@@ -1,8 +1,8 @@
 /*
     FILE: style.css
-    DESC: Main styling for the Town of Glenville project.
+    DESC: Main styling for the RegEx project.
     AUTH: Kevin J. Becker 
-    VERS: 02/24/2019
+    VERS: 03/23/2019
 */
 
 /*   GLOBAL STYLING   */
@@ -13,7 +13,7 @@
 body {
     margin: 0;
     margin-top: 50px;
-    background: #eff1f7;
+    background: #f4f7ff;
 }
 
 /* any timed transision will use ease-in-out function */
@@ -182,9 +182,9 @@ a {
    the content of the page */
 .content {
     background: white;
-    margin: 0 auto 8px;
+    margin: 0 auto;
     width: 75%;
-    padding: 15px 30px 60px;
+    padding: 40px 30px 60px;
 }
 
 .content.thin {
@@ -195,44 +195,12 @@ a {
 @media screen and (max-width: 1044px) {
     .content, .content.thin {
         width: calc(100% - 40px);
-        padding: 15px 20px 30px;
+        padding: 30px 20px 30px;
+        min-height: calc(100vh - 110px);
     }
 }
 
 /*   END BODY CONTAINER STYLING -- BODY CONTENT STYLING   */
-
-.content-lead-img {
-    width: 100%;
-    margin: 0 auto;
-    overflow: hidden;
-}
-
-.content-lead-img img {
-    display: block;
-    width: 100%;
-    overflow: hidden;
-    transition: .3s;
-}
-
-.content-lead-img img:hover {
-    cursor: pointer;
-    transform: scale(1.08);
-}
-
-@media screen and (max-width: 1300px) { 
-    .content-lead-img {
-        display: flex;
-        justify-content: center;
-        overflow: hidden;
-        height: 360px;
-    }
-
-    .content-lead-img img {
-        flex: none;
-        min-width: 1300px;
-        overflow: hidden!important;
-    }
-}
 
 /* the content headers need their own styling */
 .content-header h1 {
@@ -248,20 +216,6 @@ a {
     color: #b0b0b0;
 }
 
-/* scales the page title to be fit smaller screens */
-@media screen and (max-width: 500px) {
-    .content-header h1 {
-        font-size: 11vw;
-        text-align: center;
-        margin-top: 0;
-    }
-}
-
-/* each p tag needs to have an indent of 30px */
-.content .content-wrapper p {
-    text-indent: 30px;
-}
-
 /* the links on the entire page */
 .content a {
     color: #555b6b;
@@ -269,102 +223,6 @@ a {
 }
 .content a:hover {
     color: #282d38;
-}
-
-/* makes the content header appear like an h2 with smaller margin */
-.content-section-header {
-    margin-bottom: 0;
-    font-weight: bolder;
-    font-size: 1.5rem;
-}
-
-/* styles the address "main" line to have smaller margins */
-.address h4 {
-    font-weight: bolder;
-    margin: 5px 0 0;
-}
-
-/* each content section that isn't the last section has a large bottom margin */
-section:not(:last-child) {
-    margin-bottom: 3rem;
-}
-
-/* vertical alignment set to "sub" for the validity check
-   icons (so they are veritcally centered with the text) */
-.validity-icon {
-    vertical-align: sub;
-}
-
-/* makes sure images don't get too big */
-.img-block-left img, .img-block-right img {
-    width: 100%;
-    max-width: 450px;
-}
-
-/* when the screen is more than 785px, images will float */
-.img-block-left {
-    float: left;
-}
-
-.img-block-right {
-    float: right;
-}
-
-/* makes images slightly smaller on "large" screens that are not 1920x1080 or 
-   above */
-@media screen and (max-width: 1350px) {
-    .img-block-left img, .img-block-right img {
-        max-width: 300px;
-    } 
-}
-
-/* when the screen is more than 785px, images will not float
-   but instead be centered on the screen */
-@media screen and (max-width: 784px) {
-    .img-block-left, .img-block-right {
-        display: block;
-        float: none;
-        margin: 15px auto;
-    }
-
-    .img-block-left img, .img-block-right img {
-        max-width: 100%;
-    }
-
-    .lead-img {
-        width: 100%;
-    }
-}
-
-.img-block-left, .img-block-right, .img-block-full {
-    padding: 0 15px;
-    text-align: center;
-}
-
-.img-block-full img {
-    width: 100%;
-}
-
-.slideshow img, .slideshow figcaption {
-    transition: opacity .3s;
-}
-
-/* applies some styling to a figure so it has no margines on the left and right */
-figure{
-    margin-left: 0;
-    margin-right: 0;
-}
-
-/* images can have a caption below which displays in the center beneat the image */
-figcaption {
-    display: block;
-    color: #7f7f7f;
-    font-style: italic;
-}
-
-/* makes an image circular */
-.img-round {
-    border-radius: 50%;
 }
 
 /*   END IMAGE STYLING -- TEXT STYLING   */

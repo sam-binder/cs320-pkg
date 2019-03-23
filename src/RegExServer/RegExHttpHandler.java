@@ -1,5 +1,7 @@
 package RegExServer;
 
+// FILE: RegExHttpHandler.java
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -30,7 +32,7 @@ public class RegExHttpHandler implements HttpHandler {
     /**
      * The document root of HTML files
      */
-    private static final String DOCUMENT_ROOT = "./RegExServer/public_html/";
+    private static final String DOCUMENT_ROOT = "./src/RegExServer/public_html/";
 
     /**
      * Gets a session ID from the cookies for a given request.
