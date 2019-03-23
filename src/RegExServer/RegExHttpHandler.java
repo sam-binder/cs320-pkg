@@ -14,22 +14,29 @@ import java.nio.file.Paths;
 import java.util.*;
 
 /**
+ * RegExHttpHandler is the HttpHandler used to process requests
+ * to the RegExHttpServer.  The Handler will send out the appropriate
+ * pages based on the request URI.
  *
+ * @author Kevin J. Becker (kjb2503)
+ * @version 03/22/2019
  */
 public class RegExHttpHandler implements HttpHandler {
     /**
-     *
+     * The Map of sessions for different users.
      */
     private Map<String, RegExSession> sessions = new HashMap<>();
+
     /**
-     *
+     * The document root of HTML files
      */
     private static final String DOCUMENT_ROOT = "./RegExServer/public_html/";
 
     /**
+     * Gets a session ID from the cookies for a given request.
      *
-     * @param cookies
-     * @return
+     * @param cookies  The list of cookies to search for a session ID in.
+     * @return The string session ID if it exists, else null.
      */
     private String getSessionId(List<String> cookies) {
         // if we have a sessionId set, that will appear here
@@ -55,9 +62,11 @@ public class RegExHttpHandler implements HttpHandler {
     }
 
     /**
+     * Gets a session from the map for a given session ID, giving null
+     * if it couldn't be found.
      *
-     * @param sessionId
-     * @return
+     * @param sessionId  The session ID being looked for.
+     * @return  The RegExSession corresponding to a session ID, else null.
      */
     private RegExSession getSessionFromId(String sessionId) {
         // our userRegExSession will initially be null
@@ -74,9 +83,11 @@ public class RegExHttpHandler implements HttpHandler {
     }
 
     /**
+     * Handles a given HttpExchange which represents a single connection
+     * to the server.
      *
-     * @param exchange
-     * @throws IOException
+     * @param exchange  The exchange that was created as part of the request.
+     * @throws IOException  Any IOExceptions are thrown out to the caller.
      */
     public void handle(HttpExchange exchange) throws IOException {
         // logs that a new user has connected and where they're from
@@ -302,9 +313,11 @@ public class RegExHttpHandler implements HttpHandler {
     }
 
     /**
+     * Formats the homepage for a given user.
      *
-     * @param userRegExSession
-     * @return
+     * @param userRegExSession  The session for the user.
+     * @return  The byte-level representation of the home page for the
+     * given user.
      */
     private static byte[] getHomePageContent(RegExSession userRegExSession) {
         return new byte[]{};
