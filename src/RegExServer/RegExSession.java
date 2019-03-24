@@ -52,9 +52,13 @@ public class RegExSession {
      *
      * @param userId  The userId of the person this session represents.
      */
-    public RegExSession(int userId) {
+    public RegExSession(int userId, String firstName, String lastName) {
         // sets our userId
         this.userId = userId;
+
+        // sets first and last names
+        this.firstName = firstName;
+        this.lastName = lastName;
 
         // creates our calendar
         Calendar sessionExpire = Calendar.getInstance();

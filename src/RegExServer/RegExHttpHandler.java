@@ -32,7 +32,7 @@ public class RegExHttpHandler implements HttpHandler {
     /**
      * The document root of HTML files
      */
-    private static final String DOCUMENT_ROOT = "./src/RegExServer/public_html/";
+    public static final String DOCUMENT_ROOT = "./src/RegExServer/public_html";
 
     /**
      * Gets a session ID from the cookies for a given request.
@@ -47,14 +47,19 @@ public class RegExHttpHandler implements HttpHandler {
         // goes through and each cookie if it exists
         if(cookies != null) {
             // searches for the session ID
-            for(String cookie : cookies) {
-                // splits the cookie by the first equals sign
-                String [] cookieSplit = cookie.split("=", 2);
+            for(String cookiesLine : cookies) {
+                // splits our cookies by the separator
+                String [] allCookiesSplit = cookiesLine.split("; ");
 
-                // if our cookie ID is our session ID string
-                if(cookieSplit[0].equalsIgnoreCase("REGEX_SESSION")) {
-                    RegExLogger.log("\tcookie found for new connection - " + cookieSplit[1], 1);
-                    sessionId = cookieSplit[1];
+                for(String cookie : allCookiesSplit) {
+                    // splits the cookie by the first equals sign
+                    String [] cookieSplit = cookie.split("[=]", 2);
+
+                    // if our cookie ID is our session ID string
+                    if(cookieSplit[0].equalsIgnoreCase("REGEX_SESSION")) {
+                        RegExLogger.log("\tcookie found for new connection - " + cookieSplit[1], 1);
+                        sessionId = cookieSplit[1];
+                    }
                 }
             }
         }
@@ -122,10 +127,14 @@ public class RegExHttpHandler implements HttpHandler {
 
             // trash the cookie from the map (remove it)
             this.sessions.remove(sessionId);
+
+            // removes reference to userRegExSession
+            userRegExSession = null;
         }
 
         // gets the requested path (in lowercase form)
         String requestedPath = exchange.getRequestURI().getPath().toLowerCase();
+
         // logs the path user is requesting
         RegExLogger.log("user requesting page: " + requestedPath, 1);
 
@@ -134,6 +143,10 @@ public class RegExHttpHandler implements HttpHandler {
             // add in 'index.html' to the end
             requestedPath = requestedPath + "index.html";
         }
+
+        // grabs the parameters
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestParameters = (Map<String, Object>)exchange.getAttribute("parameters");
 
         // for now all we're doing is sending a vanilla "hi there"
         byte [] responseBody;
@@ -236,6 +249,29 @@ public class RegExHttpHandler implements HttpHandler {
                 // checks for home index request OR if no session
                 switch (requestedPath) {
                     case "/index.html":
+                        // check for posted login information
+                        if(requestParameters.containsKey("login-submit")) {
+                            // logs the user in (for now we just consider it valid and create
+                            // the session)
+                            // TODO: implement login information checking
+                            if(requestParameters.get("username").equals("user") &&
+                               requestParameters.get("password").equals("pass")) {
+                                // creates our new session
+                                userRegExSession = new RegExSession(1, "Kevin", "Becker");
+
+                                // puts our session into the map
+                                this.sessions.put("1", userRegExSession);
+
+                                // adds a new cookie header to tell the browser to keep track
+                                // of our session
+                                attachNewHeader(
+                                    exchange,
+                                    "Set-Cookie",
+                                    Collections.singletonList("REGEX_SESSION=1")
+                                );
+                            }
+                        }
+
                         // if the user has a session and it is still valid
                         if(userRegExSession != null && userRegExSession.isStillValidSession()) {
                             // redirect them to the home page
@@ -254,7 +290,8 @@ public class RegExHttpHandler implements HttpHandler {
                         }
                         break;
                     case "/home/index.html":
-                        responseBody = getHomePageContent(userRegExSession);
+                        // gets our home page content for our user
+                        responseBody = RegExHome.getPageContent(userRegExSession);
                         break;
                     default:
                         // attempt to bring up static version of the file

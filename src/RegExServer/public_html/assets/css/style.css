@@ -208,6 +208,11 @@ a {
     margin-top: 15px;
     margin-bottom: 0;
 }
+
+.content-header h1.header-smaller {
+    font-size: 2.5rem;
+}
+
 .content-header h3 {
     font-size: 1.5rem;
     margin-top: 5px;
