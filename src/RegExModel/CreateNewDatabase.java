@@ -1,4 +1,4 @@
-package cs320.model;
+package RegExModel;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;

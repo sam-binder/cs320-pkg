@@ -32,7 +32,7 @@ body {
 /* the header will be what is known also as a "navbar"
    in this navbar many changes are made, but the gist is
    a purple bar 1.5rem minimum in height with links
-   to all the pages */ 
+   to all the pages */
 .header {
     font-family: 'Roboto', Helvetica, Arial, sans-serif!important;
     font-weight: 300;
@@ -41,8 +41,8 @@ body {
     left: 0;
     width: calc(100% - 2rem);
     min-height: 2rem;
-    padding: .5rem 1rem;
-    background: rgba(255, 255, 255, 0.96);
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.98);
     color: #6d7487;
     box-shadow: 0px 5px 23px 0px rgba(0, 0, 0, .15);
     border-bottom-left-radius: 8px;
@@ -70,6 +70,7 @@ a {
 .navbar-links-wrapper {
     vertical-align: sub;
     list-style-type: none;
+    margin: 0;
     padding: 0;
     transition: .25s;
 }
@@ -126,13 +127,10 @@ a {
     cursor: pointer;
     transition: .3s ease;
     float: right;
-    position: relative;
-    right: 0;    
-    /*top: 10px;*/
 }
 
 .navbar-toggler:hover, .navbar-toggler.open {
-    background-color: #e9e6ef;
+    background-color: #e7ebf4;
 }
 
 /* the toggler icon that we want users to click on to expand the menu */
@@ -170,7 +168,8 @@ a {
 
     /* each link needs to appear on its own line */
     .navbar-link {
-        display: block!important;
+        width: 100%;
+        display: block !important;
         text-align: center;
         padding: 10px 15px;
     }

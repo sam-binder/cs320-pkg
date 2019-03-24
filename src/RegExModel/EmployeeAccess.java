@@ -1,4 +1,4 @@
-package cs320.model;
+package RegExModel;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
