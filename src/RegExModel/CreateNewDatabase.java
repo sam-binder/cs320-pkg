@@ -56,9 +56,9 @@ public class CreateNewDatabase {
                 + "DATE DATE,"
                 + "TIME TIME,"
                 + "EMPLOYEE_ID_FK INT,"
-                + "LOCATION_ID_FK VARCHAR(255),"
+                + "LOCATION_ID_FK CHAR(12),"
                 + "ACCOUNT_NUMBER_FK INT,"
-                + "PACKAGE_SERIAL_FK VARCHAR(255),"
+                + "PACKAGE_SERIAL_FK CHAR(6),"
                 + ");";
         Statement stmt = conn.createStatement();
         stmt.execute(query);
@@ -94,11 +94,11 @@ public class CreateNewDatabase {
         String query = "CREATE TABLE IF NOT EXISTS package("
                 + "ACCOUNT_NUMBER_FK INT,"
                 + "SERVICE_ID_FK INT,"
-                + "SERIAL VARCHAR(255),"
-                + "HEIGHT DOUBLE,"
-                + "LENGTH DOUBLE,"
-                + "DEPTH DOUBLE,"
-                + "WEIGHT DOUBLE,"
+                + "SERIAL CHAR(6),"
+                + "HEIGHT INT,"
+                + "LENGTH INT,"
+                + "DEPTH INT,"
+                + "WEIGHT INT,"
                 + "SIGNED_FOR_BY VARCHAR(255),"
                 + ");" ;
         Statement stmt = conn.createStatement();
