@@ -24,7 +24,12 @@ public class RegExSession {
     /**
      * The user's ID in the database.
      */
-    public int userId;
+    public int accountNumber;
+
+    /**
+     * The account type of the user (customer, accounting_employee, package_employee)
+     */
+    public String accountType;
 
     /**
      * The username of the person this session represents.
@@ -32,14 +37,9 @@ public class RegExSession {
     public String userName;
 
     /**
-     * The first name of the person this session represents.
+     * User's password
      */
-    public String firstName;
-
-    /**
-     * The last name of the person this session represents.
-     */
-    public String lastName;
+    private String password;
 
     /**
      * The date this session expires.
@@ -49,19 +49,16 @@ public class RegExSession {
     /**
      * Creates a new RegExSession based on the userId of the
      * person.
-     *
-     * @param userId  The userId of the person this session represents.
      */
-    public RegExSession(int userId, String firstName, String lastName, String userName) {
+    public RegExSession(String accountType, String userName, String password) {
         // sets our userId
-        this.userId = userId;
+//        this.accountNumber = accountNumber;
 
-        // sets first and last names
-        this.firstName = firstName;
-        this.lastName = lastName;
+        this.accountType = accountType;
 
-        // sets userName
+        // sets userName and password
         this.userName = userName;
+        this.password = password;
 
         // creates our calendar
         Calendar sessionExpire = Calendar.getInstance();
@@ -117,9 +114,7 @@ public class RegExSession {
     }
 
     public String replaceVarPlaceholders(String pageContent) {
-        return pageContent.replace("@{fn}", this.firstName)
-                          .replace("@{ln}", this.lastName)
-                          .replace("@{user-name}", this.userName)
-                          .replace("@{user-id}", "" + this.userId);
+        return pageContent.replace("@{user-name}", this.userName)
+                          .replace("@{user-type}", this.accountType);
     }
 }

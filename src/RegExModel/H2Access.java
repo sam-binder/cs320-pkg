@@ -27,10 +27,10 @@ public class H2Access {
 	 * connection has been used, should be closed with closeConnection()
 	 * @param user: user name for the owner of the database
 	 * @param password: password of the database owner
+	 * @throws SQLException
 	 */
-	public Connection createConnection(String user, String password){
+	public Connection createConnection(String user, String password) throws SQLException{
 		try {
-
 			//This needs to be on the front of your location
 			String url = "jdbc:h2:" + this.dbLocation;
 			//This tells it to use the h2 driver
@@ -38,7 +38,7 @@ public class H2Access {
 			
 			//creates the connection
 			return DriverManager.getConnection(url, user, password);
-		} catch (SQLException | ClassNotFoundException e) {
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -72,14 +72,14 @@ public class H2Access {
 	}
 
 	public String getUserType(String username){
-		Connection conn = this.createConnection("me", "password");
-		String query = "SELECT type FROM user where username='" + username + "'";
-		ResultSet r = this.createAndExecuteQuery(conn, query);
 		try {
+			Connection conn = this.createConnection("me", "password");
+			String query = "SELECT type FROM user where username='" + username + "'";
+			ResultSet r = this.createAndExecuteQuery(conn, query);
 			if (r.next())
 				return r.getString(1);
+		} catch (SQLException e) { e.printStackTrace(); }
 
-		}catch (SQLException e) {e.printStackTrace();}
 		return null;
 	}
 	
@@ -90,15 +90,15 @@ public class H2Access {
 	public static void main(String[] args) {
 		CreateNewDatabase cDb = new CreateNewDatabase();
 		H2Access h2 = new H2Access();
-		try{
+//		try{
 //			cDb.transaction();
 //			cDb.packageInit();
 //			cDb.customers();
 //			cDb.billing();
 //			cDb.accountingEmployees();
 //			cDb.packageEmployees();
-			cDb.users();
-		} catch (SQLException e){e.printStackTrace();}
+//			cDb.users();
+//		} catch (SQLException e){e.printStackTrace();}
 
 		System.out.println("\nSample checking a user's type.");
 		System.out.println(h2.getUserType("AAAA"));
@@ -107,6 +107,8 @@ public class H2Access {
 		try (EmployeeAccess employee1 = new EmployeeAccess("CCCC", "password", h2.getUserType("CCCC"))) {
 			System.out.println("User ID: " + employee1.getId());
 			employee1.updatePackageLocation("TOT0MYPN2PLK", 131, "B9IWEA");
+		} catch(SQLException sqle) {
+			sqle.printStackTrace();
 		}
 
 		try (EmployeeAccess employee2 = new EmployeeAccess("BBBB", "password", h2.getUserType("BBBB"))) {
@@ -160,6 +162,7 @@ public class H2Access {
 		} catch (SQLException e){
 			e.printStackTrace();
 		}
+
 	}
 
 

@@ -14,8 +14,12 @@ import java.util.Arrays;
 public class CreateNewDatabase {
     public CreateNewDatabase(){
         H2Access h2 = new H2Access();
-        Connection c = h2.createConnection("me", "password");
-        h2.closeConnection(c);
+        try {
+            Connection c = h2.createConnection("me", "password");
+            h2.closeConnection(c);
+        } catch(SQLException sqle) {
+            sqle.printStackTrace();
+        }
     }
 
     // Happens only once to populate the database from the csvs

@@ -2,6 +2,8 @@ package RegExServer;
 
 // FILE: RegExHttpHandler.java
 
+import RegExModel.*;
+
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -210,57 +213,66 @@ public class RegExHttpHandler implements HttpHandler {
                         case "/index.html":
                             // check for posted login information
                             if (requestParameters.containsKey("login-submit")) {
+                                // logs that a login attempt was read
+                                RegExLogger.log("login attempt read", 1);
                                 // extract the username and password
                                 String username = (String)requestParameters.get("username");
                                 String password = (String)requestParameters.get("password");
 
-                                /*
-                                String userType = H2Access.getUserType(username);
+                                // creates a new login access
+                                H2Access loginAccess = new H2Access();
+                                // gets the user type based off of username
+                                String userType = loginAccess.getUserType(username);
 
+                                // if the user actually exists in the database
                                 if(userType != null) {
-                                    // do the things for user
+                                    // attempts to log the user in using username and password
+                                    try {
+                                        // if user is a customer, make them a CustomerAccess object
+                                        if(userType.equals("customer")) {
+                                            // creates a new CustomerAccess which attempts to login
+                                            // if this throws a SQLException either username or password
+                                            // was incorrect
+                                            new CustomerAccess(username, password);
+                                        } else {
+                                            // attempts to create an EmployeeAccess
+                                            new EmployeeAccess(username, password, userType);
+                                        }
 
+                                        RegExLogger.log("login successful", 1);
+
+                                        // getting here means the login succeeded
+                                        // creates a new session for the user
+                                        userRegExSession = new RegExSession(userType, username, password);
+
+                                        // adds our session to the map
+                                        this.sessions.put(username, userRegExSession);
+
+                                        // adds a new cookie header to tell the browser to keep track
+                                        // of our session
+                                        attachNewHeader(
+                                            exchange,
+                                            "Set-Cookie",
+                                            Collections.singletonList("REGEX_SESSION=" + username)
+                                        );
+                                    } catch(SQLException sqle) {
+                                        // logs that the login attempt failed
+                                        RegExLogger.warn("password check failed", 1);
+                                        // if we get here the username/password was incorrect
+                                        // sets the response code to moved temporarily
+                                        responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                                        // redirect the user to login failed index
+                                        redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
+
+                                        // empty response body
+                                        responseBody = new byte[]{};
+
+                                        // break the switch so that no more processing occurs
+                                        break;
+                                    }
                                 } else {
-                                    // sets the response code to moved temporarily
-                                    responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-
-                                    // redirect the user to login failed index
-                                    redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
-
-                                    // empty response body
-                                    responseBody = new byte[]{};
-
-                                    // break the switch so that no more processing occurs
-                                    break;
-                                }
-                                 */
-
-                                // logs the user in (for now we just consider it valid and create
-                                // the session)
-
-                                // dummy checking for right now
-                                if (requestParameters.get("username").equals("user") &&
-                                    requestParameters.get("password").equals("pass")) {
-                                    // creates our new session
-                                    userRegExSession = new RegExSession(
-                                        1,
-                                        "Kevin",
-                                        "Becker",
-                                        "admin"
-                                    );
-
-                                    // puts our session into the map
-                                    this.sessions.put("1", userRegExSession);
-
-                                    // adds a new cookie header to tell the browser to keep track
-                                    // of our session
-                                    attachNewHeader(
-                                        exchange,
-                                        "Set-Cookie",
-                                        Collections.singletonList("REGEX_SESSION=1")
-                                    );
-                                // else user sign in was bad -- redirect them back to home with login error page
-                                } else {
+                                    RegExLogger.warn("username check failed", 1);
                                     // sets the response code to moved temporarily
                                     responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
@@ -286,13 +298,13 @@ public class RegExHttpHandler implements HttpHandler {
                                 // gets an empty response body
                                 responseBody = new byte[]{};
                             } else {
+                                // generates the error content
+                                String errorContent = (requestParameters.containsKey("login-failed")) ?
+                                                        "Your username or password was incorrect." :
+                                                        RegExIndex.NO_ERROR;
                                 // gets the response body (with or without error dialogue depending on if
                                 // there should be one)
-                                responseBody = new RegExIndex(
-                                            (requestParameters.containsKey("login-failed")) ?
-                                                "Your username or password was incorrect." :
-                                                RegExIndex.NO_ERROR
-                                        ).getPageContent();
+                                responseBody = new RegExIndex(errorContent).getPageContent();
                             }
                             break;
                         case "/home/index.html":
