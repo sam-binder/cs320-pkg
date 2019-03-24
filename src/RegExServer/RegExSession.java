@@ -14,7 +14,7 @@ import java.util.Date;
  */
 public class RegExSession {
     /**
-     *  The length that each session is valid for intially is
+     *  The length that each session is valid for initially is
      *  24 hours.
      */
     private static final int SESSION_LENGTH_HOURS = 24;

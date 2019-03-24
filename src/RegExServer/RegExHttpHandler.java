@@ -137,7 +137,7 @@ public class RegExHttpHandler implements HttpHandler {
         // if we have a session and it is expired OR sessionId has a value but no
         // cookie was returned (most likely due to server restart, etc.)
         if((userRegExSession != null && !userRegExSession.isStillValidSession()) ||
-           (sessionId != null && userRegExSession == null)) {
+           (userRegExSession == null && sessionId != null)) {
             // logs that the session is expired and that it will be deleted
             RegExLogger.warn("session is expired - responding with deletion request", 2);
 
@@ -201,6 +201,7 @@ public class RegExHttpHandler implements HttpHandler {
                                 // logs the user in (for now we just consider it valid and create
                                 // the session)
                                 // TODO: implement login information checking
+                                // dummy checking for right now
                                 if (requestParameters.get("username").equals("user") &&
                                     requestParameters.get("password").equals("pass")) {
                                     // creates our new session
@@ -221,6 +222,19 @@ public class RegExHttpHandler implements HttpHandler {
                                         "Set-Cookie",
                                         Collections.singletonList("REGEX_SESSION=1")
                                     );
+                                // else user sign in was bad -- redirect them back to home with login error page
+                                } else {
+                                    // sets the response code to moved temporarily
+                                    responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                                    // redirect the user to login failed index
+                                    redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
+
+                                    // empty response body
+                                    responseBody = new byte[]{};
+
+                                    // break the switch so that no more processing occurs
+                                    break;
                                 }
                             }
 
@@ -230,18 +244,23 @@ public class RegExHttpHandler implements HttpHandler {
                                 responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
                                 // redirect user to the home page
-                                redirectUser(exchange,DOMAIN_ROOT + "/home/");
+                                redirectUser(exchange, DOMAIN_ROOT + "/home/");
 
                                 // gets an empty response body
                                 responseBody = new byte[]{};
                             } else {
-                                // if they're not logged in continue on with loading login screen
-                                responseBody = getFileContents(requestedPath);
+                                // gets the response body (with or without error dialogue depending on if
+                                // there should be one)
+                                responseBody = new RegExIndex(
+                                        (requestParameters.containsKey("login-failed")) ?
+                                            "Your username or password was incorrect." :
+                                            RegExIndex.NO_ERROR
+                                        ).getPageContent();
                             }
                             break;
                         case "/home/index.html":
                             // gets our home page content for our user
-                            responseBody = RegExHome.getPageContent(userRegExSession);
+                            responseBody = new RegExHome(userRegExSession).getPageContent();
                             break;
                         case "/logout/index.html":
                             // deletes cookie from browser
@@ -276,6 +295,8 @@ public class RegExHttpHandler implements HttpHandler {
                     if(requestedPath.endsWith(".ico")) {
                         requestedPath = "/assets/images/favicon.ico";
                     }
+
+                    // attach the correct header to specify content type
                     attachNewHeader(
                         exchange,
                         "Content-Type",
