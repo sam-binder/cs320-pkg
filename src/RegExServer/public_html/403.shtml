@@ -9,7 +9,7 @@
     </head>
     <body>
         <div class="header">
-            <a href="./" class="navbar-brand">
+            <a href="/" class="navbar-brand">
                 <img src="/assets/images/regex_logo_icon.png" alt="RegEx Logo" title="View the homepage." />
             </a>
         </div>
