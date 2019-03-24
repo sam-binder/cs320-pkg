@@ -15,6 +15,11 @@
     margin-bottom: 30px;
 }
 
+.login-row label {
+    display: block;
+    margin-bottom: 8px;
+}
+
 .login-input {
     display: block;
     width: 30rem;
