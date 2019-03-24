@@ -1,5 +1,6 @@
 package RegExModel;
 import java.sql.*;
+import java.util.Arrays;
 
 /**
  * This is a sample main program. 
@@ -69,6 +70,18 @@ public class H2Access {
 			e.printStackTrace();
 		}
 	}
+
+	public String getUserType(String username){
+		Connection conn = this.createConnection("me", "password");
+		String query = "SELECT type FROM user where username='" + username + "'";
+		ResultSet r = this.createAndExecuteQuery(conn, query);
+		try {
+			if (r.next())
+				return r.getString(1);
+
+		}catch (SQLException e) {e.printStackTrace();}
+		return null;
+	}
 	
 	/**
 	 * Starts and runs the database
@@ -76,26 +89,37 @@ public class H2Access {
 	 */
 	public static void main(String[] args) {
 		CreateNewDatabase cDb = new CreateNewDatabase();
-		//try{cDb.accountingEmployees();} catch (SQLException e){e.printStackTrace();}
+		H2Access h2 = new H2Access();
+		try{
+//			cDb.transaction();
+//			cDb.packageInit();
+//			cDb.customers();
+//			cDb.billing();
+//			cDb.accountingEmployees();
+//			cDb.packageEmployees();
+			cDb.users();
+		} catch (SQLException e){e.printStackTrace();}
+
+		System.out.println("\nSample checking a user's type.");
+		System.out.println(h2.getUserType("AAAA"));
 
 		System.out.println("\nSample Package Employee updating a packages location.");
-		try (EmployeeAccess employee1 = new EmployeeAccess("FQAX", "password", "packageEmployee")) {
+		try (EmployeeAccess employee1 = new EmployeeAccess("CCCC", "password", h2.getUserType("CCCC"))) {
 			System.out.println("User ID: " + employee1.getId());
 			employee1.updatePackageLocation("TOT0MYPN2PLK", 131, "B9IWEA");
 		}
 
-		try (EmployeeAccess employee2 = new EmployeeAccess("KENL", "password", "accountingEmployee")) {
+		try (EmployeeAccess employee2 = new EmployeeAccess("BBBB", "password", h2.getUserType("BBBB"))) {
 			System.out.println("\nSample Accounting Employee looking up customers named Amy.");
 			ResultSet results = employee2.getCustomersWhere("first_name='Amy'");
 			while(results.next()){
-				System.out.printf("Person %d: %d %d %d %s %s %s\n",
+				System.out.printf("Person %d: %d %d %d %s %s\n",
 						results.getInt(1),
 						results.getInt(2),
 						results.getInt(3),
 						results.getInt(4),
 						results.getString(5),
-						results.getString(6),
-						results.getString(7));
+						results.getString(6));
 			}
 			System.out.println("\nSample Accounting Employee viewing billing " +
 					"information for customer with account number 16.");

@@ -2,14 +2,21 @@ package RegExModel;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 
 /**
  * Created by Walter Schaertl on 3/23/2019.
  */
 public class CreateNewDatabase {
+    public CreateNewDatabase(){
+        H2Access h2 = new H2Access();
+        Connection c = h2.createConnection("me", "password");
+        h2.closeConnection(c);
+    }
 
     // Happens only once to populate the database from the csvs
     public void packageEmployees() throws SQLException {
@@ -17,21 +24,23 @@ public class CreateNewDatabase {
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS package_employee("
                 + "ID INT PRIMARY KEY,"
-                + "USERNAME VARCHAR(255),"
                 + ");" ;
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./H2Demo/CSVs/package_employees.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/package_employees.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("employeeID")) {
-                    query = String.format("INSERT INTO package_employee VALUES(%s,\'%s\');", split[0], split[1]);
+                    query = String.format("INSERT INTO package_employee VALUES(%s);", split[0]);
                     conn.createStatement().execute(query);
-                    conn.createStatement().execute("CREATE USER " + split[1] + " PASSWORD 'password';");
-                    // Package users have all abilities on transaction table (maybe change?)
-                    conn.createStatement().execute("GRANT ALL ON TRANSACTION TO " + split[1]);
+//                    try{conn.createStatement().execute("CREATE USER " + split[1] + " PASSWORD 'password';");}
+//                    catch (SQLException e){};
+//                    // Package users have all abilities on transaction table (maybe change?)
+//                    conn.createStatement().execute("GRANT ALL ON TRANSACTION TO " + split[1]);
+//                    conn.createStatement().execute("GRANT ALL ON PACKAGE TO " + split[1]);
+//                    conn.createStatement().execute("GRANT ALL ON PACKAGE_EMPLOYEE TO " + split[1]);
                 }
             }
             br.close();
@@ -61,22 +70,22 @@ public class CreateNewDatabase {
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS accounting_employee("
                 + "ID INT PRIMARY KEY,"
-                + "USERNAME VARCHAR(255),"
                 + ");" ;
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./H2Demo/CSVs/accounting_employees.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/accounting_employees.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("employeeID")) {
-                    query = String.format("INSERT INTO accounting_employee VALUES(%s,\'%s\');", split[0], split[1]);
+                    query = String.format("INSERT INTO accounting_employee VALUES(%s);", split[0]);
                     conn.createStatement().execute(query);
-                    try{conn.createStatement().execute("CREATE USER " + split[1] + " PASSWORD 'password';");}
-                    catch(SQLException e){;}
-                    // This is probably too many permissions
-                    conn.createStatement().execute("GRANT ALL ON CUSTOMER, BILLING, TRANSACTION, PACKAGE TO " + split[1]);
+//                    try{conn.createStatement().execute("CREATE USER " + split[1] + " PASSWORD 'password';");}
+//                    catch(SQLException e){}
+//                    // This is probably too many permissions
+//                    for(String table: Arrays.asList("CUSTOMER", "PACKAGE", "BILLING", "TRANSACTION"))
+//                        conn.createStatement().execute("GRANT ALL ON " + table+ " TO " + split[1]);
                 }
             }
             br.close();
@@ -101,7 +110,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./H2Demo/CSVs/package.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/package.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -128,22 +137,19 @@ public class CreateNewDatabase {
                 + "FIRST_NAME VARCHAR(255),"
                 + "LAST_NAME VARCHAR(255),"
                 + "PHONE_NO VARCHAR(255),"
-                + "USERNAME VARCHAR(255)," // Can be null
                 + ");" ;
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./H2Demo/CSVs/customer.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/customer.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("account_number")) {
-                    query = String.format("INSERT INTO customer VALUES(%s,%s,%s,%s,'%s','%s','%s','%s');",
-                            split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7]);
+                    query = String.format("INSERT INTO customer VALUES(%s,%s,%s,%s,'%s','%s','%s');",
+                            split[0], split[1], split[2], split[3], split[4], split[5], split[6]);
                     conn.createStatement().execute(query);
-                    conn.createStatement().execute("CREATE USER " + split[7] + " PASSWORD 'password';");
-                    // Package users have all abilities on transaction table (maybe change?)
-                    //conn.createStatement().execute("GRANT ALL ON package TO " + split[1]);
+
                 }
             }
             br.close();
@@ -165,7 +171,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./H2Demo/CSVs/billing.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/billing.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -176,6 +182,49 @@ public class CreateNewDatabase {
                             Integer.parseInt(split[3].replace("\"","")),
                             Integer.parseInt(split[4].replace("\"","")));
                     conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // creates users
+    public void users() throws  SQLException{
+        H2Access h2 = new H2Access();
+        Connection conn = h2.createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS user("
+                + "ACCOUNT_NUMBER_FK INT,"
+                + "USERNAME VARCHAR(255) PRIMARY KEY,"
+                + "PASSWORD VARCHAR(255),"
+                + "TYPE VARCHAR(255)"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/user.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("account_number_fk")) {
+                    query = String.format("INSERT INTO user VALUES(%s,'%s','%s','%s');",
+                            split[0], split[1], split[2], split[3]);
+                    conn.createStatement().execute(query);
+                    String username = split[1];
+                    try {
+                        conn.createStatement().execute("CREATE USER " + username + " PASSWORD '" + split[2] + "';");
+                    } catch (SQLException e){}
+                    if(split[3].equals("customer")) {
+                        for(String table: Arrays.asList("PACKAGE", "USER"))
+                            conn.createStatement().execute("GRANT ALL ON " + table + " TO " + username);
+                    } else if(split[3].equals("accounting_employee")) {
+                        for(String table: Arrays.asList("CUSTOMER", "PACKAGE", "BILLING", "TRANSACTION", "USER"))
+                            conn.createStatement().execute("GRANT ALL ON " + table + " TO " + username);
+                    } else if(split[3].equals("package_employee")){
+                        for(String table: Arrays.asList("TRANSACTION", "PACKAGE", "PACKAGE_EMPLOYEE", "USER"))
+                            conn.createStatement().execute("GRANT ALL ON " + table + " TO " + username);
+                    }
                 }
             }
             br.close();
