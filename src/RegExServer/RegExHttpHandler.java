@@ -204,7 +204,7 @@ public class RegExHttpHandler implements HttpHandler {
                                 if (requestParameters.get("username").equals("user") &&
                                     requestParameters.get("password").equals("pass")) {
                                     // creates our new session
-                                    userRegExSession = new RegExSession(1, "Kevin", "Becker");
+                                    userRegExSession = new RegExSession(1, "Kevin", "Becker", "admin");
 
                                     // puts our session into the map
                                     this.sessions.put("1", userRegExSession);
