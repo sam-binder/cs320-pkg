@@ -185,7 +185,7 @@ public class RegExHttpHandler implements HttpHandler {
             // folder deep) anything else will be 404
             try {
                 // if we're sending an HTML file we need to do some processing
-                if(requestedPath.endsWith(".html")) {
+                if(requestedPath.endsWith("html")) {
                     // the only thing sent here is html
                     attachNewHeader(
                         exchange,
@@ -204,7 +204,12 @@ public class RegExHttpHandler implements HttpHandler {
                                 if (requestParameters.get("username").equals("user") &&
                                     requestParameters.get("password").equals("pass")) {
                                     // creates our new session
-                                    userRegExSession = new RegExSession(1, "Kevin", "Becker");
+                                    userRegExSession = new RegExSession(
+                                        1,
+                                        "Kevin",
+                                        "Becker",
+                                        "admin"
+                                    );
 
                                     // puts our session into the map
                                     this.sessions.put("1", userRegExSession);
@@ -238,6 +243,29 @@ public class RegExHttpHandler implements HttpHandler {
                             // gets our home page content for our user
                             responseBody = RegExHome.getPageContent(userRegExSession);
                             break;
+                        case "/logout/index.html":
+                            // deletes cookie from browser
+                            attachNewHeader(
+                                exchange,
+                                "Set-Cookie",
+                                Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+                            );
+
+                            // trash the cookie from the map (remove it)
+                            this.sessions.remove(sessionId);
+
+                            // redirect user to home page
+                            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                            // attaches a location header for the browser to go to root (login)
+                            redirectUser(
+                                exchange,
+                                DOMAIN_ROOT + "/"
+                            );
+
+                            // empty response body
+                            responseBody = new byte[]{};
+                            break;
                         default:
                             // attempt to bring up static version of the file
                             responseBody = getFileContents(requestedPath);
@@ -249,13 +277,13 @@ public class RegExHttpHandler implements HttpHandler {
                         requestedPath = "/assets/images/favicon.ico";
                     }
                     attachNewHeader(
-                            exchange,
-                            "Content-Type",
-                            Collections.singletonList(
-                                this.fileTypeMIMES.get(
-                                    requestedPath.substring(requestedPath.lastIndexOf(".")+1)
-                                )
+                        exchange,
+                        "Content-Type",
+                        Collections.singletonList(
+                            this.fileTypeMIMES.get(
+                                requestedPath.substring(requestedPath.lastIndexOf(".")+1)
                             )
+                        )
                     );
 
                     // gets our response body from our contents
@@ -305,6 +333,7 @@ public class RegExHttpHandler implements HttpHandler {
     private static byte[] getFileContents(String pathToFile) throws FileNotFoundException, IOException {
         // if the file isn't found we have to respond with a 404
         if(!new File(DOCUMENT_ROOT + pathToFile).exists()) {
+            System.out.println("uh oh");
             throw new FileNotFoundException();
         }
 
@@ -326,14 +355,14 @@ public class RegExHttpHandler implements HttpHandler {
         switch (errorNum) {
             case 404:
                 RegExLogger.warn("asset not found - sending 404", 1);
-                return getFileContents("404.shtml");
+                return getFileContents("/404.shtml");
             case 403:
                 RegExLogger.warn("no access - sending 403", 1);
-                return getFileContents("403.shtml");
+                return getFileContents("/403.shtml");
             default:
                 RegExLogger.warn(" server issue hit - sending 500", 1);
                 // default to error 404
-                return getFileContents("500.shtml");
+                return getFileContents("/500.shtml");
         }
     }
 
