@@ -100,6 +100,8 @@ public class CreateNewDatabase {
                 + "DEPTH INT,"
                 + "WEIGHT INT,"
                 + "SIGNED_FOR_BY VARCHAR(255),"
+                + "ORIGIN_FK CHAR(12)"
+                + "DESTINATION_FK CHAR(12)"
                 + ");" ;
         Statement stmt = conn.createStatement();
         stmt.execute(query);
@@ -188,7 +190,7 @@ public class CreateNewDatabase {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS user("
-                + "ACCOUNT_NUMBER_FK INT,"
+                + "GENERAL_FK INT,"
                 + "USERNAME VARCHAR(255) PRIMARY KEY,"
                 + "PASSWORD VARCHAR(255),"
                 + "TYPE VARCHAR(255)"
@@ -267,6 +269,7 @@ public class CreateNewDatabase {
                 + "ACCOUNT_NUMBER_FK INT,"
                 + "PACKAGE_SERIAL_FK VARCHAR(255),"
                 + "SERVICE_ID INT"
+                + "PAID INT"
                 + ");" ;
         Statement stmt = conn.createStatement();
         stmt.execute(query);
