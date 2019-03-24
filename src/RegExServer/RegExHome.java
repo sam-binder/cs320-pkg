@@ -19,20 +19,11 @@ public class RegExHome {
             StandardCharsets.UTF_8
         );
 
-        System.out.println(userRegExSession.firstName);
-
-        try {
-            // first we need to put in our first name
-            pageContent = pageContent.replace(
-                    "%{fn}",
-                    userRegExSession.firstName
-            );
-        }
-        catch(Exception e) {
-            System.err.println(e.getMessage());
-        }
-
-        System.out.println("wait what");
+        // first we need to put in our first name
+        pageContent = pageContent.replace(
+            "@{fn}",
+            userRegExSession.firstName
+        );
 
         // return our page content as bytes
         return pageContent.getBytes();

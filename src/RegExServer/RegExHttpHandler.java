@@ -27,12 +27,28 @@ public class RegExHttpHandler implements HttpHandler {
     /**
      * The Map of sessions for different users.
      */
-    private Map<String, RegExSession> sessions = new HashMap<>();
+    private Map<String, RegExSession> sessions;
+    private Map<String, String> fileTypeMIMES;
 
     /**
      * The document root of HTML files
      */
     public static final String DOCUMENT_ROOT = "./src/RegExServer/public_html";
+
+    public RegExHttpHandler() {
+        this.sessions = new HashMap<>();
+        this.fileTypeMIMES = new HashMap<>();
+
+        // PUTS OUR SUPPORTED MIME TYPES
+        this.fileTypeMIMES.put("css", "text/css");
+        this.fileTypeMIMES.put("js", "application/javascript");
+        this.fileTypeMIMES.put("jpg", "image/jpeg");
+        this.fileTypeMIMES.put("jpeg", "image/jpeg");
+        this.fileTypeMIMES.put("gif", "image/gif");
+        this.fileTypeMIMES.put("png", "image/png");
+        this.fileTypeMIMES.put("ico", "image/x-icon");
+        this.fileTypeMIMES.put("svg", "image/svg+xml");
+    }
 
     /**
      * Gets a session ID from the cookies for a given request.
@@ -113,203 +129,152 @@ public class RegExHttpHandler implements HttpHandler {
 
         // gets our session from our session ID
         RegExSession userRegExSession = getSessionFromId(sessionId);
+        // the byte-level form of the response
+        byte [] responseBody;
+        // our response code (defaults to 200 OK)
+        int responseCode = HttpURLConnection.HTTP_OK;
 
-        // if we have a session and it is expired
+        // if we have a session and it is expired OR sessionId has a value but no
+        // cookie was returned (most likely due to server restart, etc.)
         if((userRegExSession != null && !userRegExSession.isStillValidSession()) ||
-           (sessionId != null && userRegExSession == null)){
+           (sessionId != null && userRegExSession == null)) {
             // logs that the session is expired and that it will be deleted
             RegExLogger.warn("session is expired - responding with deletion request", 2);
 
             // puts in place our cookie deletion to remove it from the browser
             attachNewHeader(
-                    exchange,
-            "Set-Cookie",
+                exchange,
+                "Set-Cookie",
                 Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
             );
 
             // trash the cookie from the map (remove it)
             this.sessions.remove(sessionId);
-        }
 
-        // gets the requested path (in lowercase form)
-        String requestedPath = exchange.getRequestURI().getPath().toLowerCase();
+            // redirect user to home page
+            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
-        // logs the path user is requesting
-        RegExLogger.log("user requesting page: " + requestedPath, 1);
+            // attaches a location header for the browser to go to root (login)
+            redirectUser(
+                exchange,
+                DOMAIN_ROOT + "/"
+            );
 
-        // if the requested path ends with a /
-        if(requestedPath.endsWith("/")) {
-            // add in 'index.html' to the end
-            requestedPath = requestedPath + "index.html";
-        }
+            // empty response body
+            responseBody = new byte[]{};
+        } else {
+            // gets the requested path (in lowercase form)
+            String requestedPath = exchange.getRequestURI().getPath().toLowerCase();
 
-        // grabs the parameters
-        @SuppressWarnings("unchecked")
-        Map<String, Object> requestParameters = (Map<String, Object>)exchange.getAttribute("parameters");
+            // logs the path user is requesting
+            RegExLogger.log("user requesting page: " + requestedPath, 1);
 
-        // for now all we're doing is sending a vanilla "hi there"
-        byte [] responseBody;
-        // our response code (defaults to 200 OK)
-        int responseCode = HttpURLConnection.HTTP_OK;
-
-        // the next thing we need to do is figure out our path
-        // we will only have certain pages we know about to build
-        // simply check for the known ones here (they only go single
-        // folder deep) anything else will be 404
-        try {
-            // first we have to check if we are sending a non-html file
-            // CSS FILE ======================================================
-            if (requestedPath.endsWith(".css")) {
-                // sets a header that content type will be css
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("text/css")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
-
-            // JS FILE =======================================================
-            } else if (requestedPath.endsWith(".js")) {
-                // sets a header that content type will be js
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("application/javascript")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
-
-            // PNG FILE ======================================================
-            } else if(requestedPath.endsWith(".png")) {
-                // sets a header that content type will be js
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("image/png")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
-
-            // JPEG FILE =====================================================
-            } else if(requestedPath.endsWith(".jpg") ||
-                      requestedPath.endsWith(".jpeg")) {
-                // sets a header that content type will be js
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("image/jpeg")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
-
-            // GIF FILE ======================================================
-            } else if(requestedPath.endsWith(".gif")) {
-                // sets a header that content type will be a gif
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("image/gif")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
-
-            // ICO FILE ======================================================
-            } else if(requestedPath.endsWith(".ico")) {
-                // sets a header that content type will be an ico
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("image/x-icon")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents("/assets/images/favicon.ico");
-
-            // SVG FILE ======================================================
-            } else if(requestedPath.endsWith(".svg")) {
-                // sets a header that content type will be an ico
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("image/svg+xml")
-                );
-                // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
-
-            // HTML FILE =====================================================
-            } else {
-                // the only thing sent here is html
-                attachNewHeader(
-                    exchange,
-                    "Content-Type",
-                    Collections.singletonList("text/html; charset=UTF-8")
-                );
-
-                // checks for home index request OR if no session
-                switch (requestedPath) {
-                    case "/index.html":
-                        // check for posted login information
-                        if(requestParameters.containsKey("login-submit")) {
-                            // logs the user in (for now we just consider it valid and create
-                            // the session)
-                            // TODO: implement login information checking
-                            if(requestParameters.get("username").equals("user") &&
-                               requestParameters.get("password").equals("pass")) {
-                                // creates our new session
-                                userRegExSession = new RegExSession(1, "Kevin", "Becker");
-
-                                // puts our session into the map
-                                this.sessions.put("1", userRegExSession);
-
-                                // adds a new cookie header to tell the browser to keep track
-                                // of our session
-                                attachNewHeader(
-                                    exchange,
-                                    "Set-Cookie",
-                                    Collections.singletonList("REGEX_SESSION=1")
-                                );
-                            }
-                        }
-
-                        // if the user has a session and it is still valid
-                        if(userRegExSession != null && userRegExSession.isStillValidSession()) {
-                            // redirect them to the home page
-                            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-                            attachNewHeader(
-                                exchange,
-                                "Location",
-                                Collections.singletonList(DOMAIN_ROOT + "/home/")
-                            );
-
-                            // gets an empty response body
-                            responseBody = new byte[]{};
-                        } else {
-                            // if they're not logged in continue on with loading login screen
-                            responseBody = getFileContents(requestedPath);
-                        }
-                        break;
-                    case "/home/index.html":
-                        // gets our home page content for our user
-                        responseBody = RegExHome.getPageContent(userRegExSession);
-                        break;
-                    default:
-                        // attempt to bring up static version of the file
-                        responseBody = getFileContents(requestedPath);
-                }
+            // if the requested path ends with a /
+            if(requestedPath.endsWith("/")) {
+                // add in 'index.html' to the end
+                requestedPath = requestedPath + "index.html";
             }
-        // FileNotFoundException thrown when a file cannot be located by the getFileContents method
-        } catch(FileNotFoundException fnfe) {
-            // set our response code to 404 NOT FOUND
-            responseCode = HttpURLConnection.HTTP_NOT_FOUND;
-            // get the error response page for our error
-            responseBody = getErrorPage(responseCode);
-        } catch(IOException e) {
-            // logs that some exception was hit
-            RegExLogger.error("issue with loading page - internal server error", 1);
-            // our response code is set to 500 INTERNAL ERROR
-            responseCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
-            // gets our response body page for our response code
-            responseBody = getErrorPage(responseCode);
+
+            // grabs the parameters
+            @SuppressWarnings("unchecked")
+            Map<String, Object> requestParameters = (Map<String, Object>)exchange.getAttribute("parameters");
+
+            // the next thing we need to do is figure out our path
+            // we will only have certain pages we know about to build
+            // simply check for the known ones here (they only go single
+            // folder deep) anything else will be 404
+            try {
+                // if we're sending an HTML file we need to do some processing
+                if(requestedPath.endsWith(".html")) {
+                    // the only thing sent here is html
+                    attachNewHeader(
+                        exchange,
+                        "Content-Type",
+                        Collections.singletonList("text/html; charset=UTF-8")
+                    );
+
+                    // checks for home index request OR if no session
+                    switch (requestedPath) {
+                        case "/index.html":
+                            // check for posted login information
+                            if (requestParameters.containsKey("login-submit")) {
+                                // logs the user in (for now we just consider it valid and create
+                                // the session)
+                                // TODO: implement login information checking
+                                if (requestParameters.get("username").equals("user") &&
+                                    requestParameters.get("password").equals("pass")) {
+                                    // creates our new session
+                                    userRegExSession = new RegExSession(1, "Kevin", "Becker");
+
+                                    // puts our session into the map
+                                    this.sessions.put("1", userRegExSession);
+
+                                    // adds a new cookie header to tell the browser to keep track
+                                    // of our session
+                                    attachNewHeader(
+                                        exchange,
+                                        "Set-Cookie",
+                                        Collections.singletonList("REGEX_SESSION=1")
+                                    );
+                                }
+                            }
+
+                            // if the user has a session and it is still valid
+                            if (userRegExSession != null && userRegExSession.isStillValidSession()) {
+                                // redirect them to the home page
+                                responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                                // redirect user to the home page
+                                redirectUser(exchange,DOMAIN_ROOT + "/home/");
+
+                                // gets an empty response body
+                                responseBody = new byte[]{};
+                            } else {
+                                // if they're not logged in continue on with loading login screen
+                                responseBody = getFileContents(requestedPath);
+                            }
+                            break;
+                        case "/home/index.html":
+                            // gets our home page content for our user
+                            responseBody = RegExHome.getPageContent(userRegExSession);
+                            break;
+                        default:
+                            // attempt to bring up static version of the file
+                            responseBody = getFileContents(requestedPath);
+                    }
+                    // else we send back the file contents of whatever was requested (if it exists)
+                } else {
+                    // always send the request for icon to the favicon
+                    if(requestedPath.endsWith(".ico")) {
+                        requestedPath = "/assets/images/favicon.ico";
+                    }
+                    attachNewHeader(
+                            exchange,
+                            "Content-Type",
+                            Collections.singletonList(
+                                this.fileTypeMIMES.get(
+                                    requestedPath.substring(requestedPath.lastIndexOf(".")+1)
+                                )
+                            )
+                    );
+
+                    // gets our response body from our contents
+                    responseBody = getFileContents(requestedPath);
+                }
+                // FileNotFoundException thrown when a file cannot be located by the getFileContents method
+            } catch(FileNotFoundException fnfe) {
+                // set our response code to 404 NOT FOUND
+                responseCode = HttpURLConnection.HTTP_NOT_FOUND;
+                // get the error response page for our error
+                responseBody = getErrorPage(responseCode);
+            } catch(IOException e) {
+                // logs that some exception was hit
+                RegExLogger.error("issue with loading page - internal server error", 1);
+                // our response code is set to 500 INTERNAL ERROR
+                responseCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
+                // gets our response body page for our response code
+                responseBody = getErrorPage(responseCode);
+            }
         }
 
         // direct our exchange to send back the response headers
@@ -348,17 +313,6 @@ public class RegExHttpHandler implements HttpHandler {
         return Files.readAllBytes(
             Paths.get(DOCUMENT_ROOT + pathToFile)
         );
-    }
-
-    /**
-     * Formats the homepage for a given user.
-     *
-     * @param userRegExSession  The session for the user.
-     * @return  The byte-level representation of the home page for the
-     * given user.
-     */
-    private static byte[] getHomePageContent(RegExSession userRegExSession) {
-        return new byte[]{};
     }
 
     /**
@@ -417,6 +371,10 @@ public class RegExHttpHandler implements HttpHandler {
     }
 
     private static void redirectUser(HttpExchange exchange, String pathToRedirect) {
-
+        attachNewHeader(
+            exchange,
+        "Location",
+            Collections.singletonList(pathToRedirect)
+        );
     }
 }
