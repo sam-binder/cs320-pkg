@@ -340,8 +340,6 @@ public class RegExHttpHandler implements HttpHandler {
         response.close();
     }
 
-    // PAGE RETURN METHODS ==============================================
-
     /**
      * Gets the file contents based on the pathToFile (throwing a FileNotFoundException
      * if the file cannot be found).
@@ -420,7 +418,14 @@ public class RegExHttpHandler implements HttpHandler {
         exchange.getResponseHeaders().put(name, body);
     }
 
+    /**
+     * Attaches a redirect header to let the browser know that a user should be redirected.
+     *
+     * @param exchange  The exchange to apply the header to.
+     * @param pathToRedirect  The absolute location to redirect the user to.
+     */
     private static void redirectUser(HttpExchange exchange, String pathToRedirect) {
+        // this method is a dummy method to add a "Location" header.
         attachNewHeader(
             exchange,
         "Location",
