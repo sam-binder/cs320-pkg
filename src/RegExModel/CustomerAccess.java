@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 /**
  * Created by Walter Schaertl on 3/24/2019.
  */
-public class CustomerAccess implements AutoCloseable{
+public class CustomerAccess extends Access implements AutoCloseable{
     private String username;
     private Connection connection;
     private H2Access h2;

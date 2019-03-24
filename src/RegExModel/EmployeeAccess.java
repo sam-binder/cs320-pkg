@@ -8,7 +8,7 @@ import java.sql.SQLException;
 /**
  * Created by Walter Schaertl on 3/23/2019.
  */
-public class EmployeeAccess implements AutoCloseable{
+public class EmployeeAccess extends Access implements AutoCloseable{
     private String username, type;
     private Connection connection;
     private H2Access h2;
