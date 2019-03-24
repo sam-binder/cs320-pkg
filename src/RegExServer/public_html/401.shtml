@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name = "viewport" content = "width = device-width, initial-scale = 1, maximum-scale = 1">
+        <link href="/assets/css/style.error.css" rel="stylesheet" />
+        <title>RegEx Intranet &bull; 401</title>
+    </head>
+    <body>
+        <div class="header">
+            <a href="./" class="navbar-brand">
+                <img src="/assets/images/regex_logo_icon.png" alt="RegEx Logo" title="View the homepage." />
+            </a>
+        </div>
+        <div class="error-wrapper">
+            <div class="error">
+                <i class="fa fa-exclamation-triangle fa-5x error-icon"></i>
+                <div class="error-title">
+                    Error 401
+                </div>
+                <div class="error-heading">
+                    This page requires login to be accessed.
+                </div>
+                <div class="error-ending">
+                    Go <a href="/">here</a> to return home.
+                </div>
+            </div>
+        </div>
+        <script defer
+                src="https://use.fontawesome.com/releases/v5.8.1/js/all.js"
+                integrity="sha384-g5uSoOSBd7KkhAMlnQILrecXvzst9TdC09/VM+pjDTCM+1il8RHz5fKANTFFb+gQ"
+                crossorigin="anonymous"></script>
+    </body>
+</html>

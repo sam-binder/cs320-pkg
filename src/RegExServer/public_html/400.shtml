@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name = "viewport" content = "width = device-width, initial-scale = 1, maximum-scale = 1">
+        <meta name="description" content="USATF Course Measurement Database">
+        <meta name="author" content="USATF">
+
+        <!-- Local styles to the server -->
+        <link rel = "stylesheet" href = "/.default/.src/css/style.css"/>
+        <link rel = "stylesheet" href = "/.default/.src/css/bootstrap-4.1.1.min.css"/>
+        <link rel = "icon" type = "image/ico" href = "/.default/.assets/favicon.ico"/>
+
+        <!-- Local scripts to the server -->
+        <script src = "/.default/.src/js/jquery-3.1.1.min.js"></script>
+        <script src = "/.default/.src/js/popper-1.12.9.min.js"></script>
+        <script src = "/.default/.src/js/bootstrap-4.1.1.min.js"></script>
+
+        <!-- Files not local to server -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+        <title>USATF · Bad Request</title>
+        <style>
+        #error
+        {
+            margin-top:25vh;
+        }
+        </style>
+    </head>
+
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md bottom-shadow navbar-dark bg-usatf" role="navigation">
+            <a class = "navbar-brand" href = "/home/" title = "Home" tabindex = "-1">
+                <img src = "/.default/.assets/white-logo.png" style = "height: 30px;">
+            </a>
+        </nav>
+        <div class="container text-center" id = "error">
+            <div class="row">
+                <div class="col">
+                    <i class = "fa fa-exclamation-triangle fa-5x text-usatf"></i>
+                    <h1>
+                        <em>
+                            Error 400
+                        </em>
+                        <br/>
+                        Your browser has made a bad request to the server.
+                    </h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 offset-md-3 col-sm-8 offset-sm-2">
+                    <p class="lead text-center">
+                        If you keep seeing this error, contact us
+                        <a href = "mailto:webmaster@certifiedroadraces.com">here</a>, please.
+                        Alternatively, you can navigate to the <a href = "/">home page</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

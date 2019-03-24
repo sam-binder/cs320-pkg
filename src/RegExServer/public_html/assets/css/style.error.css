@@ -1,0 +1,113 @@
+/*
+    FILE: style.error.css
+    DESC: Error styling for the RegEx project.
+    AUTH: Kevin J. Becker 
+    VERS: 03/23/2019
+*/
+
+/*   GLOBAL STYLING   */
+/* content will be written with Open Sans typeface */
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,700|Roboto:100,300');
+
+/* general styling for the body */
+body {
+    margin: 0;
+    background: #eff1f7;
+}
+
+/* any timed transision will use ease-in-out function */
+* {
+    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+    transition-timing-function: ease-in-out;
+}
+
+/* removes default css outlines for inputs  */
+*:focus, *:invalid {
+    outline: none;
+}
+
+/*   END GLOBAL STYLING -- NAVBAR STYLING   */
+
+/* the header will be what is known also as a "navbar"
+   in this navbar many changes are made, but the gist is
+   a purple bar 1.5rem minimum in height with links
+   to all the pages */
+.header {
+    font-family: 'Roboto', Helvetica, Arial, sans-serif!important;
+    font-weight: 300;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: calc(100% - 2rem);
+    min-height: 2rem;
+    padding: .5rem 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    color: #6d7487;
+    box-shadow: 0px 5px 23px 0px rgba(0, 0, 0, .15);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1;
+}
+
+/* forces all anchors to have pointer cursor (some aren't in header) */
+a {
+    cursor: pointer;
+}
+
+/* the .navbar-brand is the main image of the whole site; the logo */
+.navbar-brand {
+    text-decoration: none;
+}
+.navbar-brand img {
+    position: relative;
+    top: 3px;
+    width: 100px;
+    vertical-align: middle;
+    margin: 0 10px;
+    transition: .25s;
+}
+.navbar-brand img:hover {
+    transform: scale(1.08);
+}
+
+.error-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.error-icon {
+    color: #366ed6;
+}
+
+.error-title {
+    font-size: 2.25rem;
+    font-style: italic;
+}
+
+.error-heading {
+    font-size: 2rem;
+    font-weight: bolder;
+    margin-bottom: 15px;
+}
+
+.error-ending {
+    font-size: 1.5rem;
+    color: #393939;
+}
+
+.error-ending a {
+    text-decoration: none;
+    color: #df4242;
+    transition: .15s;
+}
+
+.error-ending a:hover {
+    color: rgba(182, 53, 53, 0.91);
+}
