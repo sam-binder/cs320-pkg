@@ -5,15 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class RegExHome extends RegExPage{
+public class RegExIndex extends RegExPage {
     // the URI for this page
-    private static String pageURI = RegExHttpHandler.DOCUMENT_ROOT + "/home/index.html";
+    private static String pageURI = RegExHttpHandler.DOCUMENT_ROOT + "/index.html";
 
-    // the RegExSession used to render this page with
-    private RegExSession userRegExSession;
+    public static String NO_ERROR = null;
 
-    public RegExHome(RegExSession userRegExSession) {
-        this.userRegExSession = userRegExSession;
+    // the error message to print
+    private String error;
+
+    public RegExIndex(String error) {
+        this.error = error;
     }
 
     public byte[] getPageContent() throws IOException {
@@ -26,8 +28,11 @@ public class RegExHome extends RegExPage{
             StandardCharsets.UTF_8
         );
 
-        // replaces all var placeholders with session details
-        pageContent = userRegExSession.replaceVarPlaceholders(pageContent);
+        // replaces error dialogue with
+        pageContent = pageContent.replace(
+            "@{error-dialog}",
+            RegExErrorDialog.getErrorDialogHTML(this.error)
+        );
 
         // return our page content as bytes
         return pageContent.getBytes();

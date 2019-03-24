@@ -229,7 +229,14 @@ a {
     color: #282d38;
 }
 
-/*   END IMAGE STYLING -- TEXT STYLING   */
+.error {
+    background: #e25757;
+    color: #ffffff;
+    margin-top: 2rem;
+    padding: 1.25rem;
+}
+
+/*   END CONTENT STYLING -- TEXT STYLING   */
 
 /* some general styling classes */ 
 .text-right {

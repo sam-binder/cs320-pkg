@@ -11,6 +11,10 @@
     justify-content: center;
 }
 
+.error~.login {
+    margin-top: 60px;
+}
+
 .login-row {
     margin-bottom: 30px;
 }
