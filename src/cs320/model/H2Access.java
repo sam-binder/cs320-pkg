@@ -1,3 +1,4 @@
+package cs320.model;
 import java.sql.*;
 
 /**
