@@ -7,13 +7,20 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
+
 import java.net.HttpURLConnection;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Collections;
+
 
 /**
  * RegExHttpHandler is the HttpHandler used to process requests
@@ -179,6 +186,8 @@ public class RegExHttpHandler implements HttpHandler {
             if(requestedPath.endsWith("/")) {
                 // add in 'index.html' to the end
                 requestedPath = requestedPath + "index.html";
+            } else if(requestedPath.lastIndexOf(".") == -1) {
+                requestedPath = requestedPath + "/index.html";
             }
 
             // grabs the parameters
@@ -196,7 +205,7 @@ public class RegExHttpHandler implements HttpHandler {
                         Collections.singletonList("text/html; charset=UTF-8")
                     );
 
-                    // checks for home index request OR if no session
+                    // determines which page to send back
                     switch (requestedPath) {
                         case "/index.html":
                             // check for posted login information
@@ -280,9 +289,9 @@ public class RegExHttpHandler implements HttpHandler {
                                 // gets the response body (with or without error dialogue depending on if
                                 // there should be one)
                                 responseBody = new RegExIndex(
-                                        (requestParameters.containsKey("login-failed")) ?
-                                            "Your username or password was incorrect." :
-                                            RegExIndex.NO_ERROR
+                                            (requestParameters.containsKey("login-failed")) ?
+                                                "Your username or password was incorrect." :
+                                                RegExIndex.NO_ERROR
                                         ).getPageContent();
                             }
                             break;
@@ -338,7 +347,7 @@ public class RegExHttpHandler implements HttpHandler {
                     // gets our response body from our contents
                     responseBody = getFileContents(requestedPath);
                 }
-                // FileNotFoundException thrown when a file cannot be located by the getFileContents method
+            // FileNotFoundException thrown when a file cannot be located by the getFileContents method
             } catch(FileNotFoundException fnfe) {
                 // set our response code to 404 NOT FOUND
                 responseCode = HttpURLConnection.HTTP_NOT_FOUND;
@@ -380,7 +389,6 @@ public class RegExHttpHandler implements HttpHandler {
     private static byte[] getFileContents(String pathToFile) throws FileNotFoundException, IOException {
         // if the file isn't found we have to respond with a 404
         if(!new File(DOCUMENT_ROOT + pathToFile).exists()) {
-            System.out.println("uh oh");
             throw new FileNotFoundException();
         }
 
