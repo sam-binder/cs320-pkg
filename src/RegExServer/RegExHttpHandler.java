@@ -243,6 +243,29 @@ public class RegExHttpHandler implements HttpHandler {
                             // gets our home page content for our user
                             responseBody = RegExHome.getPageContent(userRegExSession);
                             break;
+                        case "/logout/index.html":
+                            // deletes cookie from browser
+                            attachNewHeader(
+                                exchange,
+                                "Set-Cookie",
+                                Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+                            );
+
+                            // trash the cookie from the map (remove it)
+                            this.sessions.remove(sessionId);
+
+                            // redirect user to home page
+                            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                            // attaches a location header for the browser to go to root (login)
+                            redirectUser(
+                                exchange,
+                                DOMAIN_ROOT + "/"
+                            );
+
+                            // empty response body
+                            responseBody = new byte[]{};
+                            break;
                         default:
                             // attempt to bring up static version of the file
                             responseBody = getFileContents(requestedPath);
