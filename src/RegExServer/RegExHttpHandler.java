@@ -57,7 +57,7 @@ public class RegExHttpHandler implements HttpHandler {
 
                     // if our cookie ID is our session ID string
                     if(cookieSplit[0].equalsIgnoreCase("REGEX_SESSION")) {
-                        RegExLogger.log("\tcookie found for new connection - " + cookieSplit[1], 1);
+                        RegExLogger.log("cookie found for new connection - " + cookieSplit[1], 1);
                         sessionId = cookieSplit[1];
                     }
                 }
@@ -115,21 +115,20 @@ public class RegExHttpHandler implements HttpHandler {
         RegExSession userRegExSession = getSessionFromId(sessionId);
 
         // if we have a session and it is expired
-        if(userRegExSession != null && !userRegExSession.isStillValidSession()) {
+        if((userRegExSession != null && !userRegExSession.isStillValidSession()) ||
+           (sessionId != null && userRegExSession == null)){
             // logs that the session is expired and that it will be deleted
-            RegExLogger.warn("\tsession is expired - responding with deletion request", RegExLogger.NO_LEVEL);
+            RegExLogger.warn("session is expired - responding with deletion request", 2);
 
             // puts in place our cookie deletion to remove it from the browser
-            exchange.getResponseHeaders().put(
+            attachNewHeader(
+                    exchange,
             "Set-Cookie",
                 Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
             );
 
             // trash the cookie from the map (remove it)
             this.sessions.remove(sessionId);
-
-            // removes reference to userRegExSession
-            userRegExSession = null;
         }
 
         // gets the requested path (in lowercase form)
@@ -224,7 +223,7 @@ public class RegExHttpHandler implements HttpHandler {
                     Collections.singletonList("image/x-icon")
                 );
                 // sets our response body to the contents
-                responseBody = getFileContents(requestedPath);
+                responseBody = getFileContents("/assets/images/favicon.ico");
 
             // SVG FILE ======================================================
             } else if(requestedPath.endsWith(".svg")) {
@@ -415,5 +414,9 @@ public class RegExHttpHandler implements HttpHandler {
     private static void attachNewHeader(HttpExchange exchange, String name, List<String> body) {
         // attaches the new response header
         exchange.getResponseHeaders().put(name, body);
+    }
+
+    private static void redirectUser(HttpExchange exchange, String pathToRedirect) {
+
     }
 }
