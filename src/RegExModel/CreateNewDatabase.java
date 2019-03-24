@@ -2,6 +2,7 @@ package RegExModel;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.DoubleBuffer;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -39,12 +40,6 @@ public class CreateNewDatabase {
                 if(!split[0].equals("employeeID")) {
                     query = String.format("INSERT INTO package_employee VALUES(%s);", split[0]);
                     conn.createStatement().execute(query);
-//                    try{conn.createStatement().execute("CREATE USER " + split[1] + " PASSWORD 'password';");}
-//                    catch (SQLException e){};
-//                    // Package users have all abilities on transaction table (maybe change?)
-//                    conn.createStatement().execute("GRANT ALL ON TRANSACTION TO " + split[1]);
-//                    conn.createStatement().execute("GRANT ALL ON PACKAGE TO " + split[1]);
-//                    conn.createStatement().execute("GRANT ALL ON PACKAGE_EMPLOYEE TO " + split[1]);
                 }
             }
             br.close();
@@ -85,11 +80,6 @@ public class CreateNewDatabase {
                 if(!split[0].equals("employeeID")) {
                     query = String.format("INSERT INTO accounting_employee VALUES(%s);", split[0]);
                     conn.createStatement().execute(query);
-//                    try{conn.createStatement().execute("CREATE USER " + split[1] + " PASSWORD 'password';");}
-//                    catch(SQLException e){}
-//                    // This is probably too many permissions
-//                    for(String table: Arrays.asList("CUSTOMER", "PACKAGE", "BILLING", "TRANSACTION"))
-//                        conn.createStatement().execute("GRANT ALL ON " + table+ " TO " + split[1]);
                 }
             }
             br.close();
@@ -194,7 +184,6 @@ public class CreateNewDatabase {
         }
     }
 
-    // creates users
     public void users() throws  SQLException{
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
@@ -233,6 +222,247 @@ public class CreateNewDatabase {
             }
             br.close();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void address() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS address("
+                + "ID INT PRIMARY KEY auto_increment,"
+                + "COMPANY VARCHAR(255),"
+                + "ATTN VARCHAR(255),"
+                + "STREET_LINE_1 VARCHAR(255),"
+                + "STREET_LINE_2 VARCHAR(255),"
+                + "ZIP_FK INT,"
+                + "ACCOUNT_NUMBER_FK INT,"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/address.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("ID")) {
+                    query = String.format("INSERT INTO address VALUES(%d, '%s','%s', '%s', '%s', %d, %d);",
+                            Integer.parseInt(split[0].replace("\"", "")),
+                            split[1].replace("\"", ""), split[2].replace("\"", ""), split[3].replace("\"", ""), split[4].replace("\"", ""),
+                            Integer.parseInt(split[5].replace("\"", "")),
+                            Integer.parseInt(split[6].replace("\"", "")));
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void charges() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS charge("
+                + "ID INT PRIMARY KEY auto_increment,"
+                + "PRICE DOUBLE,"
+                + "ACCOUNT_NUMBER_FK INT,"
+                + "PACKAGE_SERIAL_FK VARCHAR(255),"
+                + "SERVICE_ID INT"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/charges.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("ID")) {
+                    query = String.format("INSERT INTO charge VALUES(%d, %f, %d, '%s', %d);",
+                            Integer.parseInt(split[0].replace("\"", "")),
+                            Double.parseDouble(split[1].replace("\"", "")),
+                            Integer.parseInt(split[2].replace("\"", "")),
+                            split[3].replace("\"", ""),
+                            Integer.parseInt(split[4].replace("\"", "")));
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void location() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS location("
+                + "ID CHAR(12) PRIMARY KEY,"
+                + "ADDRESS_ID INT,"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/location.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("ID")) {
+                    if (split.length > 1) {
+                        int id = Integer.parseInt(split[1].replace("\"", ""));
+                        query = String.format("INSERT INTO location VALUES('%s', %d);", split[0], id);
+                    } else
+                        query = String.format("INSERT INTO location VALUES('%s', null);", split[0]);
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void priority() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS priority("
+                + "ID INT PRIMARY KEY,"
+                + "AIR_GROUND INT,"
+                + "RUSH INT,"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/priority.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("ID")) {
+                    query = String.format("INSERT INTO priority VALUES(%d, %d, %d);",
+                            Integer.parseInt(split[0].replace("\"", "")),
+                            Integer.parseInt(split[1].replace("\"", "")),
+                            Integer.parseInt(split[2].replace("\"", "")));
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void rates() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS rate("
+                + "NEGOTIATED_RATE_ID INT PRIMARY KEY,"
+                + "GROUND_RATE DOUBLE,"
+                + "AIR_RATE DOUBLE,"
+                + "RUSH_RATE DOUBLE,"
+                + "DIM_RATING_BREAK INT,"
+                + "EMPLOYEE_ID INT,"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/rates.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("negotiated_rate_ID")) {
+                    query = String.format("INSERT INTO rate VALUES(%d, %f, %f, %f, %d, %d);",
+                            Integer.parseInt(split[0].replace("\"", "")),
+                            Double.parseDouble(split[1].replace("\"", "")),
+                            Double.parseDouble(split[2].replace("\"", "")),
+                            Double.parseDouble(split[3].replace("\"", "")),
+                            Integer.parseInt(split[4].replace("\"", "")),
+                            Integer.parseInt(split[5].replace("\"", "")));
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void service() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS service("
+                + "ID INT PRIMARY KEY,"
+                + "PRIORITY_FK INT,"
+                + "HAZARDOUS INT,"
+                + "SIGNATURE_REQ INT,"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/service.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("ID")) {
+                    query = String.format("INSERT INTO service VALUES(%d, %d, %d, %d);",
+                            Integer.parseInt(split[0].replace("\"", "")),
+                            Integer.parseInt(split[1].replace("\"", "")),
+                            Integer.parseInt(split[2].replace("\"", "")),
+                            Integer.parseInt(split[3].replace("\"", "")));
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void zipCodes() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE TABLE IF NOT EXISTS zip_code("
+                + "ID INT PRIMARY KEY,"
+                + "ZIP_CODE CHAR(5),"
+                + "LATITUDE double,"
+                + "LONGITUDE double,"
+                + "CITY VARCHAR(30),"
+                + "STATE CHAR(2),"
+                + ");" ;
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/zipcodes.csv"));
+            String line;
+            while((line = br.readLine()) != null){
+                String[] split = line.split(",");
+                if(!split[0].equals("ID")) {
+                    query = String.format("INSERT INTO zip_code VALUES(%d, '%s', %f, %f, '%s', '%s');",
+                            Integer.parseInt(split[0].replace("\"", "")),
+                            split[1].replace("\"", ""),
+                            Double.parseDouble(split[2].replace("\"", "")),
+                            Double.parseDouble(split[3].replace("\"", "")),
+                            split[4].replace("\"", ""),
+                            split[5].replace("\"", ""));
+                    conn.createStatement().execute(query);
+                }
+            }
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void initDatabase(){
+        H2Access h2 = new H2Access();
+        try {
+            this.transaction();
+            this.packageInit();
+            this.customers();
+            this.billing();
+            this.accountingEmployees();
+            this.packageEmployees();
+            this.address();
+            this.charges();
+            this.location();
+            this.priority();
+            this.rates();
+            this.service();
+            this.zipCodes();
+            this.users();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }

@@ -11,7 +11,7 @@ import java.util.Arrays;
  *
  */
 public class H2Access {
-	private String dbLocation = "./h2demo/h2demo";
+	private String dbLocation = "./src";
 
 	public String getDbLocation() {
 		return dbLocation;
@@ -88,17 +88,10 @@ public class H2Access {
 	 * @param args: not used but you can use them
 	 */
 	public static void main(String[] args) {
-		CreateNewDatabase cDb = new CreateNewDatabase();
 		H2Access h2 = new H2Access();
-//		try{
-//			cDb.transaction();
-//			cDb.packageInit();
-//			cDb.customers();
-//			cDb.billing();
-//			cDb.accountingEmployees();
-//			cDb.packageEmployees();
-//			cDb.users();
-//		} catch (SQLException e){e.printStackTrace();}
+		boolean firstTime = false;
+		if(firstTime)
+			new CreateNewDatabase().initDatabase();
 
 		System.out.println("\nSample checking a user's type.");
 		System.out.println(h2.getUserType("AAAA"));
