@@ -2,8 +2,6 @@ package RegExModel;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.DoubleBuffer;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -12,7 +10,22 @@ import java.util.Arrays;
 /**
  * Created by Walter Schaertl on 3/23/2019.
  */
+
+/**
+ * This class is used to spin up a new clean database using the correlated
+ * provided CSV files. Each table can be generated individually if it gets
+ * corrupted or dropped and needs to be readded. NOTE: this should not
+ * be run on existing tables, it will more than likely fair with primary
+ * key conflicts.
+ * @author Walter Schaertl
+ * @date 3/24/19
+ */
 public class CreateNewDatabase {
+
+    /**
+     * Public constructor to set up a the first database connection.
+     *  Uses the username password pair of "me", "password".
+     */
     public CreateNewDatabase(){
         H2Access h2 = new H2Access();
         try {
@@ -23,10 +36,13 @@ public class CreateNewDatabase {
         }
     }
 
-    // Happens only once to populate the database from the csvs
+    /**
+     * Sets up the package_employee table from the package_employees.csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void packageEmployees() throws SQLException {
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS package_employee("
                 + "ID INT PRIMARY KEY,"
                 + ");" ;
@@ -46,12 +62,19 @@ public class CreateNewDatabase {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        conn.close();
     }
 
+    /**
+     * Sets up the transaction table, empty by default as nothing has happened yet
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void transaction() throws SQLException {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS transaction("
+                // Autoincrement for easy of adding future transactions
                 + "ID INT PRIMARY KEY auto_increment,"
                 + "DATE DATE,"
                 + "TIME TIME,"
@@ -64,6 +87,11 @@ public class CreateNewDatabase {
         stmt.execute(query);
     }
 
+    /**
+     * Sets up the accounting_employee table from the accounting_employees csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void accountingEmployees() throws SQLException {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
@@ -88,6 +116,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the package table from the package csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void packageInit() throws SQLException{
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
@@ -100,7 +133,7 @@ public class CreateNewDatabase {
                 + "DEPTH INT,"
                 + "WEIGHT INT,"
                 + "SIGNED_FOR_BY VARCHAR(255),"
-                + "ORIGIN_FK CHAR(12)"
+                + "ORIGIN_FK CHAR(12),"
                 + "DESTINATION_FK CHAR(12)"
                 + ");" ;
         Statement stmt = conn.createStatement();
@@ -111,8 +144,8 @@ public class CreateNewDatabase {
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("account_number_fk")) {
-                    query = String.format("INSERT INTO package VALUES(%s,%s,'%s',%s,%s,%s,%s,'%s');",
-                            split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7]);
+                    query = String.format("INSERT INTO package VALUES(%s,%s,'%s',%s,%s,%s,%s,'%s','%s','%s');",
+                            split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7], "null", "null");
                     conn.createStatement().execute(query);
                 }
             }
@@ -122,10 +155,16 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the customer table from the customer csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void customers() throws SQLException {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS customer("
+                // Autoincrement for easy of adding future customers
                 + "ACCOUNT_NUMBER INT PRIMARY KEY auto_increment,"
                 + "BILLING_FK INT,"
                 + "NEGOTIATED_RATE_ID_FK INT,"
@@ -145,7 +184,6 @@ public class CreateNewDatabase {
                     query = String.format("INSERT INTO customer VALUES(%s,%s,%s,%s,'%s','%s','%s');",
                             split[0], split[1], split[2], split[3], split[4], split[5], split[6]);
                     conn.createStatement().execute(query);
-
                 }
             }
             br.close();
@@ -154,10 +192,16 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the billing table from the billing csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void billing() throws SQLException {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS billing("
+                // Autoincrement for easy of adding future billing
                 + "ID INT PRIMARY KEY auto_increment,"
                 + "BALANCE_TO_DATE DOUBLE,"
                 + "PAY_MODEL VARCHAR(255),"
@@ -186,6 +230,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the user table from the user csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void users() throws  SQLException{
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
@@ -228,9 +277,15 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the address table from the address csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void address() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS address("
+                // Autoincrement for easy of adding future addresses
                 + "ID INT PRIMARY KEY auto_increment,"
                 + "COMPANY VARCHAR(255),"
                 + "ATTN VARCHAR(255),"
@@ -261,14 +316,20 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the charges table from the charges csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void charges() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS charge("
+                // Autoincrement for easy of adding future charges
                 + "ID INT PRIMARY KEY auto_increment,"
                 + "PRICE DOUBLE,"
                 + "ACCOUNT_NUMBER_FK INT,"
                 + "PACKAGE_SERIAL_FK VARCHAR(255),"
-                + "SERVICE_ID INT"
+                + "SERVICE_ID INT,"
                 + "PAID INT"
                 + ");" ;
         Statement stmt = conn.createStatement();
@@ -279,12 +340,12 @@ public class CreateNewDatabase {
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("ID")) {
-                    query = String.format("INSERT INTO charge VALUES(%d, %f, %d, '%s', %d);",
+                    query = String.format("INSERT INTO charge VALUES(%d, %f, %d, '%s', %d, %d);",
                             Integer.parseInt(split[0].replace("\"", "")),
                             Double.parseDouble(split[1].replace("\"", "")),
                             Integer.parseInt(split[2].replace("\"", "")),
                             split[3].replace("\"", ""),
-                            Integer.parseInt(split[4].replace("\"", "")));
+                            Integer.parseInt(split[4].replace("\"", "")), 0);
                     conn.createStatement().execute(query);
                 }
             }
@@ -294,6 +355,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the location table from the location csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void location() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS location("
@@ -322,6 +388,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the priority table from the priority csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void priority() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS priority("
@@ -350,6 +421,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the rate table from the rates csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void rates() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS rate("
@@ -384,6 +460,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the service table from the service csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void service() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS service("
@@ -414,6 +495,11 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Sets up the zip_code table from the zipcodes csv
+     * @throws SQLException if any number of  things go wrong, from
+     * failure to establish a connection to failure to execute a query.
+     */
     public void zipCodes() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS zip_code("
@@ -448,6 +534,9 @@ public class CreateNewDatabase {
         }
     }
 
+    /**
+     * Initializes all the tables.
+     */
     public void initDatabase(){
         H2Access h2 = new H2Access();
         try {

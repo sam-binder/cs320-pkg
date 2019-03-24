@@ -3,31 +3,32 @@ import java.sql.*;
 import java.util.Arrays;
 
 /**
- * This is a sample main program. 
- * You will create something similar
- * to run your database.
+ * Contains a main method to set up a new database and
+ * view example functionality.
  * 
- * @author wps
+ * @author Walter Schaertl, template provided
  *
  */
 public class H2Access {
+    // Deafult database location
 	private String dbLocation = "./src";
 
+    // Database getter
 	public String getDbLocation() {
 		return dbLocation;
 	}
 
+	// Database seter
 	public void setDbLocation(String dbLocation) {
 		this.dbLocation = dbLocation;
 	}
 
 	/**
-	 * Creates and returns a database connection with the given params. Returns None
-	 * if the connection fails, relies on any calling function to handle. After the
+	 * Creates and returns a database connection with the given params. After the
 	 * connection has been used, should be closed with closeConnection()
-	 * @param user: user name for the owner of the database
-	 * @param password: password of the database owner
-	 * @throws SQLException
+	 * @param user: user name for the user logging in
+	 * @param password: password of the user logging in
+	 * @throws SQLException if the connection fails
 	 */
 	public Connection createConnection(String user, String password) throws SQLException{
 		try {
@@ -44,6 +45,10 @@ public class H2Access {
 		return null;
 	}
 
+    /**
+     * Closes a connection
+     * @param conn a Connection object to close.
+     */
 	public void closeConnection(Connection conn){
 		try {
 			conn.close();
@@ -52,6 +57,12 @@ public class H2Access {
 		}
 	}
 
+    /**
+     * Executes a query and returns data it requested.
+     * @param conn Connection: a valid connection to the database
+     * @param query String: a query
+     * @return ResultSet: a ResultSet of data returned
+     */
 	public ResultSet createAndExecuteQuery(Connection conn, String query){
 		try {
 			Statement stmt = conn.createStatement();
@@ -62,6 +73,11 @@ public class H2Access {
 		return null;
 	}
 
+    /**
+     * Executes a query that expects no data to be returned.
+     * @param conn Connection: a valid connection to the database
+     * @param query String: a query
+     */
 	public void createAndExecute(Connection conn, String query){
 		try {
 			Statement stmt = conn.createStatement();
@@ -71,6 +87,11 @@ public class H2Access {
 		}
 	}
 
+    /**
+     * When given a user's username, returns the type of user it is.
+     * @param username String: a user's username
+     * @return String: The name of the table that the user is in (customer, accounting_employee, package_employee).
+     */
 	public String getUserType(String username){
 		try {
 			Connection conn = this.createConnection("me", "password");
@@ -89,10 +110,13 @@ public class H2Access {
 	 */
 	public static void main(String[] args) {
 		H2Access h2 = new H2Access();
+
+        //NOTE: Set to true if AND ONLY IF this is the first time running the code.
 		boolean firstTime = false;
 		if(firstTime)
 			new CreateNewDatabase().initDatabase();
 
+        // Example usage of ease functions
 		System.out.println("\nSample checking a user's type.");
 		System.out.println(h2.getUserType("AAAA"));
 
@@ -142,15 +166,17 @@ public class H2Access {
 			System.out.println("\nSample Accounting Employee viewing a package information.");
 			results = employee2.viewPackageData(131, "B9IWEA");
 			while(results.next()) {
-				System.out.printf("Package Date %d: %d %s %f %f %f %f %s \n",
+				System.out.printf("Package Date %d: %d %s %d %d %d %d %s %s %s\n",
 						results.getInt(1),
 						results.getInt(2),
 						results.getString(3),
-						results.getDouble(4),
-						results.getDouble(5),
-						results.getDouble(6),
-						results.getDouble(7),
-						results.getString(8));
+						results.getInt(4),
+						results.getInt(5),
+						results.getInt(6),
+						results.getInt(7),
+						results.getString(8),
+                        results.getString(9),
+                        results.getString(10));
 			}
 		} catch (SQLException e){
 			e.printStackTrace();
