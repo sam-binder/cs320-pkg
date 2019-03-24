@@ -14,7 +14,7 @@ import java.util.Date;
  */
 public class RegExSession {
     /**
-     *  The length that each session is valid for intially is
+     *  The length that each session is valid for initially is
      *  24 hours.
      */
     private static final int SESSION_LENGTH_HOURS = 24;
@@ -87,25 +87,39 @@ public class RegExSession {
     }
 
     /**
-     * Adds time to the expiration of a session by hours mand hours.
-     *
-     * @param hours  The number of hours to extend the life of this session.
+     * Adds two hours to the expiration of the session
      */
-    public synchronized void addTimeToExpiration(int hours) {
+    public synchronized void extend() {
         // creates a new calendar object based on current expiration
         Calendar newSessionExpire = Calendar.getInstance();
         newSessionExpire.setTime(this.expiration);
         // adds hours many hours to the current expiration
-        newSessionExpire.add(Calendar.HOUR_OF_DAY, hours);
+        newSessionExpire.add(Calendar.HOUR_OF_DAY, 2);
 
         // sets in place our new expiration
         this.expiration = newSessionExpire.getTime();
     }
 
+    /**
+     * Determines if the session is within an hour of expiration.
+     *
+     * @return  True if the session is within an hour of expiration; else false.
+     */
+    public synchronized boolean withinHourOfExpiration() {
+        // creates a new calendar with date representation of three
+        // hours from now
+        Calendar oneHourFromNow = Calendar.getInstance();
+        oneHourFromNow.setTime(new Date());
+        oneHourFromNow.add(Calendar.HOUR_OF_DAY, 1);
+
+        // returns true if the expiration is BEFORE three hours from now
+        return this.expiration.before(oneHourFromNow.getTime());
+    }
+
     public String replaceVarPlaceholders(String pageContent) {
         return pageContent.replace("@{fn}", this.firstName)
                           .replace("@{ln}", this.lastName)
-                          .replace("@{user_name}", this.userName)
-                          .replace("@{user_id}", "" + this.userId);
+                          .replace("@{user-name}", this.userName)
+                          .replace("@{user-id}", "" + this.userId);
     }
 }

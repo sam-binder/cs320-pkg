@@ -7,13 +7,20 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
+
 import java.net.HttpURLConnection;
+
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Collections;
+
 
 /**
  * RegExHttpHandler is the HttpHandler used to process requests
@@ -137,7 +144,7 @@ public class RegExHttpHandler implements HttpHandler {
         // if we have a session and it is expired OR sessionId has a value but no
         // cookie was returned (most likely due to server restart, etc.)
         if((userRegExSession != null && !userRegExSession.isStillValidSession()) ||
-           (sessionId != null && userRegExSession == null)) {
+           (userRegExSession == null && sessionId != null)) {
             // logs that the session is expired and that it will be deleted
             RegExLogger.warn("session is expired - responding with deletion request", 2);
 
@@ -163,6 +170,12 @@ public class RegExHttpHandler implements HttpHandler {
             // empty response body
             responseBody = new byte[]{};
         } else {
+            // if the user session isn't null and they are within the hour of expiration
+            if(userRegExSession != null && userRegExSession.withinHourOfExpiration()) {
+                // add time to the session
+                userRegExSession.extend();
+            }
+
             // gets the requested path (in lowercase form)
             String requestedPath = exchange.getRequestURI().getPath().toLowerCase();
 
@@ -173,34 +186,59 @@ public class RegExHttpHandler implements HttpHandler {
             if(requestedPath.endsWith("/")) {
                 // add in 'index.html' to the end
                 requestedPath = requestedPath + "index.html";
+            } else if(requestedPath.lastIndexOf(".") == -1) {
+                requestedPath = requestedPath + "/index.html";
             }
 
             // grabs the parameters
             @SuppressWarnings("unchecked")
             Map<String, Object> requestParameters = (Map<String, Object>)exchange.getAttribute("parameters");
 
-            // the next thing we need to do is figure out our path
-            // we will only have certain pages we know about to build
-            // simply check for the known ones here (they only go single
-            // folder deep) anything else will be 404
+            // next is to figure out what to send back in response
             try {
                 // if we're sending an HTML file we need to do some processing
                 if(requestedPath.endsWith("html")) {
-                    // the only thing sent here is html
+                    // the only thing sent from here down is html
                     attachNewHeader(
                         exchange,
                         "Content-Type",
                         Collections.singletonList("text/html; charset=UTF-8")
                     );
 
-                    // checks for home index request OR if no session
+                    // determines which page to send back
                     switch (requestedPath) {
                         case "/index.html":
                             // check for posted login information
                             if (requestParameters.containsKey("login-submit")) {
+                                // extract the username and password
+                                String username = (String)requestParameters.get("username");
+                                String password = (String)requestParameters.get("password");
+
+                                /*
+                                String userType = H2Access.getUserType(username);
+
+                                if(userType != null) {
+                                    // do the things for user
+
+                                } else {
+                                    // sets the response code to moved temporarily
+                                    responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                                    // redirect the user to login failed index
+                                    redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
+
+                                    // empty response body
+                                    responseBody = new byte[]{};
+
+                                    // break the switch so that no more processing occurs
+                                    break;
+                                }
+                                 */
+
                                 // logs the user in (for now we just consider it valid and create
                                 // the session)
-                                // TODO: implement login information checking
+
+                                // dummy checking for right now
                                 if (requestParameters.get("username").equals("user") &&
                                     requestParameters.get("password").equals("pass")) {
                                     // creates our new session
@@ -221,6 +259,19 @@ public class RegExHttpHandler implements HttpHandler {
                                         "Set-Cookie",
                                         Collections.singletonList("REGEX_SESSION=1")
                                     );
+                                // else user sign in was bad -- redirect them back to home with login error page
+                                } else {
+                                    // sets the response code to moved temporarily
+                                    responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                                    // redirect the user to login failed index
+                                    redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
+
+                                    // empty response body
+                                    responseBody = new byte[]{};
+
+                                    // break the switch so that no more processing occurs
+                                    break;
                                 }
                             }
 
@@ -230,18 +281,23 @@ public class RegExHttpHandler implements HttpHandler {
                                 responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
                                 // redirect user to the home page
-                                redirectUser(exchange,DOMAIN_ROOT + "/home/");
+                                redirectUser(exchange, DOMAIN_ROOT + "/home/");
 
                                 // gets an empty response body
                                 responseBody = new byte[]{};
                             } else {
-                                // if they're not logged in continue on with loading login screen
-                                responseBody = getFileContents(requestedPath);
+                                // gets the response body (with or without error dialogue depending on if
+                                // there should be one)
+                                responseBody = new RegExIndex(
+                                            (requestParameters.containsKey("login-failed")) ?
+                                                "Your username or password was incorrect." :
+                                                RegExIndex.NO_ERROR
+                                        ).getPageContent();
                             }
                             break;
                         case "/home/index.html":
                             // gets our home page content for our user
-                            responseBody = RegExHome.getPageContent(userRegExSession);
+                            responseBody = new RegExHome(userRegExSession).getPageContent();
                             break;
                         case "/logout/index.html":
                             // deletes cookie from browser
@@ -276,6 +332,8 @@ public class RegExHttpHandler implements HttpHandler {
                     if(requestedPath.endsWith(".ico")) {
                         requestedPath = "/assets/images/favicon.ico";
                     }
+
+                    // attach the correct header to specify content type
                     attachNewHeader(
                         exchange,
                         "Content-Type",
@@ -289,7 +347,7 @@ public class RegExHttpHandler implements HttpHandler {
                     // gets our response body from our contents
                     responseBody = getFileContents(requestedPath);
                 }
-                // FileNotFoundException thrown when a file cannot be located by the getFileContents method
+            // FileNotFoundException thrown when a file cannot be located by the getFileContents method
             } catch(FileNotFoundException fnfe) {
                 // set our response code to 404 NOT FOUND
                 responseCode = HttpURLConnection.HTTP_NOT_FOUND;
@@ -319,8 +377,6 @@ public class RegExHttpHandler implements HttpHandler {
         response.close();
     }
 
-    // PAGE RETURN METHODS ==============================================
-
     /**
      * Gets the file contents based on the pathToFile (throwing a FileNotFoundException
      * if the file cannot be found).
@@ -333,7 +389,6 @@ public class RegExHttpHandler implements HttpHandler {
     private static byte[] getFileContents(String pathToFile) throws FileNotFoundException, IOException {
         // if the file isn't found we have to respond with a 404
         if(!new File(DOCUMENT_ROOT + pathToFile).exists()) {
-            System.out.println("uh oh");
             throw new FileNotFoundException();
         }
 
@@ -353,12 +408,21 @@ public class RegExHttpHandler implements HttpHandler {
     private static byte [] getErrorPage(int errorNum) throws IOException {
         // determines which page to send back
         switch (errorNum) {
-            case 404:
-                RegExLogger.warn("asset not found - sending 404", 1);
-                return getFileContents("/404.shtml");
+            case 400:
+                RegExLogger.warn("bad request received - sending 400", 1);
+                return getFileContents("/400.shtml");
+            case 401:
+                RegExLogger.warn("login required - sending 401", 1);
+                return getFileContents("/401.shtml");
             case 403:
                 RegExLogger.warn("no access - sending 403", 1);
                 return getFileContents("/403.shtml");
+            case 404:
+                RegExLogger.warn("asset not found - sending 404", 1);
+                return getFileContents("/404.shtml");
+            case 503:
+                RegExLogger.error("server panic - responding with 503", 1);
+                return getFileContents("/503.shtml");
             default:
                 RegExLogger.warn(" server issue hit - sending 500", 1);
                 // default to error 404
@@ -372,7 +436,10 @@ public class RegExHttpHandler implements HttpHandler {
      * @param exchange  The exchange to attach the headers to.
      */
     private static void attachDefaultHeaders(HttpExchange exchange) {
+        // gets the headers from the exchange
         Headers responseHeaders = exchange.getResponseHeaders();
+
+        // adds in our connection keep alive, keep alive time, and server ID
         responseHeaders.put(
             "Connection",
             Collections.singletonList("Keep-Alive")
@@ -399,7 +466,14 @@ public class RegExHttpHandler implements HttpHandler {
         exchange.getResponseHeaders().put(name, body);
     }
 
+    /**
+     * Attaches a redirect header to let the browser know that a user should be redirected.
+     *
+     * @param exchange  The exchange to apply the header to.
+     * @param pathToRedirect  The absolute location to redirect the user to.
+     */
     private static void redirectUser(HttpExchange exchange, String pathToRedirect) {
+        // this method is a dummy method to add a "Location" header.
         attachNewHeader(
             exchange,
         "Location",
