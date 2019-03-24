@@ -98,4 +98,11 @@ public class RegExSession {
         // sets in place our new expiration
         this.expiration = newSessionExpire.getTime();
     }
+
+    public String replaceVarPlaceholders(String pageContent) {
+        return pageContent.replace("@{fn}", this.firstName)
+                          .replace("@{ln}", this.lastName)
+                          .replace("@{user_name}", this.userName)
+                          .replace("@{user_id}", "" + this.userId);
+    }
 }

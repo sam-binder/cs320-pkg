@@ -19,11 +19,8 @@ public class RegExHome {
             StandardCharsets.UTF_8
         );
 
-        // first we need to put in our first name
-        pageContent = pageContent.replace(
-            "@{fn}",
-            userRegExSession.firstName
-        );
+        // replaces all var placeholders with session details
+        pageContent = userRegExSession.replaceVarPlaceholders(pageContent);
 
         // return our page content as bytes
         return pageContent.getBytes();
