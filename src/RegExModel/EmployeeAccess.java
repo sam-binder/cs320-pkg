@@ -20,19 +20,17 @@ public class EmployeeAccess extends Access implements AutoCloseable{
         this.connection = this.h2.createConnection(username, password);
     }
 
+    // Returns the employee id
     public int getId() {
+        String query = "SELECT account_number_fk FROM user where username='" + username + "'";
+        ResultSet r = h2.createAndExecuteQuery(connection, query);
         try {
-            String table = type.equals("packageEmployee") ? "package_employee" : "accounting_employee";
-            String query = String.format("SELECT * from " + table + " where username = '%s'", username);
-            ResultSet results = h2.createAndExecuteQuery(connection, query);
-            if (results.first())
-                return results.getInt(1);
-        }
-        catch (SQLException e){
-            e.printStackTrace();
-        }
+            if (r.next())
+                return r.getInt(1);
+        }catch (SQLException e) {}
         return -1;
     }
+
     @Override
     public void close(){
         h2.closeConnection(this.connection);
