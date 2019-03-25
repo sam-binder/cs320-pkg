@@ -52,8 +52,6 @@ public class RegExSession {
      */
     public RegExSession(String accountType, String userName, String password) {
         // sets our userId
-//        this.accountNumber = accountNumber;
-
         this.accountType = accountType;
 
         // sets userName and password

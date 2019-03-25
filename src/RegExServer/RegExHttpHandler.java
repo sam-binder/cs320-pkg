@@ -15,14 +15,12 @@ import java.io.IOException;
 
 import java.net.HttpURLConnection;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Collections;
+import java.util.*;
 
 
 /**
@@ -245,15 +243,17 @@ public class RegExHttpHandler implements HttpHandler {
                                         // creates a new session for the user
                                         userRegExSession = new RegExSession(userType, username, password);
 
+                                        String newSessionId = getNewSessionId();
+
                                         // adds our session to the map
-                                        this.sessions.put(username, userRegExSession);
+                                        this.sessions.put(newSessionId, userRegExSession);
 
                                         // adds a new cookie header to tell the browser to keep track
                                         // of our session
                                         attachNewHeader(
                                             exchange,
                                             "Set-Cookie",
-                                            Collections.singletonList("REGEX_SESSION=" + username)
+                                            Collections.singletonList("REGEX_SESSION=" + newSessionId)
                                         );
                                     } catch(SQLException sqle) {
                                         // logs that the login attempt failed
@@ -418,7 +418,7 @@ public class RegExHttpHandler implements HttpHandler {
      * @return  The contents of the error page specified.
      */
     private static byte [] getErrorPage(int errorNum) throws IOException {
-        // determines which page to send back
+        // determines which error page to send back
         switch (errorNum) {
             case 400:
                 RegExLogger.warn("bad request received - sending 400", 1);
@@ -491,5 +491,30 @@ public class RegExHttpHandler implements HttpHandler {
         "Location",
             Collections.singletonList(pathToRedirect)
         );
+    }
+
+    private String getNewSessionId() {
+        Random random = new Random();
+        String availableChars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder id;
+
+        // builds new id's until we land on one not in our map
+        do {
+            // creates a new StringBuilder object
+            id = new StringBuilder();
+
+            // appends 10 random characters
+            for(int i = 0; i < 10; ++i) {
+                // appends 10 random characters from the available chars
+                id.append(
+                    availableChars.charAt(
+                        random.nextInt(availableChars.length())
+                    )
+                );
+            }
+        } while (this.sessions.containsKey(id.toString()));
+
+        // lastly we return our ID
+        return id.toString();
     }
 }

@@ -183,7 +183,7 @@ a {
     background: white;
     margin: 0 auto;
     width: 75%;
-    padding: 40px 30px 60px;
+    padding: 50px 30px 60px;
 }
 
 .content.thin {
@@ -236,6 +236,99 @@ a {
     padding: 1.25rem;
 }
 
+.input-row {
+    margin-bottom: 30px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.label-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.regex-std-input {
+    /*display: block;*/
+    width: 30rem;
+    padding: 10px;
+    min-height: 25px;
+    border: none;
+    border-bottom: 3px solid #b9caea;
+    transition: .25s;
+    font-size: 1rem;
+    font-weight: 300;
+    border-radius: .25rem;
+}
+
+.regex-std-input:hover {
+    background-color: #f4f7ff;
+}
+
+.regex-std-input:focus {
+    background-color: #eff2f9;
+    border-bottom-color: #366ed6;
+}
+
+.regex-std-table {
+    width: 100%;
+    overflow-x: scroll;
+    text-align: center;
+    border-collapse: collapse;
+}
+
+.regex-std-table th {
+    padding: 8px;
+}
+
+.regex-std-table td {
+    padding: 15px;
+}
+
+.regex-std-table tbody tr:nth-of-type(2n+1){
+    background-color: #f4f7ff;
+}
+
+.regex-std-table tbody tr:hover {
+    background-color: #eff2f9;
+}
+
+@media screen and (max-width: 675px) {
+    .regex-std-input {
+        width: calc(100% - 20px);
+    }
+
+    .btn-primary {
+        width: 100%;
+        display: block;
+        margin-left: 0!important;
+        margin-top: 15px !important;
+    }
+}
+
+.btn-primary {
+    padding: 10px 15px;
+    border-radius: .25rem;
+    border: none;
+    background-color: #366ed6;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 100;
+    box-shadow: 0 5px 15px 0 rgba(0,0,0,0.15);
+    transition: .3s;
+    cursor: pointer;
+    vertical-align: middle;
+}
+.btn-primary:hover {
+    box-shadow: 0 5px 15px 0 rgba(0,0,0,0.3);
+    background-color: #4378db;
+}
+.btn-primary:active {
+    background-color: #578bec;
+}
+
 /*   END CONTENT STYLING -- TEXT STYLING   */
 
 /* some general styling classes */ 
@@ -257,12 +350,18 @@ a {
 .text-bold {
     font-weight: bolder;
 }
+.ml-1 {
+    margin-left: 0.5rem;
+}
+.ml-2 {
+    margin-left: 1rem;
+}
 .mt-0 {
-    margin-top: 0!important;
+    margin-top: 0;
 }
 .mt-3 {
-    margin-top: 3rem!important;
+    margin-top: 3rem;
 }
 .mb-0 {
-    margin-bottom: 0!important;
+    margin-bottom: 0;
 }

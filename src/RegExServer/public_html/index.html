@@ -18,37 +18,37 @@
         <div class="content thin">
             <div id="heading-wrapper-1">
                 <div class="content-header mt-0">
-                    <h1>RegEx Login</h1>
+                    <h1>Login</h1>
                 </div>
             </div>
             @{error-dialog}
             <div class="login">
                 <form id="login-form" method="post">
-                    <div class="login-row">
+                    <div class="input-row">
                         <label for="username">Username</label>
                         <input type="text"
                                id="username"
                                name="username"
-                               class="login-input"
+                               class="regex-std-input"
                                placeholder="Enter username here."
                                maxlength="60"
                                required />
                     </div>
-                    <div class="login-row">
+                    <div class="input-row">
                         <label for="password">Password</label>
                         <input type="password"
                                 id="password"
                                 name="password"
-                                class="login-input"
+                                class="regex-std-input"
                                 placeholder="Enter password here."
                                 maxlength="60"
                                 required />
                     </div>
-                    <div class="login-row">
+                    <div class="input-row">
                         <button type="submit"
                                 id="login-submit"
                                 name="login-submit"
-                                class="btn-submit">
+                                class="btn-primary">
                             Login
                         </button>
                     </div>

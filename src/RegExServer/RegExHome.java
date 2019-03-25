@@ -52,7 +52,17 @@ public class RegExHome extends RegExPage{
         // replaces all var placeholders with session details
         pageContent = userRegExSession.replaceVarPlaceholders(pageContent);
 
+        String userTypeSpecificContent = getUserTypeSpecificContent();
+
         // return our page content as bytes
         return pageContent.getBytes();
+    }
+
+    public String getUserTypeSpecificContent() {
+        // generates home content for customers
+        if(this.userRegExSession.accountType.equals("customer")) {
+            // generate customer
+        }
+        return "";
     }
 }
