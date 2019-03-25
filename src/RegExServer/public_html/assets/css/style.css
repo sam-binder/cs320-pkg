@@ -300,6 +300,10 @@ label {
         width: calc(100% - 20px);
     }
 
+    .table-responsive {
+        display: block;
+    }
+
     .btn-primary {
         width: 100%;
         display: block;
@@ -335,6 +339,9 @@ label {
 .text-right {
     text-align: right;
 }
+.text-left {
+    text-align: left;
+}
 .text-center{
     text-align: center;
 }
@@ -364,4 +371,17 @@ label {
 }
 .mb-0 {
     margin-bottom: 0;
+}
+.no-deco {
+    text-decoration: none;
+}
+.mw-50 {
+    max-width: 50%;
+}
+
+@media screen and (max-width: 675px) {
+    .mw-50 {
+        width: 100%;
+        max-width: 100%;
+    }
 }
