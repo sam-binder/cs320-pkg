@@ -485,6 +485,9 @@ public class RegExHttpHandler implements HttpHandler {
      * @param pathToRedirect  The absolute location to redirect the user to.
      */
     private static void redirectUser(HttpExchange exchange, String pathToRedirect) {
+        // logs that the user is being redirected
+        RegExLogger.warn("redirecting user to " + pathToRedirect, 2);
+
         // this method is a dummy method to add a "Location" header.
         attachNewHeader(
             exchange,
