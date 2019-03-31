@@ -15,7 +15,6 @@ import java.io.IOException;
 
 import java.net.HttpURLConnection;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -243,6 +242,7 @@ public class RegExHttpHandler implements HttpHandler {
                                         // creates a new session for the user
                                         userRegExSession = new RegExSession(userType, username, password);
 
+                                        // gets a new random session ID
                                         String newSessionId = getNewSessionId();
 
                                         // adds our session to the map
@@ -334,6 +334,7 @@ public class RegExHttpHandler implements HttpHandler {
                             // empty response body
                             responseBody = new byte[]{};
                             break;
+                        case "/track/index.html":
                         default:
                             // attempt to bring up static version of the file
                             responseBody = getFileContents(requestedPath);
