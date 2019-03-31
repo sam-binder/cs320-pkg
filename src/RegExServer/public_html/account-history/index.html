@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name = "viewport" content = "width=device-width, initial-scale=1, maximum-scale=1">
+        <link href="/assets/css/style.css" rel="stylesheet" />
+        <title>RegEx Intranet &bull; Account History</title>
+    </head>
+    <body>
+    <div class="header full">
+        <a href="../" class="navbar-brand">
+            <img src="/assets/images/regex_logo_icon.png" alt="RegEx Logo" title="View the homepage." />
+        </a>
+
+        <!-- a toggler for small screens -->
+        <button id="navbar-toggler" class="navbar-toggler" type="button">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <ul class="navbar-links-wrapper">
+            <li class="navbar-link">
+                <a href="../" title="View the homepage.">
+                    Home
+                </a>
+            </li>
+            <li class="navbar-link">
+                <a href="../account-history/" title="View your account history." class="active">
+                    Account History
+                </a>
+            </li>
+            <li class="navbar-link">
+                <a href="../logout/" title="Logout of RegEx Intranet.">
+                    Logout
+                </a>
+            </li>
+        </ul>
+
+    </div>
+
+    <div class="content">
+        <div id="heading-wrapper-1">
+            <div class="content-header mt-0">
+                <h1 class="header-smaller">Account History</h1>
+            </div>
+        </div>
+        <!--@{user-type-specific-content}-->
+        <div class="row mt-3">
+            <h2>Shipment History</h2>
+            <table class="regex-std-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th>Note</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>March 20, 2019 at 9:30AM EDT</td>
+                    <td>Santa Fe, NM</td>
+                    <td>Package delivered.</td>
+                </tr>
+                <tr>
+                    <td>March 19, 2019 at 8:30PM EDT</td>
+                    <td><strong>Santa Fe, NM</strong></td>
+                    <td>Arrival at local carrier facility.</td>
+                </tr>
+                <tr>
+                    <td>March 19, 2019 at 6:30AM EDT</td>
+                    <td><strong>Albuquerque, NM</strong></td>
+                    <td>Departure scan at transfer facility.</td>
+                </tr>
+                <tr>
+                    <td>March 18, 2019 at 8:30PM EDT</td>
+                    <td><strong>Colorado Springs, CO</strong></td>
+                    <td>Dropped off at carrier processing facility.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="/assets/js/collapsible-trigger.js"></script>
+    <script defer
+            src="https://use.fontawesome.com/releases/v5.8.1/js/all.js"
+            integrity="sha384-g5uSoOSBd7KkhAMlnQILrecXvzst9TdC09/VM+pjDTCM+1il8RHz5fKANTFFb+gQ"
+            crossorigin="anonymous"></script>
+    </body>
+</html>
