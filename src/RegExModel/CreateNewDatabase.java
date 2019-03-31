@@ -554,8 +554,43 @@ public class CreateNewDatabase {
             this.service();
             this.zipCodes();
             this.users();
+            this.buildFunctions();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Initialize all the functions
+     */
+    public void buildFunctions() throws SQLException{
+        // Tracking function
+        buildTrackingFunction();
+        // Accounting Employee Functions:
+        //      view customer report
+
+    }
+
+    /**
+     * builds the tracking function
+     * @throws SQLException
+     */
+    public void buildTrackingFunction() throws SQLException{
+        Connection conn = new H2Access().createConnection("me", "password");
+        String query = "CREATE FUNCTION get_tracking(account_number_fk int, package_serial_fk int)"
+                + "RETURNS table ("
+                + "ID int,"
+                + "date date,"
+                + "time time,"
+                + "location_ID_fk char(12))"
+                + "RETURN table"
+                + "(SELECT ID, date, time, location_ID_fk"
+                + "FROM Transaction"
+                + "WHERE Transaction.account_number_fk = get_tracking.account_number_fk"
+                + "AND Transaction.package_serial_fk = get_tracking.package_serial_fk)";
+        Statement stmt = conn.createStatement();
+        stmt.execute(query);
+    }
+
+
 }
