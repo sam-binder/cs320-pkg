@@ -17,6 +17,11 @@ public class RegExViewPackage extends RegExPage {
     private static String noPackageIDURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/no-package-id.part";
 
     /**
+     * The URI to the navbar links that will only be dropped in if the user is logged in.
+     */
+    private static String navbarLinksURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/navbar-links.part";
+
+    /**
      * If a packageID was specified, this will show the package details
      */
     private static String packageIDURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/specified-package-id.part";
@@ -27,12 +32,18 @@ public class RegExViewPackage extends RegExPage {
     private String packageID;
 
     /**
+     * Will be true if the user has a session, else false
+     */
+    private boolean isLoggedIn;
+
+    /**
      * Constructs a new RegExViewPackage page with the package tracking ID of packageID.
      *
      * @param packageID  The package ID being tracked.
      */
-    public RegExViewPackage(String packageID) {
+    public RegExViewPackage(String packageID, boolean isLoggedIn) {
         this.packageID = packageID;
+        this.isLoggedIn = isLoggedIn;
     }
 
     /**
@@ -66,6 +77,7 @@ public class RegExViewPackage extends RegExPage {
                 )
             );
         } else {
+            // we have a specified packageID, we need to run some things on that
             String specifiedIDPageContent = new String(
                 Files.readAllBytes(
                     Paths.get(packageIDURI)
@@ -73,17 +85,41 @@ public class RegExViewPackage extends RegExPage {
                 StandardCharsets.UTF_8
             );
 
+            // request from H2 the package details
+
             // generate the package details table
             pageContent = pageContent.replace(
                 "@{package-title}",
-                "View Package Details"
+                this.packageID
             ).replace(
                 "@{view-package-main-content}",
                 specifiedIDPageContent
             );
         }
 
+        // drops in the navbar links if the user is logged in
+        pageContent = pageContent.replace(
+            "@{logged-in-navbar-links}",
+            getNavbarLinks()
+        );
+
         // return our page content as bytes
         return pageContent.getBytes();
+    }
+
+
+    private String getNavbarLinks() throws IOException {
+        // if the user is logged in, return the navbar links (and toggler)
+        if(this.isLoggedIn) {
+            return new String(
+                Files.readAllBytes(
+                    Paths.get(navbarLinksURI)
+                ),
+                StandardCharsets.UTF_8
+            );
+        // else return an empty string
+        } else {
+            return "";
+        }
     }
 }

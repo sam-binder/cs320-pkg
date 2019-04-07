@@ -140,6 +140,8 @@ public class RegExHttpHandler implements HttpHandler {
         byte [] responseBody;
         // our response code (defaults to 200 OK)
         int responseCode = HttpURLConnection.HTTP_OK;
+        // will be set to true if a session cookie had been found, but was expired
+        boolean sessionExpired = false;
 
         // if we have a session and it is expired OR sessionId has a value but no
         // cookie was returned (most likely due to server restart, etc.)
@@ -158,121 +160,98 @@ public class RegExHttpHandler implements HttpHandler {
             // trash the cookie from the map (remove it)
             this.sessions.remove(sessionId);
 
-            // redirect user to home page
-            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+            // sets our session expired boolean to be true
+            sessionExpired = true;
+        }
+        // if the user session isn't null and they are within the hour of expiration
+        if(userRegExSession != null && userRegExSession.withinHourOfExpiration()) {
+            // add time to the session
+            userRegExSession.extend();
+        }
 
-            // attaches a location header for the browser to go to root (login)
-            redirectUser(
-                exchange,
-                DOMAIN_ROOT + "/"
-            );
+        // gets the requested path (in lowercase form)
+        String requestedPath = exchange.getRequestURI().getPath().toLowerCase();
 
-            // empty response body
-            responseBody = new byte[]{};
-        } else {
-            // if the user session isn't null and they are within the hour of expiration
-            if(userRegExSession != null && userRegExSession.withinHourOfExpiration()) {
-                // add time to the session
-                userRegExSession.extend();
-            }
+        // logs the path user is requesting
+        RegExLogger.log("user requesting page: " + requestedPath, 1);
 
-            // gets the requested path (in lowercase form)
-            String requestedPath = exchange.getRequestURI().getPath().toLowerCase();
+        // if the requested path ends with a /
+        if(requestedPath.endsWith("/")) {
+            // add in 'index.html' to the end
+            requestedPath = requestedPath + "index.html";
+        } else if(requestedPath.lastIndexOf(".") == -1) {
+            requestedPath = requestedPath + "/index.html";
+        }
 
-            // logs the path user is requesting
-            RegExLogger.log("user requesting page: " + requestedPath, 1);
+        // grabs the parameters
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestParameters = (Map<String, Object>)exchange.getAttribute("parameters");
 
-            // if the requested path ends with a /
-            if(requestedPath.endsWith("/")) {
-                // add in 'index.html' to the end
-                requestedPath = requestedPath + "index.html";
-            } else if(requestedPath.lastIndexOf(".") == -1) {
-                requestedPath = requestedPath + "/index.html";
-            }
+        // next is to figure out what to send back in response
+        try {
+            // if we're sending an HTML file we need to do some processing
+            if(requestedPath.endsWith("html")) {
+                // the only thing sent from here down is html
+                attachNewHeader(
+                    exchange,
+                    "Content-Type",
+                    Collections.singletonList("text/html; charset=UTF-8")
+                );
 
-            // grabs the parameters
-            @SuppressWarnings("unchecked")
-            Map<String, Object> requestParameters = (Map<String, Object>)exchange.getAttribute("parameters");
+                // determines which page to send back
+                switch (requestedPath) {
+                    case "/index.html":
+                        // check for posted login information
+                        if (requestParameters.containsKey("login-submit")) {
+                            // logs that a login attempt was read
+                            RegExLogger.log("login attempt read", 1);
+                            // extract the username and password
+                            String username = (String)requestParameters.get("username");
+                            String password = (String)requestParameters.get("password");
 
-            // next is to figure out what to send back in response
-            try {
-                // if we're sending an HTML file we need to do some processing
-                if(requestedPath.endsWith("html")) {
-                    // the only thing sent from here down is html
-                    attachNewHeader(
-                        exchange,
-                        "Content-Type",
-                        Collections.singletonList("text/html; charset=UTF-8")
-                    );
+                            // creates a new login access
+                            H2Access loginAccess = new H2Access();
+                            // gets the user type based off of username
+                            String userType = loginAccess.getUserType(username);
 
-                    // determines which page to send back
-                    switch (requestedPath) {
-                        case "/index.html":
-                            // check for posted login information
-                            if (requestParameters.containsKey("login-submit")) {
-                                // logs that a login attempt was read
-                                RegExLogger.log("login attempt read", 1);
-                                // extract the username and password
-                                String username = (String)requestParameters.get("username");
-                                String password = (String)requestParameters.get("password");
-
-                                // creates a new login access
-                                H2Access loginAccess = new H2Access();
-                                // gets the user type based off of username
-                                String userType = loginAccess.getUserType(username);
-
-                                // if the user actually exists in the database
-                                if(userType != null) {
-                                    // attempts to log the user in using username and password
-                                    try {
-                                        // if user is a customer, make them a CustomerAccess object
-                                        if(userType.equals("customer")) {
-                                            // creates a new CustomerAccess which attempts to login
-                                            // if this throws a SQLException either username or password
-                                            // was incorrect
-                                            new CustomerAccess(username, password);
-                                        } else {
-                                            // attempts to create an EmployeeAccess
-                                            new EmployeeAccess(username, password, userType);
-                                        }
-
-                                        RegExLogger.log("login successful", 1);
-
-                                        // getting here means the login succeeded
-                                        // creates a new session for the user
-                                        userRegExSession = new RegExSession(userType, username, password);
-
-                                        // gets a new random session ID
-                                        String newSessionId = getNewSessionId();
-
-                                        // adds our session to the map
-                                        this.sessions.put(newSessionId, userRegExSession);
-
-                                        // adds a new cookie header to tell the browser to keep track
-                                        // of our session
-                                        attachNewHeader(
-                                            exchange,
-                                            "Set-Cookie",
-                                            Collections.singletonList("REGEX_SESSION=" + newSessionId)
-                                        );
-                                    } catch(SQLException sqle) {
-                                        // logs that the login attempt failed
-                                        RegExLogger.warn("password check failed", 1);
-                                        // if we get here the username/password was incorrect
-                                        // sets the response code to moved temporarily
-                                        responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-
-                                        // redirect the user to login failed index
-                                        redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
-
-                                        // empty response body
-                                        responseBody = new byte[]{};
-
-                                        // break the switch so that no more processing occurs
-                                        break;
+                            // if the user actually exists in the database
+                            if(userType != null) {
+                                // attempts to log the user in using username and password
+                                try {
+                                    // if user is a customer, make them a CustomerAccess object
+                                    if(userType.equals("customer")) {
+                                        // creates a new CustomerAccess which attempts to login
+                                        // if this throws a SQLException either username or password
+                                        // was incorrect
+                                        new CustomerAccess(username, password);
+                                    } else {
+                                        // attempts to create an EmployeeAccess
+                                        new EmployeeAccess(username, password, userType);
                                     }
-                                } else {
-                                    RegExLogger.warn("username check failed", 1);
+
+                                    RegExLogger.log("login successful", 1);
+
+                                    // getting here means the login succeeded
+                                    // creates a new session for the user
+                                    userRegExSession = new RegExSession(userType, username, password);
+
+                                    // gets a new random session ID
+                                    String newSessionId = getNewSessionId();
+
+                                    // adds our session to the map
+                                    this.sessions.put(newSessionId, userRegExSession);
+
+                                    // adds a new cookie header to tell the browser to keep track
+                                    // of our session
+                                    attachNewHeader(
+                                        exchange,
+                                        "Set-Cookie",
+                                        Collections.singletonList("REGEX_SESSION=" + newSessionId)
+                                    );
+                                } catch(SQLException sqle) {
+                                    // logs that the login attempt failed
+                                    RegExLogger.warn("password check failed", 1);
+                                    // if we get here the username/password was incorrect
                                     // sets the response code to moved temporarily
                                     responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
@@ -285,48 +264,45 @@ public class RegExHttpHandler implements HttpHandler {
                                     // break the switch so that no more processing occurs
                                     break;
                                 }
-                            }
-
-                            // if the user has a session and it is still valid
-                            if (userRegExSession != null && userRegExSession.isStillValidSession()) {
-                                // redirect them to the home page
+                            } else {
+                                RegExLogger.warn("username check failed", 1);
+                                // sets the response code to moved temporarily
                                 responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
-                                // redirect user to the home page
-                                redirectUser(exchange, DOMAIN_ROOT + "/home/");
+                                // redirect the user to login failed index
+                                redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
 
-                                // gets an empty response body
+                                // empty response body
                                 responseBody = new byte[]{};
-                            } else {
-                                // generates the error content
-                                String errorContent = (requestParameters.containsKey("login-failed")) ?
-                                                        "Your username or password was incorrect." :
-                                                        RegExIndex.NO_ERROR;
-                                // gets the response body (with or without error dialogue depending on if
-                                // there should be one)
-                                responseBody = new RegExIndex(errorContent).getPageContent();
+
+                                // break the switch so that no more processing occurs
+                                break;
                             }
-                            break;
-                        case "/home/index.html":
-                            // gets our home page content for our user
-                            responseBody = new RegExHome(userRegExSession).getPageContent();
-                            break;
-                        case "/view-package/index.html":
-                            // gets the packageID from the map (will be null if none is there)
-                            String packageID = (String)requestParameters.get("package-id");
-                            responseBody = new RegExViewPackage(packageID).getPageContent();
-                            break;
-                        case "/logout/index.html":
-                            // deletes cookie from browser
-                            attachNewHeader(
-                                exchange,
-                                "Set-Cookie",
-                                Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
-                            );
+                        }
 
-                            // trash the cookie from the map (remove it)
-                            this.sessions.remove(sessionId);
+                        // if the user has a session and it is still valid
+                        if (userRegExSession != null && userRegExSession.isStillValidSession()) {
+                            // redirect them to the home page
+                            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
+                            // redirect user to the home page
+                            redirectUser(exchange, DOMAIN_ROOT + "/home/");
+
+                            // gets an empty response body
+                            responseBody = new byte[]{};
+                        } else {
+                            // generates the error content
+                            String errorContent = (requestParameters.containsKey("login-failed")) ?
+                                                    "Your username or password was incorrect." :
+                                                    RegExIndex.NO_ERROR;
+                            // gets the response body (with or without error dialogue depending on if
+                            // there should be one)
+                            responseBody = new RegExIndex(errorContent).getPageContent();
+                        }
+                        break;
+                    case "/home/index.html":
+                        // if the user attempts to access a protected page without a session
+                        if(sessionExpired || userRegExSession == null) {
                             // redirect user to home page
                             responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
@@ -338,46 +314,77 @@ public class RegExHttpHandler implements HttpHandler {
 
                             // empty response body
                             responseBody = new byte[]{};
-                            break;
-                        default:
-                            // attempt to bring up static version of the file
-                            responseBody = getFileContents(requestedPath);
-                    }
-                    // else we send back the file contents of whatever was requested (if it exists)
-                } else {
-                    // always send the request for icon to the favicon
-                    if(requestedPath.endsWith(".ico")) {
-                        requestedPath = "/assets/images/favicon.ico";
-                    }
+                        } else {
+                            // gets our home page content for our user
+                            responseBody = new RegExHome(userRegExSession).getPageContent();
+                        }
+                        break;
+                    case "/view-package/index.html":
+                        // gets the packageID from the map (will be null if none is there)
+                        String packageID = (String)requestParameters.get("package-id");
+                        responseBody = new RegExViewPackage(packageID, userRegExSession != null).getPageContent();
+                        break;
+                    case "/logout/index.html":
+                        // deletes cookie from browser
+                        attachNewHeader(
+                            exchange,
+                            "Set-Cookie",
+                            Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+                        );
 
-                    // attach the correct header to specify content type
-                    attachNewHeader(
-                        exchange,
-                        "Content-Type",
-                        Collections.singletonList(
-                            this.fileTypeMIMES.get(
-                                requestedPath.substring(requestedPath.lastIndexOf(".")+1)
-                            )
-                        )
-                    );
+                        // trash the cookie from the map (remove it)
+                        this.sessions.remove(sessionId);
 
-                    // gets our response body from our contents
-                    responseBody = getFileContents(requestedPath);
+                        // redirect user to home page
+                        responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                        // attaches a location header for the browser to go to root (login)
+                        redirectUser(
+                            exchange,
+                            DOMAIN_ROOT + "/"
+                        );
+
+                        // empty response body
+                        responseBody = new byte[]{};
+                        break;
+                    default:
+                        // attempt to bring up static version of the file
+                        responseBody = getFileContents(requestedPath);
                 }
-            // FileNotFoundException thrown when a file cannot be located by the getFileContents method
-            } catch(FileNotFoundException fnfe) {
-                // set our response code to 404 NOT FOUND
-                responseCode = HttpURLConnection.HTTP_NOT_FOUND;
-                // get the error response page for our error
-                responseBody = getErrorPage(responseCode);
-            } catch(IOException e) {
-                // logs that some exception was hit
-                RegExLogger.error("issue with loading page - internal server error", 1);
-                // our response code is set to 500 INTERNAL ERROR
-                responseCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
-                // gets our response body page for our response code
-                responseBody = getErrorPage(responseCode);
+                // else we send back the file contents of whatever was requested (if it exists)
+            } else {
+                // always send the request for icon to the favicon
+                if(requestedPath.endsWith(".ico")) {
+                    requestedPath = "/assets/images/favicon.ico";
+                }
+
+                // attach the correct header to specify content type
+                attachNewHeader(
+                    exchange,
+                    "Content-Type",
+                    Collections.singletonList(
+                        this.fileTypeMIMES.get(
+                            requestedPath.substring(requestedPath.lastIndexOf(".")+1)
+                        )
+                    )
+                );
+
+                // gets our response body from our contents
+                responseBody = getFileContents(requestedPath);
             }
+        // FileNotFoundException thrown when a file cannot be located by the getFileContents method
+        } catch(FileNotFoundException fnfe) {
+            // set our response code to 404 NOT FOUND
+            responseCode = HttpURLConnection.HTTP_NOT_FOUND;
+            // get the error response page for our error
+            responseBody = getErrorPage(responseCode);
+        } catch(IOException e) {
+            // logs that some exception was hit
+            RegExLogger.error("issue with loading page - internal server error", 1);
+            // our response code is set to 500 INTERNAL ERROR
+            responseCode = HttpURLConnection.HTTP_INTERNAL_ERROR;
+            // gets our response body page for our response code
+            responseBody = getErrorPage(responseCode);
         }
 
         // direct our exchange to send back the response headers
