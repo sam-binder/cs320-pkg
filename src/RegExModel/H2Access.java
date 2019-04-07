@@ -118,37 +118,86 @@ public class H2Access {
 		return s;
 	}
 
+    /**
+     * Gets the foreign key of a user
+     * @param username
+     * @return
+     */
+	public int getUserFK(String username){
+        try{
+            Connection conn = this.createConnection("me", "password");
+            String query = "SELECT general_fk FROM " + getUserType(username) +
+                    " WHERE username = '" + username + "';";
+            ResultSet r = conn.createStatement().executeQuery(query);
+            if(r.next())
+                return r.getInt(1);
+        } catch(SQLException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
 	/**
-	 * Attempts to create a customer.
+	 * Attempts to create a customer. Creates an entry in the user table with the username
+     * and password, and an entry in the customer table with mostly null values
 	 * Error codes:
 	 * 	0	-	Successfully created a user.
 	 * 	1	-	Another user already has the username.
 	 * 	2	-	Database already in use.
 	 * 	3	- 	User didn't exists in the "USER" table, but did in the "Users" table.
+     * 	4   -   Unable to get the customers ID
 	 * 	-1	-	An unknown error occurred.
 	 * 	@param username The new customer's username
 	 * 	@param password The new customer's password
 	 * 	@return int: an int error or success number, see doc.
 	 */
 	public int createCustomer(String username, String password) {
-		String query = String.format("INSERT INTO user(USERNAME, PASSWORD, type) " +
-				"VALUES('%s','%s','%s');", username, password, "customer");
+        int errorCode = 0;
+        int accountID;
+        // Create a blank entry in the customer table, to be filled in by the user later
+        String customerQuery = "INSERT INTO customer(BILLING_FK, NEGOTIATED_RATE_ID_FK, " +
+                "MAILING_ADDRESS_ID_FK, FIRST_NAME, LAST_NAME, PHONE_NO) " +
+                "VALUES(null, null, null, null, null, null)";
+		String userQuery = String.format("INSERT INTO user VALUES(0, '%s','%s','%s');",
+                username, password, "customer");
+        String updateUserQuery = "UPDATE user SET general_fk=%d WHERE username='" + username + "';";
+
 		try {
-			Connection conn = createConnection("me", "password");
-			conn.createStatement().execute(query);
+            Connection conn = createConnection("me", "password");
+			conn.createStatement().execute(userQuery);
 			conn.createStatement().execute("CREATE USER " + username + " PASSWORD '" + password + "';");
 			closeConnection(conn);
-			return 0;
 		} catch (JdbcSQLIntegrityConstraintViolationException e) {
-			return 1;
+            errorCode = 1;
 		} catch (JdbcSQLNonTransientConnectionException e) {
-			return 2;
+            errorCode = 2;
 		} catch (JdbcSQLSyntaxErrorException e){
-			return 3;
+            errorCode = 3;
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return -1;
+            errorCode = -1;
 		}
+
+		// If we pass the user validation, create an empty customer in the customer table,
+        // with values to be filled in later, and edit the FK on our new user.
+		if(errorCode == 0){
+            try{
+                Connection conn = createConnection("me", "password");
+                PreparedStatement prep = conn.prepareStatement(customerQuery, Statement.RETURN_GENERATED_KEYS);
+                prep.executeUpdate();
+                ResultSet keys = prep.getGeneratedKeys();
+                if (keys.next())
+                    accountID = keys.getInt("ACCOUNT_NUMBER");
+                else
+                    return 4;
+                conn.createStatement().execute(String.format(updateUserQuery, accountID));
+                closeConnection(conn);
+            } catch (SQLException e){
+                e.printStackTrace();
+                errorCode = -1;
+            }
+        }
+        return errorCode;
 	}
 
 	/**
