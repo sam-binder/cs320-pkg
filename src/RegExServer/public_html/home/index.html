@@ -46,20 +46,19 @@
             </div>
             <!--@{user-type-specific-content}-->
             <div class="row mt-3">
-                <form id="tracker-form" method="post" action="/track/">
+                <form id="tracker-form" method="get" action="/view-package/">
                     <div class="input-row">
-                        <label for="tracking-num" class="label-header">Track a package</label>
+                        <label for="package-id" class="label-header">Track a package</label>
                         <input type="text"
                                class="regex-std-input"
-                               id="tracking-num"
-                               name="tracking-num"
+                               id="package-id"
+                               name="package-id"
                                maxlength="15"
                                placeholder="Enter tracking ID here"
                                required />
                         <button type="submit"
                                 class="btn-primary ml-2"
-                                id="tracking-submit"
-                                name="tracking-submit">
+                                id="tracking-submit">
                             Track <i class="fa fa-arrow-circle-right ml-1"></i>
                         </button>
                     </div>
@@ -79,7 +78,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <a href="/view-package/?id=00056501ERVA5Q#" title="View more info about package 00056501ERVA5Q#.">
+                                <a href="/view-package/?package-id=00056501ERVA5Q#" title="View more info about package 00056501ERVA5Q#.">
                                     00056501ERVA5Q#
                                 </a>
                             </td>
@@ -89,7 +88,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <a href="/view-package/?id=00056505TW88I4#" title="View more info about package 00056505TW88I4#.">
+                                <a href="/view-package/?package-id=00056505TW88I4#" title="View more info about package 00056505TW88I4#.">
                                     00056505TW88I4#
                                 </a>
                             </td>
@@ -99,7 +98,7 @@
                         </tr>
                         <tr>
                             <td>
-                                <a href="/view-package/?id=000565010QK9YS#" title="View more about package 000565010QK9YS#.">
+                                <a href="/view-package/?package-id=000565010QK9YS#" title="View more about package 000565010QK9YS#.">
                                     000565010QK9YS#
                                 </a>
                             </td>

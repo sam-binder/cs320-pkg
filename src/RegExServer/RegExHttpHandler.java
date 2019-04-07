@@ -311,6 +311,11 @@ public class RegExHttpHandler implements HttpHandler {
                             // gets our home page content for our user
                             responseBody = new RegExHome(userRegExSession).getPageContent();
                             break;
+                        case "/view-package/index.html":
+                            // gets the packageID from the map (will be null if none is there)
+                            String packageID = (String)requestParameters.get("package-id");
+                            responseBody = new RegExViewPackage(packageID).getPageContent();
+                            break;
                         case "/logout/index.html":
                             // deletes cookie from browser
                             attachNewHeader(
@@ -334,7 +339,6 @@ public class RegExHttpHandler implements HttpHandler {
                             // empty response body
                             responseBody = new byte[]{};
                             break;
-                        case "/track/index.html":
                         default:
                             // attempt to bring up static version of the file
                             responseBody = getFileContents(requestedPath);

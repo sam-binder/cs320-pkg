@@ -333,6 +333,11 @@ label {
     background-color: #578bec;
 }
 
+.center-div {
+    display: flex;
+    justify-content: center;
+}
+
 /*   END CONTENT STYLING -- TEXT STYLING   */
 
 /* some general styling classes */ 
