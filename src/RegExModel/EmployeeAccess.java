@@ -103,6 +103,13 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+    public void modifyCustomerBilling(int ID, double balance, String payModel, int acctNum) {
+        int employeeID = this.getId();
+        String query = "UPDATE billing SET balance_to_date=" + balance + " , pay_model=" + payModel +
+                ", employeeID=" + employeeID + "WHERE ID=" + ID + " AND account_number_fk=" + acctNum;
+        h2.createAndExecute(connection, query);
+    }
+
     /**
      * An easy way for accounting employee's to track a package
      * @param accntNum: The account id associate with the package
@@ -136,11 +143,16 @@ public class EmployeeAccess implements AutoCloseable{
      * @param rushRate the rush rate of the package
      * @param DRB dim_rating_break
      */
-    public void CreateRate(int negotiatedID, int groundRate, int airRate, int rushRate, int DRB) {
+    public void CreateRate(String negotiatedID, String groundRate, String airRate, String rushRate, String DRB) {
         int employeeID = this.getId();
+        int negotiated = Integer.parseInt(negotiatedID);
+        double ground = Double.parseDouble(groundRate);
+        double air = Double.parseDouble(airRate);
+        double rush = Double.parseDouble(rushRate);
+        int drb = Integer.parseInt(DRB);
         String query = String.format("INSERT INTO rates(NEGOTIATED_RATE_ID, GROUND_RATE, AIR_RATE, RUSH_RATE, " +
                 "DIM_RATING_BREAK, EMPLOYEEID) VALUES (\"%d\",\"%f\",\"%f\",\"%f\",\"%d\",\"%d\");",
-                negotiatedID, groundRate, airRate, rushRate, DRB, employeeID);
+                negotiated, ground, air, rush, drb, employeeID);
         h2.createAndExecute(connection, query);
     }
 
@@ -149,17 +161,34 @@ public class EmployeeAccess implements AutoCloseable{
      * @param negotiatedID the negotiated id for the package
      * @return A ResultSet of the package.
      */
-    public ResultSet viewRates(int negotiatedID) {
-        String query = "SELECT * FROM rates WHERE negotiated_rate_id=\"" + negotiatedID + "\"";
+    public ResultSet viewRates(String negotiatedID) {
+        int negotiated = Integer.parseInt(negotiatedID);
+        String query = "SELECT * FROM rates WHERE negotiated_rate_id=\"" + negotiated + "\"";
         return h2.createAndExecuteQuery(connection, query);
     }
 
-    public void modifyRates(int negotiatedID, int groundRate, int airRate, int rushRate, int DRB) {
+    /**
+     * The way to modify the info of the entry from rates table
+     * @param negotiatedID the negotiated id
+     * @param groundRate the new ground rate to be set up
+     * @param airRate the new air rate to be set up
+     * @param rushRate the new rush rate to be set up
+     * @param DRB the new dim_rating_break to be set up
+     */
+    public void modifyRates(String negotiatedID, String groundRate, String airRate, String rushRate, String DRB) {
         int employeeID = this.getId();
-        String query = String.format("UPDATE rates SET GROUND_RATE = \"" + groundRate + "\", AIR_RATE = \"" +
-                airRate + "\", RUSH_rATE = \"" + rushRate + "\", DIM_RATING_BREAK = \"" + DRB + "\", EMPLOYEEID =\""
-                + employeeID + "WHERE NEGOTIATED_RATE_ID = \"" + employeeID + "\";");
+        int negotiated = Integer.parseInt(negotiatedID);
+        double ground = Double.parseDouble(groundRate);
+        double air = Double.parseDouble(airRate);
+        double rush = Double.parseDouble(rushRate);
+        int drb = Integer.parseInt(DRB);
+        String query = String.format("UPDATE rates SET GROUND_RATE = \"" + ground + "\", AIR_RATE = \"" +
+                air + "\", RUSH_rATE = \"" + rush + "\", DIM_RATING_BREAK = \"" + drb + "\", EMPLOYEEID =\""
+                + employeeID + "WHERE NEGOTIATED_RATE_ID = \"" + negotiated + "\";");
 
         h2.createAndExecute(connection, query);
     }
+
+
+
 }
