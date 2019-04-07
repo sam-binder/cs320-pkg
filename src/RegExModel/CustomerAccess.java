@@ -1,7 +1,5 @@
 package RegExModel;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 
 /**
  * Created by Walter Schaertl on 3/24/2019.
@@ -26,6 +24,62 @@ public class CustomerAccess implements AutoCloseable{
         this.username = username;
         this.h2 = new H2Access();
         this.connection = this.h2.createConnection(username, password);
+    }
+
+
+    /**
+     * Lets the User enter in minimal information about their address. All foreign keys
+     * are generated/looked up in the process. If not applicable, strings should be blank, not null
+     * Error codes:
+     *  0   Success
+     *  -1  Could not get user general purpose foreignKey
+     *  -2  ZipCode doesn't exists
+     *  -3  An unexpected SQL exception occurred.
+     * @param company The company name
+     * @param attention The name of the individual
+     * @param streetLineOne The first address line
+     * @param streetLineTwo The second address line
+     * @param zipCode The 5 digit zip code
+     * @return an error code, 0 for success
+     */
+    public int enterAddress(String company, String attention, String streetLineOne,
+                            String streetLineTwo, int zipCode){
+        String zipQuery = "SELECT id FROM zip_code WHERE zip_code = " + zipCode + ";";
+        String addressQuery = "INSERT INTO " +
+                "address(company, attn, street_line_1, street_line_2, zip_fk, account_number_fk) " +
+                "VALUES('%s', '%s', '%s', '%s', %d, %d);";
+        String customerQuery = "UPDATE customer SET mailing_address_id_fk=%d WHERE account_number=%d";
+        ResultSet r;
+        int zipFK;
+        int addressID = 0;
+
+        // Get the user's fk
+        int userFK = h2.getUserFK(username);
+        if(userFK == -1)
+            return -1;
+
+        try {
+            // Get the ZIP ID fk based on the zipCode
+            r = connection.createStatement().executeQuery(zipQuery);
+            if(!r.next())
+                return -2;
+            else
+                zipFK = r.getInt(1);
+
+            // Create the entry in the address table
+            addressQuery = String.format(addressQuery, company, attention,
+                    streetLineOne, streetLineTwo, zipFK, userFK);
+            PreparedStatement prep = connection.prepareStatement(addressQuery, Statement.RETURN_GENERATED_KEYS);
+            prep.executeUpdate();
+            ResultSet keys = prep.getGeneratedKeys();
+            if (keys.next())
+                addressID = keys.getInt("ID");
+
+            // Set this Id as the users main address
+            connection.createStatement().execute(String.format(customerQuery, addressID, userFK));
+            return 0;
+        } catch (SQLException e){e.printStackTrace();}
+        return -3;
     }
 
     /**
