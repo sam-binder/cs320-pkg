@@ -12,104 +12,16 @@
             <a href="../" class="navbar-brand">
                 <img src="/assets/images/regex_logo_icon.png" alt="RegEx Logo" title="View the homepage." />
             </a>
-
-            <!-- a toggler for small screens -->
-            <button id="navbar-toggler" class="navbar-toggler" type="button">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <ul class="navbar-links-wrapper">
-                <li class="navbar-link">
-                    <a href="../" title="View the homepage.">
-                        Home
-                    </a>
-                </li>
-                <li class="navbar-link">
-                    <a href="../account-history/" title="View your account history.">
-                        Account History
-                    </a>
-                </li>
-                <li class="navbar-link">
-                    <a href="../logout/" title="Logout of RegEx Intranet.">
-                        Logout
-                    </a>
-                </li>
-            </ul>
-
+            @{logged-in-navbar-links}
         </div>
 
         <div class="content">
             <div id="heading-wrapper-1">
                 <div class="content-header mt-0">
-                    <h1 class="header-smaller">00056501ERVA5Q#</h1>
+                    <h1 class="header-smaller">@{package-title}</h1>
                 </div>
             </div>
-            <div class="row mt-3">
-                <h2>Package Details</h2>
-                <table class="regex-std-table mw-50">
-                    <tbody>
-                        <tr>
-                            <td class="text-right text-bold">
-                                Height
-                            </td>
-                            <td class="text-left">6 inches</td>
-                        </tr>
-                        <tr>
-                            <td class="text-right text-bold">
-                                Length
-                            </td>
-                            <td class="text-left">11 inches</td>
-                        </tr>
-                        <tr>
-                            <td class="text-right text-bold">
-                                Width
-                            </td>
-                            <td class="text-left">2 inches</td>
-                        </tr>
-                        <tr>
-                            <td class="text-right text-bold">
-                                Weight
-                            </td>
-                            <td class="text-left">40 pounds</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <!--@{user-type-specific-content}-->
-            <div class="row mt-3">
-                <h2>Shipment History</h2>
-                <table class="regex-std-table">
-                    <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Location</th>
-                        <th>Note</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>March 20, 2019 at 9:30AM EDT</td>
-                            <td>Santa Fe, NM</td>
-                            <td>Package delivered.</td>
-                        </tr>
-                        <tr>
-                            <td>March 19, 2019 at 8:30PM EDT</td>
-                            <td><strong>Santa Fe, NM</strong></td>
-                            <td>Arrival at local carrier facility.</td>
-                        </tr>
-                        <tr>
-                            <td>March 19, 2019 at 6:30AM EDT</td>
-                            <td><strong>Albuquerque, NM</strong></td>
-                            <td>Departure scan at transfer facility.</td>
-                        </tr>
-                        <tr>
-                            <td>March 18, 2019 at 8:30PM EDT</td>
-                            <td><strong>Colorado Springs, CO</strong></td>
-                            <td>Dropped off at carrier processing facility.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            @{view-package-main-content}
         </div>
 
         <script src="/assets/js/collapsible-trigger.js"></script>
