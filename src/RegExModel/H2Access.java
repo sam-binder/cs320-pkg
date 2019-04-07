@@ -126,7 +126,7 @@ public class H2Access {
 	public int getUserFK(String username){
         try{
             Connection conn = this.createConnection("me", "password");
-            String query = "SELECT general_fk FROM " + getUserType(username) +
+            String query = "SELECT general_fk FROM user " +
                     " WHERE username = '" + username + "';";
             ResultSet r = conn.createStatement().executeQuery(query);
             if(r.next())
@@ -213,7 +213,11 @@ public class H2Access {
 			new CreateNewDatabase().initDatabase();
 
 		// Example creating a Customer
-		System.out.println("Creating the customer returned: " + h2.createCustomer("Walter", "password"));
+		System.out.println("Creating the customer returned: " + h2.createCustomer("Walter12", "password"));
+        try (CustomerAccess c = new CustomerAccess("Walter12", "password")){
+            System.out.println(c.enterAddress("this co", "", "1234 Shortsville Rd", "", 14548));
+        } catch (SQLException e){ e.printStackTrace();}
+
 
         // Example usage of ease functions
 		System.out.println("\nSample checking a user's type.");

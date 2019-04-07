@@ -239,7 +239,7 @@ public class CreateNewDatabase {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS user("
-                + "GENERAL_FK INT auto_increment,"
+                + "GENERAL_FK INT,"
                 + "USERNAME VARCHAR(255) PRIMARY KEY,"
                 + "PASSWORD VARCHAR(255),"
                 + "TYPE VARCHAR(255)"
@@ -260,7 +260,7 @@ public class CreateNewDatabase {
                         conn.createStatement().execute("CREATE USER " + username + " PASSWORD '" + split[2] + "';");
                     } catch (SQLException e){}
                     if(split[3].equals("customer")) {
-                        for(String table: Arrays.asList("PACKAGE", "USER"))
+                        for(String table: Arrays.asList("PACKAGE", "USER", "ADDRESS", "ZIP_CODE", "CUSTOMER"))
                             conn.createStatement().execute("GRANT ALL ON " + table + " TO " + username);
                     } else if(split[3].equals("accounting_employee")) {
                         for(String table: Arrays.asList("CUSTOMER", "PACKAGE", "BILLING", "TRANSACTION", "USER"))
