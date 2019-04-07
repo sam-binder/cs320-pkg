@@ -239,7 +239,7 @@ public class CreateNewDatabase {
         H2Access h2 = new H2Access();
         Connection conn = h2.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS user("
-                + "GENERAL_FK INT,"
+                + "GENERAL_FK INT auto_increment,"
                 + "USERNAME VARCHAR(255) PRIMARY KEY,"
                 + "PASSWORD VARCHAR(255),"
                 + "TYPE VARCHAR(255)"

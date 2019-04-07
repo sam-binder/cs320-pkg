@@ -1,11 +1,16 @@
 package RegExModel;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
+import org.h2.jdbc.JdbcSQLNonTransientConnectionException;
+import org.h2.jdbc.JdbcSQLSyntaxErrorException;
+
+import java.net.ConnectException;
 import java.sql.*;
 import java.util.Arrays;
 
 /**
  * Contains a main method to set up a new database and
  * view example functionality.
- * 
+ *
  * @author Walter Schaertl, template provided
  *
  */
@@ -36,7 +41,7 @@ public class H2Access {
 			String url = "jdbc:h2:" + this.dbLocation;
 			//This tells it to use the h2 driver
 			Class.forName("org.h2.Driver");
-			
+
 			//creates the connection
 			return DriverManager.getConnection(url, user, password);
 		} catch (ClassNotFoundException e) {
@@ -48,13 +53,16 @@ public class H2Access {
     /**
      * Closes a connection
      * @param conn a Connection object to close.
+	 * @return boolean False if the connection couldn't be closed, true otherwise.
      */
-	public void closeConnection(Connection conn){
+	public boolean closeConnection(Connection conn){
 		try {
 			conn.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
+		return true;
 	}
 
     /**
@@ -77,14 +85,17 @@ public class H2Access {
      * Executes a query that expects no data to be returned.
      * @param conn Connection: a valid connection to the database
      * @param query String: a query
+	 * @return Boolean: If the query executed without errors
      */
-	public void createAndExecute(Connection conn, String query){
+	public boolean createAndExecute(Connection conn, String query){
 		try {
 			Statement stmt = conn.createStatement();
 			stmt.execute(query);
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
+		return true;
 	}
 
     /**
@@ -93,17 +104,53 @@ public class H2Access {
      * @return String: The name of the table that the user is in (customer, accounting_employee, package_employee).
      */
 	public String getUserType(String username){
+		String s = null;
 		try {
 			Connection conn = this.createConnection("me", "password");
 			String query = "SELECT type FROM user where username='" + username + "'";
 			ResultSet r = this.createAndExecuteQuery(conn, query);
 			if (r.next())
-				return r.getString(1);
-		} catch (SQLException e) { e.printStackTrace(); }
-
-		return null;
+				s = r.getString(1);
+			closeConnection(conn);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return s;
 	}
-	
+
+	/**
+	 * Attempts to create a customer.
+	 * Error codes:
+	 * 	0	-	Successfully created a user.
+	 * 	1	-	Another user already has the username.
+	 * 	2	-	Database already in use.
+	 * 	3	- 	User didn't exists in the "USER" table, but did in the "Users" table.
+	 * 	-1	-	An unknown error occurred.
+	 * 	@param username The new customer's username
+	 * 	@param password The new customer's password
+	 * 	@return int: an int error or success number, see doc.
+	 */
+	public int createCustomer(String username, String password) {
+		String query = String.format("INSERT INTO user(USERNAME, PASSWORD, type) " +
+				"VALUES('%s','%s','%s');", username, password, "customer");
+		try {
+			Connection conn = createConnection("me", "password");
+			conn.createStatement().execute(query);
+			conn.createStatement().execute("CREATE USER " + username + " PASSWORD '" + password + "';");
+			closeConnection(conn);
+			return 0;
+		} catch (JdbcSQLIntegrityConstraintViolationException e) {
+			return 1;
+		} catch (JdbcSQLNonTransientConnectionException e) {
+			return 2;
+		} catch (JdbcSQLSyntaxErrorException e){
+			return 3;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return -1;
+		}
+	}
+
 	/**
 	 * Starts and runs the database
 	 * @param args: not used but you can use them
@@ -115,6 +162,9 @@ public class H2Access {
 		boolean firstTime = false;
 		if(firstTime)
 			new CreateNewDatabase().initDatabase();
+
+		// Example creating a Customer
+		System.out.println("Creating the customer returned: " + h2.createCustomer("Walter", "password"));
 
         // Example usage of ease functions
 		System.out.println("\nSample checking a user's type.");
