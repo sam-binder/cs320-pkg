@@ -1,0 +1,25 @@
+<div class="row mt-3">
+    @{error-dialog}
+</div>
+<div class="row mt-3">
+    <div class="center-div">
+        <form id="tracker-form" method="get">
+            <div class="input-row">
+                <label for="package-id" class="label-header">Enter package tracking ID</label>
+                <input type="text"
+                       class="regex-std-input"
+                       id="package-id"
+                       name="package-id"
+                       maxlength="15"
+                       placeholder="Enter tracking ID here"
+                       value="@{entered-package-id}"
+                       required />
+                <button type="submit"
+                        class="btn-primary ml-2"
+                        id="tracking-submit">
+                    Track <i class="fa fa-arrow-circle-right ml-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

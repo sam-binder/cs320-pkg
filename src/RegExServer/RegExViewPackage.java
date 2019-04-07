@@ -17,14 +17,19 @@ public class RegExViewPackage extends RegExPage {
     private static String noPackageIDURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/no-package-id.part";
 
     /**
+     * If a packageID was specified AND THE ID IS REAL, this will show the package details.
+     */
+    private static String packageIDSucceedURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/specified-package-id-success.part";
+
+    /**
+     * If a packageID was specified BUT THE PACKAGE IS NOT REAL, this will show an error dialog saying so.
+     */
+    private static String packageIDFailURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/specified-package-id-failure.part";
+
+    /**
      * The URI to the navbar links that will only be dropped in if the user is logged in.
      */
     private static String navbarLinksURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/navbar-links.part";
-
-    /**
-     * If a packageID was specified, this will show the package details
-     */
-    private static String packageIDURI = RegExHttpHandler.DOCUMENT_ROOT + "/view-package/specified-package-id.part";
 
     /**
      * The packageID being tracked.
@@ -77,15 +82,70 @@ public class RegExViewPackage extends RegExPage {
                 )
             );
         } else {
-            // we have a specified packageID, we need to run some things on that
-            String specifiedIDPageContent = new String(
-                Files.readAllBytes(
-                    Paths.get(packageIDURI)
-                ),
-                StandardCharsets.UTF_8
-            );
+            // assume the parsing of package ID works by default (only if the length is 16)
+            boolean parseSucceeded = this.packageID.length() == 15;
+            // the account number starts at -1 and will be updated
+            int accntNum = -1;
+            String serial = "";
 
-            // request from H2 the package details
+            // parse out account number (first 6 digits of tracking ID)
+            try {
+                accntNum = Integer.parseInt(this.packageID.substring(0, 5));
+                serial = this.packageID.substring(8, 13);
+            // any thrown exception will mean the parse did not succeed
+            } catch (Exception e) {
+                // log that an error has occurred where the package ID was not valid
+                RegExLogger.error("requested package ID is not valid", 1);
+                // if we make it here the parse did not succeed
+                parseSucceeded = false;
+            }
+
+            // the page content relating to the specific ID
+            String specifiedIDPageContent;
+
+            // request from H2 the package details if the parse succeeded
+            if(parseSucceeded && trackingIDIsValid()) {
+                // logs that the package information is being requested from the DB
+                RegExLogger.log("requesting information from DB about package " + this.packageID, 1);
+
+                // load in the success section content
+                specifiedIDPageContent = new String(
+                    Files.readAllBytes(
+                        Paths.get(packageIDSucceedURI)
+                    ),
+                    StandardCharsets.UTF_8
+                );
+
+            } else {
+                // load in the failure section content
+                specifiedIDPageContent = new String(
+                    Files.readAllBytes(
+                        Paths.get(packageIDFailURI)
+                    ),
+                    StandardCharsets.UTF_8
+                );
+
+                // the error message to include in the error dialog
+                String errorMsg;
+                // attempts to diagnose the error that occurred
+                if(this.packageID.length() != 15) {
+                    errorMsg = "Tracking ID must be 15 characters in length.";
+                } else if(!trackingIDIsValid()) {
+                    errorMsg = this.packageID + " is not a valid tracking ID.";
+                } else {
+                    errorMsg = "An unknown error occurred.";
+                }
+
+                // puts in place our error dialog
+                specifiedIDPageContent = specifiedIDPageContent.replace(
+                    "@{error-dialog}",
+                    RegExErrorDialog.getErrorDialogHTML(errorMsg)
+                ).replace(
+                    "@{entered-package-id}",
+                    this.packageID
+                );
+            }
+
 
             // generate the package details table
             pageContent = pageContent.replace(
@@ -121,5 +181,21 @@ public class RegExViewPackage extends RegExPage {
         } else {
             return "";
         }
+    }
+
+    private boolean trackingIDIsValid() {
+        // pulls out the check digit (the last character)
+        char checkDigit = this.packageID.charAt(this.packageID.length() - 1);
+
+        // our total sum will be made using this variable
+        int sum = 0;
+        // goes through each of the non check-digit characters
+        for(int i = 0; i < 14; ++i) {
+            // add the ascii value of the char at index i
+            sum += this.packageID.charAt(i);
+        }
+
+        // returns true if the check digit matches the sum mod 17
+        return (sum % 17) + 74 == checkDigit;
     }
 }
