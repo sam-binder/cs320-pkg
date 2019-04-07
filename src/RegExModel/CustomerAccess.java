@@ -28,9 +28,64 @@ public class CustomerAccess implements AutoCloseable{
         this.connection = this.h2.createConnection(username, password);
     }
 
-    //Stubbed out method for future functionality
-    public void createAddress(){
+    public ResultSet createNewAddress(String company, String attention, String streetLine1, String streetLine2,
+                                      String zip_ID_fk, String account_number_fk) throws SQLException {
 
+        ResultSet does_it_exist = retrieveAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
+        if (!does_it_exist.next()){
+            does_it_exist = createAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
+            does_it_exist = retrieveAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
+        }
+
+        return does_it_exist;
+
+    }
+
+    private ResultSet retrieveAddress(String company, String attention, String streetLine1, String streetLine2,
+                                      String zip_ID_fk, String account_number_fk){
+        int zip_ID_fk_numeric = Integer.parseInt(zip_ID_fk);
+        int account_number_fk_numeric = Integer.parseInt(account_number_fk);
+        String query =
+                "SELECT * FROM address "+
+                "WHERE (COMPANY = '" + company + "') AND " +
+                "(ATTN = '" + attention +"') AND " +
+                "(STREET_LINE_1 = '" + streetLine1 + "') AND " +
+                "(STREET_LINE_2 = '" + streetLine2 + "') AND " +
+                "(ZIP_ID_FK = "+ zip_ID_fk_numeric + ") AND " +
+                "(ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ")";
+
+
+
+        return h2.createAndExecuteQuery(connection, query);
+    }
+    /**
+     * create a new address for a customer. Called after querying whether this address already exists.
+     * @param company
+     * @param attention
+     * @param streetLine1
+     * @param streetLine2
+     * @param zip_ID_fk
+     * @param account_number_fk
+     * @return the result of the query, which should be empty.
+     */
+    private ResultSet createAddress(String company, String attention, String streetLine1, String streetLine2,
+                              String zip_ID_fk, String account_number_fk){
+        int zip_ID_fk_numeric = Integer.parseInt(zip_ID_fk);
+        int account_number_fk_numeric = Integer.parseInt(account_number_fk);
+        String query =
+                "INSERT INTO address "+
+                "(COMPANY, ATTN, STREET_LINE_1, STREET_LINE_2, ZIP_ID_FK, ACCOUNT_NUMBER_FK)" +
+                " VALUES(" +
+                company + ", " +
+                attention + ", " +
+                streetLine1 + ", " +
+                streetLine2 + ", " +
+                zip_ID_fk_numeric + ", " +
+                account_number_fk_numeric + ")";
+
+
+
+        return h2.createAndExecuteQuery(connection, query);
     }
 
     //Stubbed out method for future functionality
