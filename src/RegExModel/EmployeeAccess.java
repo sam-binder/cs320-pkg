@@ -89,7 +89,7 @@ public class EmployeeAccess implements AutoCloseable{
      * @return a ResultSet of customers, to be processed by the client
      */
     public ResultSet getCustomersWhere(String conditional){
-        String query = "SELECT * from customer WHERE " +  conditional;
+        String query = "SELECT * from customer WHERE " +  conditional + ";";
         return h2.createAndExecuteQuery(connection, query);
 }
 
@@ -99,14 +99,21 @@ public class EmployeeAccess implements AutoCloseable{
      * @return a ResultSet of customer billing information, to be processed by the client
      */
     public ResultSet viewCustomerBilling(int acctNumber){
-        String query = "SELECT * from billing WHERE account_number_fk=" + acctNumber;
+        String query = "SELECT * from billing WHERE account_number_fk=" + acctNumber + ";";
         return h2.createAndExecuteQuery(connection, query);
     }
 
+    /**
+     * The way to modify the billing info for the customers
+     * @param ID the id for billing table
+     * @param balance the new balance for specific customers
+     * @param payModel the new pay model for specific coustomers
+     * @param acctNum the account number for the customer
+     */
     public void modifyCustomerBilling(int ID, double balance, String payModel, int acctNum) {
         int employeeID = this.getId();
         String query = "UPDATE billing SET balance_to_date=" + balance + " , pay_model=" + payModel +
-                ", employeeID=" + employeeID + "WHERE ID=" + ID + " AND account_number_fk=" + acctNum;
+                ", employeeID=" + employeeID + "WHERE ID=" + ID + " AND account_number_fk=" + acctNum + ";";
         h2.createAndExecute(connection, query);
     }
 
@@ -118,7 +125,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public ResultSet viewPackageHistory(int accntNum, String serial){
         String query = "SELECT * from transaction WHERE account_number_fk=" + accntNum +
-                " AND package_serial_fk='" + serial +"'";
+                " AND package_serial_fk='" + serial +"';";
         return h2.createAndExecuteQuery(connection, query);
     }
 
@@ -130,7 +137,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public ResultSet viewPackageData(int accntNum, String serial){
         String query = "SELECT * from package WHERE account_number_fk=" + accntNum +
-                " AND serial='" + serial +"'";
+                " AND serial='" + serial +"';";
         return h2.createAndExecuteQuery(connection, query);
     }
 
@@ -163,7 +170,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public ResultSet viewRates(String negotiatedID) {
         int negotiated = Integer.parseInt(negotiatedID);
-        String query = "SELECT * FROM rates WHERE negotiated_rate_id=\"" + negotiated + "\"";
+        String query = "SELECT * FROM rates WHERE negotiated_rate_id=\"" + negotiated + "\";";
         return h2.createAndExecuteQuery(connection, query);
     }
 
@@ -188,6 +195,22 @@ public class EmployeeAccess implements AutoCloseable{
 
         h2.createAndExecute(connection, query);
     }
+
+    /**
+     * The method to allow the employee to view the charging info with specific account number, id and serial
+     * number of the package
+     * @param ID the id of the charge table
+     * @param account_num the account number for specific customers
+     * @param package_serial the serial of the package
+     * @return the ResultSet of the package
+     */
+    public ResultSet viewCharge(int ID, int account_num, int package_serial) {
+        int service_id = this.getId();
+        String query = "SELECT price FROM charges WHERE ID = " + ID + " AND account_number_fk = " +
+                account_num + " AND package_serial_fk = " + package_serial + ";";
+        return h2.createAndExecuteQuery(connection, query);
+    }
+
 
 
 
