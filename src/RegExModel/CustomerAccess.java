@@ -99,7 +99,11 @@ public class CustomerAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
-
+    /**
+     * Gets all addresses in customer's "rolodex", that they've ever sent packages from or to
+     * @param account_number_fk
+     * @return ResultSet of all addresses with their account number associated
+     */
     public ResultSet getAllAddresses(String account_number_fk){
         int account_number_fk_numeric = Integer.parseInt(account_number_fk);
         String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ")";
