@@ -127,4 +127,39 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+
+    /**
+     * The way to create an entry to rates table.
+     * @param negotiatedID the negotiated id
+     * @param groundRate the ground rate of the package
+     * @param airRate the air rate of the package
+     * @param rushRate the rush rate of the package
+     * @param DRB dim_rating_break
+     */
+    public void CreateRate(int negotiatedID, int groundRate, int airRate, int rushRate, int DRB) {
+        int employeeID = this.getId();
+        String query = String.format("INSERT INTO rates(NEGOTIATED_RATE_ID, GROUND_RATE, AIR_RATE, RUSH_RATE, " +
+                "DIM_RATING_BREAK, EMPLOYEEID) VALUES (\"%d\",\"%f\",\"%f\",\"%f\",\"%d\",\"%d\");",
+                negotiatedID, groundRate, airRate, rushRate, DRB, employeeID);
+        h2.createAndExecute(connection, query);
+    }
+
+    /**
+     * The way to view the rates of the package by negotiated id
+     * @param negotiatedID the negotiated id for the package
+     * @return A ResultSet of the package.
+     */
+    public ResultSet viewRates(int negotiatedID) {
+        String query = "SELECT * FROM rates WHERE negotiated_rate_id=\"" + negotiatedID + "\"";
+        return h2.createAndExecuteQuery(connection, query);
+    }
+
+    public void modifyRates(int negotiatedID, int groundRate, int airRate, int rushRate, int DRB) {
+        int employeeID = this.getId();
+        String query = String.format("UPDATE rates SET GROUND_RATE = \"" + groundRate + "\", AIR_RATE = \"" +
+                airRate + "\", RUSH_rATE = \"" + rushRate + "\", DIM_RATING_BREAK = \"" + DRB + "\", EMPLOYEEID =\""
+                + employeeID + "WHERE NEGOTIATED_RATE_ID = \"" + employeeID + "\";");
+
+        h2.createAndExecute(connection, query);
+    }
 }
