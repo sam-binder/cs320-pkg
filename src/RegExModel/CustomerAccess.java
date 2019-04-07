@@ -28,11 +28,22 @@ public class CustomerAccess implements AutoCloseable{
         this.connection = this.h2.createConnection(username, password);
     }
 
+    /**
+     * Call this one when adding an address
+     * @param company
+     * @param attention
+     * @param streetLine1
+     * @param streetLine2
+     * @param zip_ID_fk
+     * @param account_number_fk
+     * @return
+     * @throws SQLException
+     */
     public ResultSet createNewAddress(String company, String attention, String streetLine1, String streetLine2,
                                       String zip_ID_fk, String account_number_fk) throws SQLException {
 
         ResultSet does_it_exist = retrieveAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
-        if (!does_it_exist.next()){
+        if (!does_it_exist.next()){ // this is how you check if its an empty ResultSet, per stack overflow
             does_it_exist = createAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
             does_it_exist = retrieveAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
         }
@@ -87,6 +98,14 @@ public class CustomerAccess implements AutoCloseable{
 
         return h2.createAndExecuteQuery(connection, query);
     }
+
+
+    public ResultSet getAllAddresses(String account_number_fk){
+        int account_number_fk_numeric = Integer.parseInt(account_number_fk);
+        String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ")";
+        return h2.createAndExecuteQuery(connection, query);
+    }
+
 
     //Stubbed out method for future functionality
     public void sendPackage(){
