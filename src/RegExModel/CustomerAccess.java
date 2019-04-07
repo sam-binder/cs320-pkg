@@ -25,9 +25,60 @@ public class CustomerAccess implements AutoCloseable{
     public CustomerAccess(String username, String password) throws SQLException {
         this.username = username;
         this.h2 = new H2Access();
-        this.connection = this.h2.createConnection(username, password);
+        this.connection = H2Access.createConnection(username, password);
     }
 
+    /**
+     * Sets up a new billing situation for a customer. By default, the balance starts at zero,
+     * and the pay model is monthly, and the employee foreign key is null. If this user
+     * become prolific or wants to change values, they call in, an accounting employee will
+     * be assigned to them, and thet employee will update their billing.
+     * @return boolean true if the billing was set up correctly
+     */
+    public boolean setUpBillingInfo() {
+        // Zero balance, monthly payments, account number, no employee assigned
+        String billingQuery = "INSERT INTO billing(balance_to_date, pay_model, " +
+                "account_number_fk, employee_id) VALUES(0, 'monthly', %d, null);";
+        // Query to update the billing_fk of the customer
+        String customerQuery = "UPDATE customer SET billing_fk=%d WHERE account_number=%d";
+        // Get the account number fk (which is the general fk of the user)
+        int accountNumber = H2Access.getUserFK(username);
+        // The billing ID, to be associated with the customer once it's created
+        int billingID = 0;
+        try {
+            // While this function sets up customer billing, the database access is not
+            // done with a customer access
+            Connection conn = H2Access.createConnection("me", "password");
+            String formattedQuery = String.format(billingQuery, accountNumber);
+            PreparedStatement prep = conn.prepareStatement(formattedQuery, Statement.RETURN_GENERATED_KEYS);
+            prep.executeUpdate();
+            ResultSet keys = prep.getGeneratedKeys();
+            if (keys.next())
+                billingID = keys.getInt("ID");
+
+            // Update the customer with the fk to this new billing object
+            formattedQuery = String.format(customerQuery, billingID, accountNumber);
+            conn.createStatement().execute(formattedQuery);
+        } catch (SQLException e){
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Allows the user to enter their basic information.
+     *
+     * @param firstName The customer's first name
+     * @param lastName The customer's last name
+     * @param phoneNumber The customer's phone number
+     * @return a boolean, true if the update was successful, else false.
+     */
+    public boolean enterBasicInformation(String firstName, String lastName, String phoneNumber){
+        String query = String.format("UPDATE customer SET first_name='%s', " +
+                "last_name='%s', phone_no='%s'", firstName, lastName, phoneNumber);
+        return H2Access.createAndExecute(connection, query);
+    }
 
     /**
      * Lets the User enter in minimal information about their address. All foreign keys
@@ -56,7 +107,7 @@ public class CustomerAccess implements AutoCloseable{
         int addressID = 0;
 
         // Get the user's fk
-        int userFK = h2.getUserFK(username);
+        int userFK = H2Access.getUserFK(username);
         if(userFK == -1)
             return -1;
 
@@ -305,30 +356,6 @@ public class CustomerAccess implements AutoCloseable{
     //Stubbed out method for future functionality
     public void addMoneyToAccount(){
 
-    }
-
-    /**
-     * Ease of use function to view data about a package.
-     * @param accntNum int: The account number of who order the package
-     * @param serial string: The package's serial number
-     * @return A ResultSet of data about the package, to be processed by the client
-     */
-    public ResultSet viewPackageData(int accntNum, String serial){
-        String query = "SELECT * from package WHERE account_number_fk=" + accntNum +
-                " AND serial='" + serial +"'";
-        return h2.createAndExecuteQuery(connection, query);
-    }
-
-    /**
-     * Ease of use function to view the history of a package.
-     * @param accntNum int: The account number of who order the package
-     * @param serial string: The package's serial number
-     * @return A ResultSet of data about the package's history, to be processed by the client
-     */
-    public ResultSet trackPackage(int accntNum, String serial){
-        String query = "SELECT * from transaction WHERE account_number_fk=" + accntNum +
-                " AND package_serial_fk='" + serial +"'";
-        return h2.createAndExecuteQuery(connection, query);
     }
 
 
