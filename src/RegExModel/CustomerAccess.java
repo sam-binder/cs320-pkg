@@ -67,16 +67,27 @@ public class CustomerAccess implements AutoCloseable{
     }
 
     /**
-     * Allows the user to enter their basic information.
+     * Allows the user to enter or update their basic information.
      *
-     * @param firstName The customer's first name
-     * @param lastName The customer's last name
-     * @param phoneNumber The customer's phone number
+     * @param firstName The customer's first name. Null to keep the same.
+     * @param lastName The customer's last name. Null to keep the same
+     * @param phoneNumber The customer's phone number. Null to keep the same
      * @return a boolean, true if the update was successful, else false.
      */
-    public boolean enterBasicInformation(String firstName, String lastName, String phoneNumber){
-        String query = String.format("UPDATE customer SET first_name='%s', " +
-                "last_name='%s', phone_no='%s'", firstName, lastName, phoneNumber);
+    public boolean changeBasicInformation(String firstName, String lastName, String phoneNumber){
+        String fnQuery = firstName != null ? "first_name='" + firstName + "', " : "";
+        String lnQuery = lastName != null ? "last_name='" + lastName + "', " : "";
+        String phoneNum = phoneNumber != null ? "phone_no='" + phoneNumber + "'" : "";
+        int userFK = H2Access.getUserFK(username);
+        if(firstName == null && lastName == null && phoneNumber == null)
+            return true;
+        if(phoneNumber == null && lastName != null)
+            lnQuery = lnQuery.substring(0, lnQuery.length() - 2);
+        if(lastName == null && phoneNumber == null)
+            fnQuery = fnQuery.substring(0, fnQuery.length() - 2);
+
+        String query = String.format("UPDATE customer SET %s %s %s WHERE account_number=%s",
+                fnQuery, lnQuery, phoneNum, userFK);
         return H2Access.createAndExecute(connection, query);
     }
 

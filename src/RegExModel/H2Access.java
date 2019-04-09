@@ -235,23 +235,40 @@ public class H2Access {
 		}
 	}
 
+	public static void clearDatabase(){
+		// remove all users but me, then drop all tables
+		try {
+			Connection conn = H2Access.createConnection("me", "password");
+			ResultSet r = H2Access.createAndExecuteQuery(conn, "Select username from user;");
+			while(r.next()) {
+				String user = r.getString(1);
+				if(!user.equalsIgnoreCase("me"))
+					H2Access.createAndExecute(conn, "drop user if exists " + user);
+			}
+			String dropTable = "DROP TABLE accounting_employee, address, billing, " +
+					"charge, customer, location, package, package_employee, priority, " +
+					"rate, service, transaction, user, zip_code;";
+			H2Access.createAndExecute(conn, dropTable);
+		} catch (SQLException e){e.printStackTrace();}
+	}
 	/**
 	 * Starts and runs the database
 	 * @param args: not used but you can use them
 	 */
 	public static void main(String[] args) {
-		H2Access h2 = new H2Access();
+		//H2Access h2 = new H2Access();
 
         //NOTE: Set to true if AND ONLY IF this is the first time running the code.
 		boolean firstTime = false;
 		if(firstTime)
 			new CreateNewDatabase().initDatabase();
+		//H2Access.clearDatabase();
 
 		// Example creating a Customer
-		System.out.println("Creating the customer returned: " + createCustomer("Walter14", "password"));
-        try (CustomerAccess c = new CustomerAccess("Walter14", "password")){
-            System.out.println(c.enterBasicInformation("Walter", "Schaertl", "585-867-5309"));
-            System.out.println(c.enterAddress("this co", "", "1234 Shortsville Rd", "", 14548));
+		System.out.println("Creating the customer returned: " + createCustomer("Walter", "password"));
+        try (CustomerAccess c = new CustomerAccess("Walter", "password")){
+            System.out.println(c.changeBasicInformation("Walter", "Schartl", "585-867-5309"));
+			System.out.println(c.changeBasicInformation("Walter", "Schaertl", null));
             System.out.println(c.setUpBillingInfo());
         } catch (SQLException e){ e.printStackTrace();}
 
