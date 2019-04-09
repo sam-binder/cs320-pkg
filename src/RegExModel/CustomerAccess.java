@@ -226,6 +226,38 @@ public class CustomerAccess implements AutoCloseable{
     }
 
     /**
+     * Sets the customer's 'home' address from the address they've used
+     * Return code
+     *  0   Success
+     *  1   The address_id provided does not exist or does not belong to this user
+     *  2   The home address could not be updated to key of the new address
+     *  3   Unknown error
+     *
+     *  @param addressId The ID of the address to set at the 'home' address
+     *  @return an integer status code
+     */
+    public int setHomeAddress(int addressId){
+        int accountNumber = H2Access.getUserFK(username);
+        String existsQuery = "SELECT account_number_fk FROM address WHERE id=" + addressId;
+        String setQuery = "UPDATE customer SET mailing_address_id_fk=%d WHERE account_number=%d";
+        try{
+            ResultSet r = H2Access.createAndExecuteQuery(connection, existsQuery);
+            if(r.next())
+                if(r.getInt(1) != accountNumber)
+                    return 1;
+            else
+                return 1;
+            String formattedSetQuery = String.format(setQuery, addressId, accountNumber);
+            if(H2Access.createAndExecute(connection, formattedSetQuery))
+                return 0;
+        } catch (SQLException e){
+            e.printStackTrace();
+            return 3;
+        }
+        return 2;
+    }
+
+    /**
      *
      * @param city
      * @param state
