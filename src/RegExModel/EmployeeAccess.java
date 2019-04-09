@@ -205,10 +205,23 @@ public class EmployeeAccess implements AutoCloseable{
      * @return the ResultSet of the charge table
      */
     public ResultSet viewCharge(int ID, int account_num, int package_serial) {
-        int service_id = this.getId();
         String query = "SELECT price FROM charges WHERE ID = " + ID + " AND account_number_fk = " +
                 account_num + " AND package_serial_fk = " + package_serial + ";";
         return h2.createAndExecuteQuery(connection, query);
+    }
+
+    /**
+     * The method for employees to update the charge for the package.
+     * @param ID the ID of the charges table
+     * @param account_num the account number of customers
+     * @param package_serial the package serial
+     * @param new_charges the new charge for the package
+     */
+    public void modifyCharge(int ID, int account_num, int package_serial, int new_charges, int service_id) {
+        String query = "UPDATE charges SET price = " + new_charges + ", service_id = " + service_id +
+                " WHERE ID = " + ID + " AND account_number_fk = " + account_num +
+                " AND package_serial_fk = " + package_serial + ";";
+        h2.createAndExecute(connection, query);
     }
 
     /**
@@ -224,6 +237,26 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+    public ResultSet viewService(int account_num, String serial) {
+        String query = "SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE" +
+                " account_number_fk = " + account_num + " AND serial = " + serial + ");";
+        return h2.createAndExecuteQuery(connection, query);
+    }
 
+    public void setService(int account_num, String serial, int service_id) {
+        String query = "UPDATE package SET service_id = " + service_id + " WHERE account_number_fk = " +
+                account_num + " AND serial = " + serial + ";";
+        h2.createAndExecute(connection, query);
+    }
 
+    public void setPriority(int service_id, int priority_id) {
+        String query = "UPDATE service SET priority_fk = " + priority_id + "WHERE ID = " + service_id + ";";
+        h2.createAndExecute(connection, query);
+    }
+
+    public ResultSet viewPriority(int service_id) {
+        String query = "SELECT * FROM priority WHERE WHERE ID = (SELECT priority_fk FROM service WHERE " +
+                "ID = " + service_id + ";";
+        return h2.createAndExecuteQuery(connection, query);
+    }
 }
