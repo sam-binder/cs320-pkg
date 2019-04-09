@@ -14,6 +14,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ *
+ */
 public class RegExViewPackage extends RegExPage {
     /**
      * URI of this page's base HTML file.
@@ -258,7 +261,12 @@ public class RegExViewPackage extends RegExPage {
         return pageContent.getBytes();
     }
 
-
+    /**
+     * Returns the navbar links if the user is signed in, else an empty string.
+     *
+     * @return  The navbar links if the user is signed in, else an empty string.
+     * @throws IOException  If any IOException is encountered, it is thrown out to the calling method.
+     */
     private String getNavbarLinks() throws IOException {
         // if the user is logged in, return the navbar links (and toggler)
         if(this.isLoggedIn) {
@@ -295,7 +303,18 @@ public class RegExViewPackage extends RegExPage {
         return (sum % 17) + 74 == checkDigit;
     }
 
-    private String generateTableRow(String dateStr, String timeStr, String city, String state, String note) {
+    /**
+     * Generates a row for the package tracking table.
+     *
+     * @param dateStr  The string representation of the date.
+     * @param timeStr  The string representation of the time.
+     * @param city  The city the update took place in.
+     * @param state  The state the update took place in.
+     * @param transactionID  The transaction ID to print a note about the update with.
+     *
+     * @return  A row for the package tracking table.
+     */
+    private String generateTableRow(String dateStr, String timeStr, String city, String state, String transactionID) {
         // a formatter to ensure consistent dates
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
         Date date = new Date();
@@ -313,6 +332,21 @@ public class RegExViewPackage extends RegExPage {
         } catch (ParseException pe) {
             /* this will never happen */
         }
+
+        String note = "";
+        switch(transactionID.charAt(0)) {
+            case 'V':
+                note = "Vehicle loading scan.";
+                break;
+            case 'T':
+                note = "Arrived at destination.";
+                break;
+            case 'H':
+                note = "Transfer at package facility.";
+                break;
+        }
+
+        note += " (" + transactionID + ")";
 
         // returns the update as a table row
         return "<tr>" +
