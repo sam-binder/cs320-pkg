@@ -1,0 +1,71 @@
+<div class="row mt-3">
+    <form id="tracker-form" method="get" action="/view-package/">
+        <div class="input-row">
+            <label for="package-id" class="label-header">Track a package</label>
+            <input type="text"
+                   class="regex-std-input"
+                   id="package-id"
+                   name="package-id"
+                   maxlength="15"
+                   placeholder="Enter tracking ID here"
+                   required />
+            <button type="submit"
+                    class="btn-primary ml-2"
+                    id="tracking-submit">
+                Track <i class="fa fa-arrow-circle-right ml-1"></i>
+            </button>
+        </div>
+    </form>
+</div>
+<div class="row mt-3">
+    <h2>Account history <small>(last 3 transactions)</small></h2>
+    <table class="regex-std-table table-responsive">
+        <thead>
+            <tr>
+                <th>Tracking ID</th>
+                <th>Charge Price</th>
+                <th>Status</th>
+                <th>Last Update</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <a href="/view-package/?package-id=00056501ERVA5Q#" title="View more info about package 00056501ERVA5Q#.">
+                        00056501ERVA5Q#
+                    </a>
+                </td>
+                <td>$106.48</td>
+                <td>Delivered</td>
+                <td>March 20, 2019 at 9:30AM EDT</td>
+            </tr>
+            <tr>
+                <td>
+                    <a href="/view-package/?package-id=00056505TW88I4#" title="View more info about package 00056505TW88I4#.">
+                        00056505TW88I4#
+                    </a>
+                </td>
+                <td>$104.47</td>
+                <td>In transit</td>
+                <td>March 18, 2019 at 11:43AM EDT</td>
+            </tr>
+            <tr>
+                <td>
+                    <a href="/view-package/?package-id=000565010QK9YS#" title="View more about package 000565010QK9YS#.">
+                        000565010QK9YS#
+                    </a>
+                </td>
+                <td>$93.15</td>
+                <td>Delivered</td>
+                <td>March 15, 2019 at 2:20PM EDT</td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <a href="/account-history/" title="View account history." class="no-deco">
+                        View entire account history <i class="fa fa-arrow-circle-right"></i>
+                    </a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
