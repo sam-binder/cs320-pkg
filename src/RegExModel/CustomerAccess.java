@@ -286,8 +286,78 @@ public class CustomerAccess implements AutoCloseable{
 
     private ResultSet createPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
                                     String dim_depth, String weight, String origin, String destination){
-        //TODO
 
+        String getLast = "SELECT MAX(serial) FROM package WHERE account_number_fk = " + account_number_fk + ";";
+
+        ResultSet last = h2.createAndExecuteQuery(connection, getLast);
+        // GET the last serial this customer has sent, add 1
+        String lastSerial;
+        char nextSerial[] = new char[6];
+        boolean carry = false;
+
+
+        try {
+            lastSerial = last.getString(0);
+        } catch (SQLException e) {
+            lastSerial = "AAAAAA";
+        }
+
+        int i = 5;
+        if (lastSerial.charAt(i) == 'Z') {
+            nextSerial[i] = '0';
+
+        } else if ( lastSerial.charAt(i) == '9' ){
+            nextSerial[i] = 'A';
+            carry = true;
+
+        } else {
+            nextSerial[i] = (char) (lastSerial.charAt(i) + 1);
+        }
+        if(!carry){
+            for(int j = 4; j < 0; j--){
+                nextSerial[j] = (char) (lastSerial.charAt(i) + 1);
+            }
+        }
+        while (carry){
+            // this will work fine until someone mails their
+            // 2176782336th package ( little over 2billion )
+            // so i guess we're not aiming to work with amazon
+
+            i--;
+            if (lastSerial.charAt(i) == 'Z') {
+                nextSerial[i] = '0';
+                carry = false;
+
+            } else if ( lastSerial.charAt(i) == '9' ){
+                nextSerial[i] = 'A';
+                carry = true;
+
+            } else {
+                nextSerial[i] = (char) (lastSerial.charAt(i) + 1);
+                carry = false;
+            }
+        }
+
+
+        String query =  "INSERT INTO PACKAGE " +
+                        "(ACCOUNT_NUMBER_FK, SERVICE_ID_FK, SERIAL, DIM_HEIGHT, DIM_LENGTH, DIM_DEPTH, WEIGHT, ORIGIN_FK, DESTINATION_FK)" +
+                        " VALUES (" +
+                        account_number_fk + ", " +
+                        service_id_fk + ", " +
+                        "'" + nextSerial.toString() + "', " +
+                        dim_height + ", " +
+                        dim_length + ", " +
+                        dim_depth + ", " +
+                        weight + ", " +
+                        "'" + origin + "', " +
+                        "'" + destination + "');";
+        ResultSet ins_new_rec = h2.createAndExecuteQuery(connection, query);
+        String query2 = "SELECT * FROM PACKAGE" +
+                        " WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk +
+                        ") AND (SERIAL = '" + nextSerial.toString() + "');";
+
+        ins_new_rec = h2.createAndExecuteQuery(connection, query2);
+        return ins_new_rec;
 
     }
 
