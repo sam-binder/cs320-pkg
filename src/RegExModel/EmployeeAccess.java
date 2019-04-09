@@ -166,7 +166,7 @@ public class EmployeeAccess implements AutoCloseable{
     /**
      * The way to view the rates of the package by negotiated id
      * @param negotiatedID the negotiated id for the package
-     * @return A ResultSet of the package.
+     * @return A ResultSet of the rates.
      */
     public ResultSet viewRates(String negotiatedID) {
         int negotiated = Integer.parseInt(negotiatedID);
@@ -202,12 +202,25 @@ public class EmployeeAccess implements AutoCloseable{
      * @param ID the id of the charge table
      * @param account_num the account number for specific customers
      * @param package_serial the serial of the package
-     * @return the ResultSet of the package
+     * @return the ResultSet of the charge table
      */
     public ResultSet viewCharge(int ID, int account_num, int package_serial) {
         int service_id = this.getId();
         String query = "SELECT price FROM charges WHERE ID = " + ID + " AND account_number_fk = " +
                 account_num + " AND package_serial_fk = " + package_serial + ";";
+        return h2.createAndExecuteQuery(connection, query);
+    }
+
+    /**
+     * The SQL for viewing the current location of the package is at
+     * @param account_num the account number of the customer
+     * @param serial the serial of the package
+     * @return the ResultSet of the package current location
+     */
+    public ResultSet viewPackageCurrentLocation(int account_num, String serial) {
+        String query = "SELECT location_ID_fk FROM transaction WHERE account_number_fk = " + account_num +
+                " AND package_serial_fk = " + serial + " AND ID = SELECT MAX(T.ID) FROM transaction AS T WHERE " +
+                "T.account_number_fk = " + account_num + " AND package_serial_fk = " + serial + ";";
         return h2.createAndExecuteQuery(connection, query);
     }
 
