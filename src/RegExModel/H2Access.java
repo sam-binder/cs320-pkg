@@ -225,7 +225,11 @@ public class H2Access {
 	 * @return A ResultSet of data about the package's history, to be processed by the client
 	 */
 	public static ResultSet trackPackage(int accntNum, String serial){
-		String query = "SELECT * from transaction WHERE account_number_fk=" + accntNum +
+		String query = "SELECT transaction.*, zip_code.city, zip_code.state from transaction " +
+				"INNER JOIN location ON location_id_fk = location.ID " +
+				"INNER JOIN address ON address.ID = location.address_id " +
+				"INNER JOIN zip_code ON zip_code.ID = address.zip_fk " +
+				"WHERE transaction.account_number_fk=" + accntNum +
 				" AND package_serial_fk='" + serial +"' ORDER BY date, time;";
 		try {
 			Connection conn = createConnection("me", "password");

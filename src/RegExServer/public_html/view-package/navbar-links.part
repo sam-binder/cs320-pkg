@@ -10,6 +10,11 @@
         </a>
     </li>
     <li class="navbar-link">
+        <a href="../view-package/" title="View tracking details for a package." class="active">
+            Track Package
+        </a>
+    </li>
+    <li class="navbar-link">
         <a href="../account-history/" title="View your account history.">
             Account History
         </a>

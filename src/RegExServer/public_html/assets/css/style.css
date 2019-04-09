@@ -362,6 +362,9 @@ label {
 .text-bold {
     font-weight: bolder;
 }
+.text-italic {
+    font-style: italic;
+}
 .ml-1 {
     margin-left: 0.5rem;
 }
