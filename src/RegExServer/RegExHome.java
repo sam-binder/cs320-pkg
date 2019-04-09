@@ -19,6 +19,8 @@ public class RegExHome extends RegExPage{
      */
     private static String pageURI = RegExHttpHandler.DOCUMENT_ROOT + "/home/index.html";
 
+    private static String customerHomeURI = RegExHttpHandler.DOCUMENT_ROOT + "/home/customer-home.part";
+
     /**
      * The session this page represents.
      */
@@ -49,20 +51,34 @@ public class RegExHome extends RegExPage{
             StandardCharsets.UTF_8
         );
 
+        // drops in the specific home page for the user that is logged in
+        pageContent = pageContent.replace(
+            "@{user-type-specific-content}",
+            getUserTypeSpecificContent()
+        );
+
         // replaces all var placeholders with session details
         pageContent = userRegExSession.replaceVarPlaceholders(pageContent);
-
-        String userTypeSpecificContent = getUserTypeSpecificContent();
 
         // return our page content as bytes
         return pageContent.getBytes();
     }
 
-    public String getUserTypeSpecificContent() {
-        // generates home content for customers
-        if(this.userRegExSession.accountType.equals("customer")) {
-            // generate customer
+    public String getUserTypeSpecificContent() throws IOException {
+        // determines which home page to load based on the user type
+        switch(this.userRegExSession.accountType) {
+            case "customer":
+                return new String(
+                    Files.readAllBytes(
+                        Paths.get(customerHomeURI)
+                    ),
+                    StandardCharsets.UTF_8
+                );
+            // temporary "DEVELOPMENT IN PROGRESS" message
+            case "accounting_employee":
+            case "package_employee":
+            default:
+                return this.userRegExSession.accountType;
         }
-        return "";
     }
 }
