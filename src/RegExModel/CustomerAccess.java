@@ -243,7 +243,12 @@ public class CustomerAccess implements AutoCloseable{
             -looks up zip codes for destination, origin
                 if not found, uses first appropriate city/state match (or throw exception if no city/state match)
             -looks up OR creates addresses for destination, origin
+        After inserting:
+            -create charge record
+            -update billing
         returns createPackage after those have been done
+
+        Does *NOT* create initial transaction - that needs to be done by a package employee
      */
     public ResultSet sendPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
                                  String dim_depth, String weight,
