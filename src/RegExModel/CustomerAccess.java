@@ -67,16 +67,27 @@ public class CustomerAccess implements AutoCloseable{
     }
 
     /**
-     * Allows the user to enter their basic information.
+     * Allows the user to enter or update their basic information.
      *
-     * @param firstName The customer's first name
-     * @param lastName The customer's last name
-     * @param phoneNumber The customer's phone number
+     * @param firstName The customer's first name. Null to keep the same.
+     * @param lastName The customer's last name. Null to keep the same
+     * @param phoneNumber The customer's phone number. Null to keep the same
      * @return a boolean, true if the update was successful, else false.
      */
-    public boolean enterBasicInformation(String firstName, String lastName, String phoneNumber){
-        String query = String.format("UPDATE customer SET first_name='%s', " +
-                "last_name='%s', phone_no='%s'", firstName, lastName, phoneNumber);
+    public boolean changeBasicInformation(String firstName, String lastName, String phoneNumber){
+        String fnQuery = firstName != null ? "first_name='" + firstName + "', " : "";
+        String lnQuery = lastName != null ? "last_name='" + lastName + "', " : "";
+        String phoneNum = phoneNumber != null ? "phone_no='" + phoneNumber + "'" : "";
+        int userFK = H2Access.getUserFK(username);
+        if(firstName == null && lastName == null && phoneNumber == null)
+            return true;
+        if(phoneNumber == null && lastName != null)
+            lnQuery = lnQuery.substring(0, lnQuery.length() - 2);
+        if(lastName == null && phoneNumber == null)
+            fnQuery = fnQuery.substring(0, fnQuery.length() - 2);
+
+        String query = String.format("UPDATE customer SET %s %s %s WHERE account_number=%s",
+                fnQuery, lnQuery, phoneNum, userFK);
         return H2Access.createAndExecute(connection, query);
     }
 
@@ -232,7 +243,12 @@ public class CustomerAccess implements AutoCloseable{
             -looks up zip codes for destination, origin
                 if not found, uses first appropriate city/state match (or throw exception if no city/state match)
             -looks up OR creates addresses for destination, origin
+        After inserting:
+            -create charge record
+            -update billing
         returns createPackage after those have been done
+
+        Does *NOT* create initial transaction - that needs to be done by a package employee
      */
     public ResultSet sendPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
                                  String dim_depth, String weight,
@@ -278,9 +294,94 @@ public class CustomerAccess implements AutoCloseable{
         String origin_id = find_location(origin_has_addr, 'O');
         String destination_id = find_location(dest_has_addr, 'D');
 
-        return createPackage(account_number_fk, service_id_fk, dim_height, dim_length, dim_depth, weight, origin_id, destination_id);
+        ResultSet pkg = createPackage(account_number_fk, service_id_fk, dim_height, dim_length, dim_depth, weight, origin_id, destination_id);
+        // ADD CHARGES
+
+        ResultSet rates = getCustomerRates(account_number_fk);
+        int billable_weight;
+        int _h = Integer.parseInt(dim_height);
+        int _l = Integer.parseInt(dim_length);
+        int _d = Integer.parseInt(dim_depth);
+        int _w = Integer.parseInt(weight);
+        int dim_break = rates.getInt(4);
+
+        billable_weight = _h * _l * _d;
+        billable_weight /= dim_break;
+
+        if(_w > billable_weight){
+            billable_weight = _w;
+        }
+
+        ResultSet charges = createCharges(rates, account_number_fk, pkg.getString(2), billable_weight, service_id_fk);
+        // charges should be the result of an insert query, so empty;
+
+        // call billing update method
+        ResultSet billing = updateBilling(account_number_fk);
+        // also empty - result of update query
+
+        return pkg;
+
+    }
+
+    private ResultSet updateBilling(String acct) throws SQLException{
+        // get current outstanding charges (from charge)
+        // & get total paid (from charge)
+        String Qoutstanding = "SELECT SUM(price) SUM(paid) FROM CHARGE WHERE account_number_fk = '" + acct + "';";
+        ResultSet outstanding = h2.createAndExecuteQuery(connection, Qoutstanding);
+        double due = outstanding.getDouble(0) - outstanding.getDouble(1);
+        // update billing table
+        String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + "WHERE account_number_fk = " + acct + ";";
+        return h2.createAndExecuteQuery(connection, QupdateOutstanding);
 
 
+
+    }
+
+    private ResultSet createCharges(ResultSet rate, String account_number_fk, String serial,
+                                    int billable_weight, String service_id) throws SQLException{
+        int service = Integer.parseInt(service_id);
+        double svc_multiplier = 1.0;
+        int priority = service / 4;
+        int hazardous = (service / 2) % 2;
+        int signature = (service % 2);
+        double base;
+        double rush;
+        if(signature == 0){
+            svc_multiplier += .05;
+        }
+        if(hazardous == 1){
+            svc_multiplier += .15;
+        }
+        if(priority > 2){
+            base = rate.getDouble(2);
+        } else {
+            base = rate.getDouble(1);
+        }
+        if(1 == priority % 1){
+            rush = rate.getDouble(3);
+        } else {
+            rush = 1.0;
+        }
+        double totalprice = ((double)billable_weight)*base*rush*svc_multiplier;
+        String QInsert = "INSERT INTO CHARGE (PRICE, ACCOUNT_NUMBER_FK, PACKAGE_SERIAL_FK, SERVICE_ID, PAID) " +
+                            "VALUES(" +
+                            totalprice + ", " +
+                            account_number_fk + ", " +
+                            serial + ", " +
+                            service_id + ", " +
+                            "0 );";
+        return h2.createAndExecuteQuery(connection, QInsert);
+
+    }
+
+
+    private ResultSet getCustomerRates(String account_number) throws SQLException{
+        String QrateID = "SELECT negotiated_rate_ID_fk FROM CUSTOMER WHERE account_number = '" + account_number + "';";
+        ResultSet rateID = h2.createAndExecuteQuery(connection, QrateID);
+        int rate_fk = rateID.getInt(0);
+        String QGetRates = "SELECT * FROM RATE WHERE negotiated_rate_ID = " + rate_fk + ";";
+        ResultSet rates = h2.createAndExecuteQuery(connection, QGetRates);
+        return rates;
 
     }
 

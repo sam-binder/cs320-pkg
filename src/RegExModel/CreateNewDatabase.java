@@ -291,7 +291,7 @@ public class CreateNewDatabase {
                 + "ATTN VARCHAR(255),"
                 + "STREET_LINE_1 VARCHAR(255),"
                 + "STREET_LINE_2 VARCHAR(255),"
-                + "ZIP_FK INT,"
+                + "ZIP_FK INT," // TODO char(5)
                 + "ACCOUNT_NUMBER_FK INT,"
                 + ");" ;
         Statement stmt = conn.createStatement();
