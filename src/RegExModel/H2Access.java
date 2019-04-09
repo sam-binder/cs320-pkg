@@ -248,9 +248,11 @@ public class H2Access {
 			new CreateNewDatabase().initDatabase();
 
 		// Example creating a Customer
-		System.out.println("Creating the customer returned: " + createCustomer("Walter12", "password"));
-        try (CustomerAccess c = new CustomerAccess("Walter12", "password")){
+		System.out.println("Creating the customer returned: " + createCustomer("Walter14", "password"));
+        try (CustomerAccess c = new CustomerAccess("Walter14", "password")){
+            System.out.println(c.enterBasicInformation("Walter", "Schaertl", "585-867-5309"));
             System.out.println(c.enterAddress("this co", "", "1234 Shortsville Rd", "", 14548));
+            System.out.println(c.setUpBillingInfo());
         } catch (SQLException e){ e.printStackTrace();}
 
 
@@ -321,6 +323,4 @@ public class H2Access {
 		}
 
 	}
-
-
 }
