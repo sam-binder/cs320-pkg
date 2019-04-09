@@ -1,9 +1,18 @@
 package RegExServer;
 
+import RegExModel.H2Access;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class RegExViewPackage extends RegExPage {
     /**
@@ -90,8 +99,8 @@ public class RegExViewPackage extends RegExPage {
 
             // parse out account number (first 6 digits of tracking ID)
             try {
-                accntNum = Integer.parseInt(this.packageID.substring(0, 5));
-                serial = this.packageID.substring(8, 13);
+                accntNum = Integer.parseInt(this.packageID.substring(0, 6));
+                serial = this.packageID.substring(8, 14);
             // any thrown exception will mean the parse did not succeed
             } catch (Exception e) {
                 // log that an error has occurred where the package ID was not valid
@@ -108,14 +117,96 @@ public class RegExViewPackage extends RegExPage {
                 // logs that the package information is being requested from the DB
                 RegExLogger.log("requesting information from DB about package " + this.packageID, 1);
 
-                // load in the success section content
-                specifiedIDPageContent = new String(
-                    Files.readAllBytes(
-                        Paths.get(packageIDSucceedURI)
-                    ),
-                    StandardCharsets.UTF_8
-                );
+                // queries the DB for tracking information
+                ResultSet packageTrackingInfo = H2Access.trackPackage(accntNum, serial);
+                // queries the DB for package data
+                ResultSet packageStats = H2Access.viewPackageData(accntNum, serial);
+                try {
+                    if(packageStats != null && packageStats.next()) {
+                        // load in the success section content
+                        specifiedIDPageContent = new String(
+                            Files.readAllBytes(
+                                Paths.get(packageIDSucceedURI)
+                            ),
+                            StandardCharsets.UTF_8
+                        ).replace(
+                            "@{package-height}",
+                            packageStats.getString(4)
+                        ).replace(
+                            "@{package-length}",
+                            packageStats.getString(5)
+                        ).replace(
+                            "@{package-width}",
+                            packageStats.getString(6)
+                        ).replace(
+                            "@{package-weight}",
+                            packageStats.getString(7)
+                        );
 
+                        // will eventually be the table of tracking updates
+                        StringBuilder trackingTable = new StringBuilder();
+
+                        if(!packageTrackingInfo.next()) {
+                            // sets that there were no entries returned
+                            trackingTable.append(
+                                "<tr>" +
+                                    "<td class='text-italic text-bold text-center' colspan='3'>No tracking data yet.</td>" +
+                                "</tr>"
+                            );
+                        } else {
+                            // next it goes through and dump in the table of tracking updates
+                            do {
+                                trackingTable.append(
+                                    generateTableRow(
+                                        packageTrackingInfo.getString(2),
+                                        packageTrackingInfo.getString(3),
+                                        packageTrackingInfo.getString(8),
+                                        packageTrackingInfo.getString(9),
+                                        packageTrackingInfo.getString(5)
+                                    )
+                                );
+                            } while(packageTrackingInfo.next());
+                        }
+
+                        // drops in our tracking table entries
+                        specifiedIDPageContent = specifiedIDPageContent.replace(
+                            "@{tracking-table}",
+                            trackingTable
+                        );
+                    } else {
+                        // if we get here the database returned a null when querying information about the package
+                        // implying it doesn't exist
+                        specifiedIDPageContent = new String(
+                                Files.readAllBytes(
+                                        Paths.get(packageIDFailURI)
+                                ),
+                                StandardCharsets.UTF_8
+                        ).replace(
+                                "@{error-dialog}",
+                                RegExErrorDialog.getErrorDialogHTML("Package does not exist.")
+                        ).replace(
+                                "@{entered-package-id}",
+                                this.packageID
+                        );
+                    }
+                } catch (SQLException sqle) {
+                    // if we get here the database returned a null when querying information about the package
+                    // implying it doesn't exist
+                    specifiedIDPageContent = new String(
+                        Files.readAllBytes(
+                            Paths.get(packageIDFailURI)
+                        ),
+                        StandardCharsets.UTF_8
+                    ).replace(
+                            "@{error-dialog}",
+                            RegExErrorDialog.getErrorDialogHTML(
+                                "An error was encountered when trying to get package data. Please try again in a little bit."
+                            )
+                    ).replace(
+                            "@{entered-package-id}",
+                            this.packageID
+                    );
+                }
             } else {
                 // load in the failure section content
                 specifiedIDPageContent = new String(
@@ -183,6 +274,11 @@ public class RegExViewPackage extends RegExPage {
         }
     }
 
+    /**
+     * Determines if the tracking ID is valid (checksum is correct)
+     *
+     * @return True if the checksum passes. False otherwise.
+     */
     private boolean trackingIDIsValid() {
         // pulls out the check digit (the last character)
         char checkDigit = this.packageID.charAt(this.packageID.length() - 1);
@@ -197,5 +293,32 @@ public class RegExViewPackage extends RegExPage {
 
         // returns true if the check digit matches the sum mod 17
         return (sum % 17) + 74 == checkDigit;
+    }
+
+    private String generateTableRow(String dateStr, String timeStr, String city, String state, String note) {
+        // a formatter to ensure consistent dates
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        Date date = new Date();
+        DateFormat dateFormatOutput = new SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH);
+
+        // a formatter to ensure consistent TIMES
+        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.ENGLISH);
+        Date time = new Date();
+        DateFormat timeFormatOutput = new SimpleDateFormat("hh:mm a");
+
+        try {
+            // parses date and time
+            date = dateFormat.parse(dateStr);
+            time = timeFormat.parse(timeStr);
+        } catch (ParseException pe) {
+            /* this will never happen */
+        }
+
+        // returns the update as a table row
+        return "<tr>" +
+                    "<td>" + dateFormatOutput.format(date) + " at " + timeFormatOutput.format(time) + "</td>" +
+                    "<td class='text-bold'>" + city + ", " + state + "</td>" +
+                    "<td>" + note + "</td>" +
+                "</tr>";
     }
 }

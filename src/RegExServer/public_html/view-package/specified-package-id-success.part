@@ -40,26 +40,7 @@
         </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>March 20, 2019 at 9:30AM EDT</td>
-                <td class="text-bold">Santa Fe, NM</td>
-                <td>Package delivered.</td>
-            </tr>
-            <tr>
-                <td>March 19, 2019 at 8:30PM EDT</td>
-                <td class="text-bold">Santa Fe, NM</td>
-                <td>Arrival scan at local carrier facility.</td>
-            </tr>
-            <tr>
-                <td>March 19, 2019 at 11:30AM EDT</td>
-                <td class="text-bold">Albuquerque, NM</td>
-                <td>Arrival scan at transfer facility.</td>
-            </tr>
-            <tr>
-                <td>March 18, 2019 at 8:30PM EDT</td>
-                <td class="text-bold">Henrietta, NY</td>
-                <td>Departure scan at origin facility</td>
-            </tr>
+            @{tracking-table}
         </tbody>
     </table>
 </div>
