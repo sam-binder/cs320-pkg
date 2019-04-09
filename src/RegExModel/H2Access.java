@@ -226,7 +226,7 @@ public class H2Access {
 	 */
 	public static ResultSet trackPackage(int accntNum, String serial){
 		String query = "SELECT * from transaction WHERE account_number_fk=" + accntNum +
-				" AND package_serial_fk='" + serial +"'";
+				" AND package_serial_fk='" + serial +"' ORDER BY date, time;";
 		try {
 			Connection conn = createConnection("me", "password");
 			return createAndExecuteQuery(conn, query);
