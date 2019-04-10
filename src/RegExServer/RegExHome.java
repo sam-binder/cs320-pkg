@@ -74,7 +74,7 @@ public class RegExHome extends RegExPage{
     }
 
     public String getUserTypeSpecificContent() throws IOException {
-        String userSpecificContent = "";
+        String userSpecificContent;
         // determines which home page to load based on the user type
         switch(this.userRegExSession.accountType) {
             case "customer":
@@ -88,7 +88,7 @@ public class RegExHome extends RegExPage{
                 StringBuilder lastThreeTransTable = new StringBuilder();
 
                 // gets the resultset for the last (up to) three transactions on this account
-                ResultSet lastThreeTrans = H2Access.getLastThreeTransactions(131);
+                ResultSet lastThreeTrans = H2Access.getLastThreeTransactions(this.userRegExSession.accountNumber);
 
                 // attempts to load in all of the three things
                 try {
@@ -112,7 +112,13 @@ public class RegExHome extends RegExPage{
                             } while (lastThreeTrans.next());
                         } else {
                             // dump in a "no records yet!"
-
+                            lastThreeTransTable.append(
+                                "<tr>" +
+                                    "<td colspan='3' class='text-italic text-bold text-center'>" +
+                                        "No transactions yet." +
+                                    "</td>" +
+                                "</tr>"
+                            );
                         }
                     }
                 } catch (SQLException sqle) {

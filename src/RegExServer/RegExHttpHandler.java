@@ -291,13 +291,64 @@ public class RegExHttpHandler implements HttpHandler {
                             // gets an empty response body
                             responseBody = new byte[]{};
                         } else {
-                            // generates the error content
-                            String errorContent = (requestParameters.containsKey("login-failed")) ?
-                                                    "Your username or password was incorrect." :
-                                                    RegExIndex.NO_ERROR;
+                            // defaults to a NO ERROR
+                            String errorContent = RegExIndex.NO_ERROR;
+
+                            // dumps in an error message if one is needed
+                            if(requestParameters.containsKey("login-failed")) {
+                                errorContent = "Your username or password was incorrect.";
+                            } else if(requestParameters.containsKey("account-created")) {
+                                errorContent = "Account created successfully.";
+                            }
                             // gets the response body (with or without error dialogue depending on if
                             // there should be one)
                             responseBody = new RegExIndex(errorContent).getPageContent();
+                        }
+                        break;
+                    case "/create-account/index.html":
+                        // if they are on this page with a "create-submit" post variable
+                        if(requestParameters.containsKey("create-submit")) {
+                            // logs that the person is attempting to create an account
+                            RegExLogger.log("create account attempt read", 1);
+
+                            // extracts the username and password
+                            String username = (String)requestParameters.get("username");
+                            String password = (String)requestParameters.get("password");
+
+                            // attempts to create a customer account and responds based on the method return
+                            switch(H2Access.createCustomer(username, password)) {
+                                case 0:
+                                    // redirect them to the home page
+                                    responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                                    // redirect user to the index
+                                    redirectUser(exchange, DOMAIN_ROOT + "/?account-created");
+
+                                    // account creation succeeded
+                                    responseBody = new byte[]{};
+                                    break;
+                                case 1:
+                                case 3:
+                                    // username exists already, try again
+                                    responseBody = new RegExCreateAccount(
+                                        "Username is already taken."
+                                    ).getPageContent();
+                                    break;
+                                case 2:
+                                    // database error
+                                    responseBody = new RegExCreateAccount(
+                                            "Database error encountered. Please try again in a minute."
+                                    ).getPageContent();
+                                    break;
+                                default:
+                                    // customer ID get failed
+                                    responseBody = new RegExCreateAccount(
+                                        "A server issue was encountered.  Please try again in a minute."
+                                    ).getPageContent();
+                            }
+                        } else {
+                            // with no post variables we just load up the default page
+                            responseBody = new RegExCreateAccount(RegExCreateAccount.NO_ERROR).getPageContent();
                         }
                         break;
                     case "/home/index.html":
