@@ -94,6 +94,20 @@ public class EmployeeAccess implements AutoCloseable{
 }
 
     /**
+     * The method to view the customer info by customer account, first name and last name.
+     * @param customerID the account for the customer
+     * @param lastName last name
+     * @param firstName first name
+     * @return the result set of the specific customer
+     */
+    public ResultSet viewSpecificCustomer(String customerID, String lastName, String firstName) {
+        int accountNum = Integer.parseInt(customerID);
+        String query = "SELECT * FROM customer WHERE account_number = " + customerID + " AND" +
+                " last_name = " + lastName + " AND first_name = " + firstName + ";";
+        return h2.createAndExecuteQuery(connection, query);
+    }
+
+    /**
      * An easy way for accounting employees to see customer billing information
      * @param acctNumber int: The id of the account to view the billing information
      * @return a ResultSet of customer billing information, to be processed by the client
@@ -237,6 +251,8 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+
+
     public ResultSet viewService(int account_num, String serial) {
         String query = "SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE" +
                 " account_number_fk = " + account_num + " AND serial = " + serial + ");";
@@ -259,4 +275,6 @@ public class EmployeeAccess implements AutoCloseable{
                 "ID = " + service_id + ";";
         return h2.createAndExecuteQuery(connection, query);
     }
+
+
 }
