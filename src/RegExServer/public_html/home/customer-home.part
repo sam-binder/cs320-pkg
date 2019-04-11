@@ -23,42 +23,12 @@
         <thead>
             <tr>
                 <th>Tracking ID</th>
-                <th>Charge Price</th>
                 <th>Status</th>
                 <th>Last Update</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>
-                    <a href="/view-package/?package-id=00056501ERVA5Q#" title="View more info about package 00056501ERVA5Q#.">
-                        00056501ERVA5Q#
-                    </a>
-                </td>
-                <td>$106.48</td>
-                <td>Delivered</td>
-                <td>March 20, 2019 at 9:30AM EDT</td>
-            </tr>
-            <tr>
-                <td>
-                    <a href="/view-package/?package-id=00056505TW88I4#" title="View more info about package 00056505TW88I4#.">
-                        00056505TW88I4#
-                    </a>
-                </td>
-                <td>$104.47</td>
-                <td>In transit</td>
-                <td>March 18, 2019 at 11:43AM EDT</td>
-            </tr>
-            <tr>
-                <td>
-                    <a href="/view-package/?package-id=000565010QK9YS#" title="View more about package 000565010QK9YS#.">
-                        000565010QK9YS#
-                    </a>
-                </td>
-                <td>$93.15</td>
-                <td>Delivered</td>
-                <td>March 15, 2019 at 2:20PM EDT</td>
-            </tr>
+            @{last-three-transactions}
             <tr>
                 <td colspan="4">
                     <a href="/account-history/" title="View account history." class="no-deco">
