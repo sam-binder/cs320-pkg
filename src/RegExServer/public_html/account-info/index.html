@@ -31,7 +31,7 @@
             </li>
             <li class="navbar-link">
                 <a href="/" title="View your account history." class="active">
-                    Account History
+                    Account Info
                 </a>
             </li>
             <li class="navbar-link">
@@ -55,10 +55,18 @@
                 <tbody>
                     <tr>
                         <td class="text-right text-bold">
+                            User Name
+                        </td>
+                        <td class="text-left">
+                            @{user-name}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right text-bold">
                             First Name
                         </td>
                         <td class="text-left">
-                            @{account-first-name}
+                            @{first-name}
                         </td>
                     </tr>
                     <tr>
@@ -66,15 +74,7 @@
                             Last Name
                         </td>
                         <td class="text-left">
-                            @{account-last-name}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right text-bold">
-                            Phone Number
-                        </td>
-                        <td class="text-left">
-                            @{account-phone}
+                            @{last-name}
                         </td>
                     </tr>
                 </tbody>
