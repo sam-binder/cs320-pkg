@@ -209,10 +209,8 @@ public class RegExHttpHandler implements HttpHandler {
                             String username = (String)requestParameters.get("username");
                             String password = (String)requestParameters.get("password");
 
-                            // creates a new login access
-                            H2Access loginAccess = new H2Access();
                             // gets the user type based off of username
-                            String userType = loginAccess.getUserType(username);
+                            String userType = H2Access.getUserType(username);
 
                             // if the user actually exists in the database
                             if(userType != null) {
@@ -224,30 +222,38 @@ public class RegExHttpHandler implements HttpHandler {
                                         // if this throws a SQLException either username or password
                                         // was incorrect
                                         new CustomerAccess(username, password);
+
+                                        // logs that the login was successful
+                                        RegExLogger.log("login successful", 1);
+
+                                        // getting here means the login succeeded
+                                        // creates a new session for the user
+                                        userRegExSession = new RegExSession(userType, username, password);
+
+                                        // gets a new random session ID
+                                        String newSessionId = getNewSessionId();
+
+                                        // adds our session to the map
+                                        this.sessions.put(newSessionId, userRegExSession);
+
+                                        // adds a new cookie header to tell the browser to keep track
+                                        // of our session
+                                        attachNewHeader(
+                                            exchange,
+                                            "Set-Cookie",
+                                            Collections.singletonList("REGEX_SESSION=" + newSessionId)
+                                        );
+                                    // the web-based UI is ONLY for customers; responds with the index saying so
                                     } else {
-                                        // attempts to create an EmployeeAccess
-                                        new EmployeeAccess(username, password, userType);
+                                        // logs that this was not allowed
+                                        RegExLogger.warn("non-customer login attempted; not allowed", 1);
+
+                                        // responds with the index page again saying it is only for customers
+                                        responseBody = new RegExIndex(
+                                        "This web application is only for customers."
+                                        ).getPageContent();
+                                        break;
                                     }
-
-                                    RegExLogger.log("login successful", 1);
-
-                                    // getting here means the login succeeded
-                                    // creates a new session for the user
-                                    userRegExSession = new RegExSession(userType, username, password);
-
-                                    // gets a new random session ID
-                                    String newSessionId = getNewSessionId();
-
-                                    // adds our session to the map
-                                    this.sessions.put(newSessionId, userRegExSession);
-
-                                    // adds a new cookie header to tell the browser to keep track
-                                    // of our session
-                                    attachNewHeader(
-                                        exchange,
-                                        "Set-Cookie",
-                                        Collections.singletonList("REGEX_SESSION=" + newSessionId)
-                                    );
                                 } catch(SQLException sqle) {
                                     // logs that the login attempt failed
                                     RegExLogger.warn("password check failed", 1);
@@ -331,7 +337,7 @@ public class RegExHttpHandler implements HttpHandler {
                                 case 3:
                                     // username exists already, try again
                                     responseBody = new RegExCreateAccount(
-                                        "Username is already taken."
+                                        "Username is already taken. Please use a different username."
                                     ).getPageContent();
                                     break;
                                 case 2:
