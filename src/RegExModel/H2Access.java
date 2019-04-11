@@ -331,8 +331,8 @@ public class H2Access {
 			System.out.println(c.changeBasicInformation("Walter", "Schartl", "585-867-5309"));
 			System.out.println(c.changeBasicInformation(null, "Schaertl", null));
 			System.out.println(c.setUpBillingInfo());
-			System.out.println(c.enterAddress("this co", "Walter S", "1123 lone rd", "", 14548));
-			System.out.println(c.enterAddress("this co", "Walter s", "Bahamas", "", 14540));
+			System.out.println(c.enterAddress("this co", "Walter S", "1123 lone rd", "", "14548"));
+			System.out.println(c.enterAddress("this co", "Walter s", "Bahamas", "", "14540"));
 			ResultSet r = c.getAllAddresses(H2Access.getUserFK("Walter") + "");
 			if (r.next()) {
 				int id = r.getInt(1);

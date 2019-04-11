@@ -245,6 +245,11 @@ label {
     margin-bottom: 8px;
 }
 
+.required:after {
+    content: "*";
+    color: #ff0000;
+}
+
 .label-header {
     font-size: 1.5rem;
     font-weight: 700;

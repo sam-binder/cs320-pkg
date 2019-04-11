@@ -324,6 +324,32 @@ public class RegExHttpHandler implements HttpHandler {
                             // attempts to create a customer account and responds based on the method return
                             switch(H2Access.createCustomer(username, password)) {
                                 case 0:
+                                    try {
+                                        // if we make it here we need to do some more processing with the user
+                                        CustomerAccess tempCustomerAccess = new CustomerAccess(username, password);
+
+                                        // sets up the user's billing info to default
+                                        tempCustomerAccess.setUpBillingInfo();
+
+                                        // next we need to do things with the customer's account, like set their
+                                        // basic information
+                                        tempCustomerAccess.changeBasicInformation(
+                                            (String)requestParameters.get("first-name"),
+                                            (String)requestParameters.get("last-name"),
+                                            (String)requestParameters.get("phone-number")
+                                        );
+
+                                        // next is to set in place the customer's address information
+                                        tempCustomerAccess.enterAddress(
+                                            (String)requestParameters.get("company"),
+                                            (String)requestParameters.get("attention"),
+                                            (String)requestParameters.get("street-line-1"),
+                                            (String)requestParameters.get("street-line-2"),
+                                            (String)requestParameters.get("zip")
+                                        );
+                                    } catch (SQLException sqle) {
+                                        /* legitimately this will NEVER happen */
+                                    }
                                     // redirect them to the home page
                                     responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
