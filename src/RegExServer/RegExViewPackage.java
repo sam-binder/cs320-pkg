@@ -339,7 +339,13 @@ public class RegExViewPackage extends RegExPage {
                 note = "Vehicle loading scan.";
                 break;
             case 'T':
-                note = "Arrived at destination.";
+                switch(transactionID.charAt(1)) {
+                    case 'O':
+                        note = "Arrived at carrier facility.";
+                        break;
+                    case 'D':
+                        note = "Arrived at destination.";
+                }
                 break;
             case 'H':
                 note = "Transfer at package facility.";

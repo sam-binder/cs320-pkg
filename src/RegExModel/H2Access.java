@@ -248,7 +248,35 @@ public class H2Access {
 		}
 	}
 
+	/**
+	 * A function which returns a ResultSet containing the last three transactions involved with this account.
+	 *
+	 * @param accntNum  The account number to get the last three transactions on.
+	 * @return  A ResultSet containing UP TO 3 transactions.
+	 */
 	public static ResultSet getLastThreeTransactions(int accntNum) {
+		String query = "SELECT date, time, transaction.account_number_fk, " +
+				"package_serial_fk, location_ID_fk, package.service_id_fk " +
+				"FROM transaction " +
+				"INNER JOIN package ON package_serial_fk = package.serial " +
+				"WHERE transaction.account_number_fk = " + accntNum + " " +
+				"ORDER BY date, time " +
+				"LIMIT 3;";
+		try {
+			Connection conn = createConnection("me", "password");
+			return createAndExecuteQuery(conn, query);
+		} catch (SQLException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Gets all packages associated with an account.
+	 *
+	 * @param accntNum  The account number to get the packages for.
+	 * @return  A ResultSet containing all packages for this account.
+	 */
+	public static ResultSet getAllPackages(int accntNum) {
 		String query = "SELECT date, time, transaction.account_number_fk, " +
 				"package_serial_fk, location_ID_fk, package.service_id_fk " +
 				"FROM transaction " +
