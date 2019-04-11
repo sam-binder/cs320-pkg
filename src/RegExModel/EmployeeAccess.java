@@ -275,23 +275,36 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+    /**
+     * View the service of the package the customer pick
+     * @param account_num the account number fo the customer
+     * @param serial the serial of the package
+     * @return the resultSet of the service of the package
+     */
     public ResultSet viewService(int account_num, String serial) {
         String query = "SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE" +
                 " account_number_fk = " + account_num + " AND serial = " + serial + ");";
         return h2.createAndExecuteQuery(connection, query);
     }
 
-    public void setService(int account_num, String serial, int service_id) {
+    /**
+     * modify the service of the package if necessary
+     * @param account_num the account number of the customer
+     * @param serial the serial of the package
+     * @param service_id the new service
+     */
+    public void modifyService(int account_num, String serial, int service_id) {
         String query = "UPDATE package SET service_id = " + service_id + " WHERE account_number_fk = " +
                 account_num + " AND serial = " + serial + ";";
         h2.createAndExecute(connection, query);
     }
 
-    public void setPriority(int service_id, int priority_id) {
-        String query = "UPDATE service SET priority_fk = " + priority_id + "WHERE ID = " + service_id + ";";
-        h2.createAndExecute(connection, query);
-    }
 
+    /**
+     * Method to view the priority of the package
+     * @param service_id the service id
+     * @return the resultSet of priority
+     */
     public ResultSet viewPriority(int service_id) {
         String query = "SELECT * FROM priority WHERE WHERE ID = (SELECT priority_fk FROM service WHERE " +
                 "ID = " + service_id + ";";
