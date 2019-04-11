@@ -251,7 +251,29 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+    /**
+     * The method to insert to signature of receiver
+     * @param receiver name of receiver
+     * @param account_num account number of the customer
+     * @param serial serial of the package
+     */
+    public void putSignature(String receiver, String account_num, String serial) {
+        String query = "UPDATE package SET signed_for_by = " + receiver + " WHERE account_number_fk = " +
+                account_num + " AND serial = " + serial + ";";
+        h2.createAndExecute(connection, query);
+    }
 
+    /**
+     * Check the receiver's name if the package is signed
+     * @param account_num the account number of the customer
+     * @param serial the serial of the package
+     * @return the resultSet of the signature of the package
+     */
+    public ResultSet checkSignature(String account_num, String serial) {
+        String query = "SELECT signed_for_by FROM  package WHERE account_number_fk = " + account_num +
+                " AND serial = " + serial + ";";
+        return h2.createAndExecuteQuery(connection, query);
+    }
 
     public ResultSet viewService(int account_num, String serial) {
         String query = "SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE" +
