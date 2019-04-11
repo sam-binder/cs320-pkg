@@ -3,7 +3,6 @@ package RegExServer;
 // FILE: RegExHome.java
 
 import RegExModel.H2Access;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,9 +26,6 @@ public class RegExHome extends RegExPage{
      * URI of this page's base HTML file.
      */
     private static String pageURI = RegExHttpHandler.DOCUMENT_ROOT + "/home/index.html";
-
-    private static String customerHomeURI = RegExHttpHandler.DOCUMENT_ROOT + "/home/customer-home.part";
-
     /**
      * The session this page represents.
      */
@@ -60,10 +56,51 @@ public class RegExHome extends RegExPage{
             StandardCharsets.UTF_8
         );
 
-        // drops in the specific home page for the user that is logged in
+        // we have to build out "last 3 transactions" table
+        StringBuilder lastThreeTransTable = new StringBuilder();
+
+        // gets the resultset for the last (up to) three transactions on this account
+        ResultSet lastThreeTrans = H2Access.getLastThreeTransactions(this.userRegExSession.accountNumber);
+
+        // attempts to load in all of the three things
+        try {
+            // if the resultset has actual data
+            if(lastThreeTrans != null) {
+                // load up the first transaction if it exists
+                if(lastThreeTrans.next()) {
+                    do {
+                        lastThreeTransTable.append(
+                                generateTableRow(
+                                        generateTrackingID(
+                                                131,
+                                                lastThreeTrans.getString(6),
+                                                lastThreeTrans.getString(4)
+                                        ),
+                                        lastThreeTrans.getString(5),
+                                        lastThreeTrans.getString(1),
+                                        lastThreeTrans.getString(2)
+                                )
+                        );
+                    } while (lastThreeTrans.next());
+                } else {
+                    // dump in a "no records yet"
+                    lastThreeTransTable.append(
+                            "<tr>" +
+                                "<td colspan='3' class='text-italic text-bold text-center'>" +
+                                    "No transactions yet." +
+                                "</td>" +
+                            "</tr>"
+                    );
+                }
+            }
+        } catch (SQLException sqle) {
+            /* hopefully this never happens */
+        }
+
+        // places our table content
         pageContent = pageContent.replace(
-            "@{user-type-specific-content}",
-            getUserTypeSpecificContent()
+            "@{last-three-transactions}",
+            lastThreeTransTable
         );
 
         // replaces all var placeholders with session details
@@ -71,72 +108,6 @@ public class RegExHome extends RegExPage{
 
         // return our page content as bytes
         return pageContent.getBytes();
-    }
-
-    public String getUserTypeSpecificContent() throws IOException {
-        String userSpecificContent;
-        // determines which home page to load based on the user type
-        switch(this.userRegExSession.accountType) {
-            case "customer":
-                userSpecificContent = new String(
-                    Files.readAllBytes(
-                        Paths.get(customerHomeURI)
-                    ),
-                    StandardCharsets.UTF_8
-                );
-
-                StringBuilder lastThreeTransTable = new StringBuilder();
-
-                // gets the resultset for the last (up to) three transactions on this account
-                ResultSet lastThreeTrans = H2Access.getLastThreeTransactions(this.userRegExSession.accountNumber);
-
-                // attempts to load in all of the three things
-                try {
-                    // if the resultset has actual data
-                    if(lastThreeTrans != null) {
-                        // load up the first transaction if it exists
-                        if(lastThreeTrans.next()) {
-                            do {
-                                lastThreeTransTable.append(
-                                    generateTableRow(
-                                        generateTrackingID(
-                                            131,
-                                            lastThreeTrans.getString(6),
-                                            lastThreeTrans.getString(4)
-                                        ),
-                                        lastThreeTrans.getString(5),
-                                        lastThreeTrans.getString(1),
-                                        lastThreeTrans.getString(2)
-                                    )
-                                );
-                            } while (lastThreeTrans.next());
-                        } else {
-                            // dump in a "no records yet!"
-                            lastThreeTransTable.append(
-                                "<tr>" +
-                                    "<td colspan='3' class='text-italic text-bold text-center'>" +
-                                        "No transactions yet." +
-                                    "</td>" +
-                                "</tr>"
-                            );
-                        }
-                    }
-                } catch (SQLException sqle) {
-                    /* hopefully this never happens */
-                }
-
-                userSpecificContent = userSpecificContent.replace(
-                    "@{last-three-transactions}",
-                    lastThreeTransTable
-                );
-                break;
-            // temporary "DEVELOPMENT IN PROGRESS" message
-            case "accounting_employee":
-            case "package_employee":
-            default:
-                return this.userRegExSession.accountType;
-        }
-        return userSpecificContent;
     }
 
     /**

@@ -10,7 +10,7 @@
     </head>
     <body>
         <div class="header">
-            <a href="./" class="navbar-brand">
+            <a href="../" class="navbar-brand">
                 <img src="/assets/images/regex_logo_icon.png" alt="RegEx Logo" title="View the homepage." />
             </a>
         </div>
@@ -19,29 +19,109 @@
             <div id="heading-wrapper-1">
                 <div class="content-header mt-0">
                     <h1>Create account</h1>
+                    <h3>Fields marked with a <i class="required"></i> are required.</h3>
                 </div>
             </div>
             @{error-dialog}
-            <div class="login">
+            <div class="create-account">
                 <form id="create-form" method="post">
                     <div class="input-row">
-                        <label for="username">Username</label>
+                        <label for="first-name" class="required">First Name</label>
+                        <input type="text"
+                               id="first-name"
+                               name="first-name"
+                               class="regex-std-input"
+                               placeholder="Enter first name here."
+                               maxlength="255"
+                               required />
+                    </div>
+                    <div class="input-row">
+                        <label for="last-name" class="required">Last Name</label>
+                        <input type="text"
+                               id="last-name"
+                               name="last-name"
+                               class="regex-std-input"
+                               placeholder="Enter last name here."
+                               maxlength="255"
+                               required />
+                    </div>
+                    <div class="input-row">
+                        <label for="phone-number" class="required">Phone Number</label>
+                        <input type="tel"
+                               id="phone-number"
+                               name="phone-number"
+                               class="regex-std-input"
+                               placeholder="###-###-####"
+                               maxlength="255"
+                               pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                               required />
+                    </div>
+                    <div class="input-row">
+                        <label for="username" class="required">Username</label>
                         <input type="text"
                                id="username"
                                name="username"
                                class="regex-std-input"
                                placeholder="Enter username here."
-                               maxlength="60"
+                               maxlength="255"
                                required />
                     </div>
                     <div class="input-row">
-                        <label for="password">Password</label>
+                        <label for="password" class="required">Password</label>
                         <input type="password"
                                id="password"
                                name="password"
                                class="regex-std-input"
                                placeholder="Enter password here."
-                               maxlength="60"
+                               maxlength="255"
+                               required />
+                    </div>
+                    <div class="input-row">
+                        <label for="company" class="required">Company</label>
+                        <input type="text"
+                               id="company"
+                               name="company"
+                               class="regex-std-input"
+                               placeholder="Enter company/personal name here."
+                               maxlength="255"
+                               required />
+                    </div>
+                    <div class="input-row">
+                        <label for="attention">Attention Line</label>
+                        <input type="text"
+                               id="attention"
+                               name="attention"
+                               class="regex-std-input"
+                               placeholder="Enter attention line here if company."
+                               maxlength="255" />
+                    </div>
+                    <div class="input-row">
+                        <label for="address-line-1" class="required">Address Line 1</label>
+                        <input type="text"
+                               id="address-line-1"
+                               name="address-line-1"
+                               class="regex-std-input"
+                               placeholder="Enter address line 1 here."
+                               maxlength="255"
+                               required />
+                    </div>
+                    <div class="input-row">
+                        <label for="address-line-2">Address Line 2</label>
+                        <input type="text"
+                               id="address-line-2"
+                               name="address-line-2"
+                               class="regex-std-input"
+                               placeholder="Enter address line 2 here."
+                               maxlength="255" />
+                    </div>
+                    <div class="input-row">
+                        <label for="zip" class="required">Zip</label>
+                        <input type="text"
+                               id="zip"
+                               name="zip"
+                               class="regex-std-input"
+                               placeholder="Enter 5-digit zip code here."
+                               maxlength="255"
                                required />
                     </div>
                     <div class="input-row">
