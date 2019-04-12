@@ -1,9 +1,14 @@
 package RegExModel;
+import com.sun.org.apache.xpath.internal.SourceTree;
+import sun.font.TrueTypeFont;
+
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Time;
 import java.sql.SQLException;
+import java.util.Scanner;
 
 /**
  * Created by Walter Schaertl on 3/23/2019.
@@ -311,5 +316,114 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
+
+
+    /**
+     * Tests if this location ID is valid
+     * @param locationID
+     * @return
+     */
+    private boolean testLocationId(String locationID){
+        String query = "SELECT * FROM location WHERE id='"+ locationID +"';";
+        ResultSet r = H2Access.createAndExecuteQuery(connection, query);
+        try {
+            return r.next();
+        } catch (SQLException e){
+            return  false;
+        }
+    }
+
+    private boolean testpackageId(int acctNumber, String pkgSerial){
+        String query = "SELECT * FROM package WHERE account_number_fk=%d and serial='%s'";
+        query = String.format(query, acctNumber, pkgSerial);
+        ResultSet r = H2Access.createAndExecuteQuery(connection, query);
+        try{
+            return r.next();
+        } catch (SQLException e){
+            return false;
+        }
+    }
+
+    private void clearScreen(){
+        try {
+            new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+        } catch (IOException | InterruptedException e){}
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
+    }
+
+    public static void main(String[] args){
+        Scanner in = new Scanner(System.in);
+        boolean success = false;
+        do {
+            System.out.print("Username: ");
+            String username = in.nextLine();
+            System.out.print("Password: ");
+            String password = in.nextLine();
+            try {
+                String employeeType =  H2Access.getUserType(username);
+                if(employeeType == null)
+                    System.out.println("This username doesn't exists, please try again.");
+                else if(employeeType.equalsIgnoreCase("customer"))
+                    System.out.println("Customers are not allowed to access this portal.");
+                else {
+                    EmployeeAccess employee = new EmployeeAccess(username, password, employeeType);
+                    success = true;
+                    System.out.print("\033[H\033[2J");
+                    System.out.flush();
+                    System.out.println("Congratulations! You've been logged in as a(n) " +
+                            employeeType.replace("_", " ") + ".");
+                    if(employeeType.equalsIgnoreCase("package_employee")){
+                        boolean idSuccess = true;
+                        do {
+                            // Sample number: TOPHP7TTMYLN
+                            System.out.print("Please enter your location ID: ");
+                            String locationID = in.nextLine();
+                            idSuccess = employee.testLocationId(locationID);
+                            if (!employee.testLocationId(locationID)) {
+                                System.out.println("That location does not exists, please try again.");
+                            } else {
+                                System.out.println("Tracking number received, you may now start scanning packages.");
+                                while(true){
+                                    // Sample Package: 00013114B9IWEA9
+                                    System.out.print("Please scan a package (or Q to quit): ");
+                                    String pkg = in.nextLine();
+                                    if(pkg.equalsIgnoreCase("Q")){
+                                        System.out.println("Have a nice day!");
+                                        return;
+                                    } else {
+                                        if(pkg.length() < 15){
+                                            System.out.println("Not enough digits entered.");
+                                        } else if(pkg.length() > 15){
+                                            System.out.println("Too many digits entered");
+                                        } else {
+                                            // TODO add a check for required signature if the location starts with TD
+                                            // TODO packages orgins and destination get set on creation
+                                            int acctNum = Integer.parseInt(pkg.substring(0, 6));
+                                            String serial = pkg.substring(8, 14);
+                                            System.out.println("Account: " + acctNum + " Serial: " + serial);
+                                            if(!employee.testpackageId(acctNum, serial)){
+                                                System.out.println("That package does not exists." +
+                                                        " Please verify the information was entered correctly.");
+                                            } else {
+                                                System.out.println("Package location updated!");
+                                                employee.updatePackageLocation(locationID, acctNum, serial);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        while (!idSuccess);
+                    }
+                }
+            } catch (SQLException e){
+                System.out.println("Could not log in with those credentials. " +
+                        "Check your username and password. " +
+                        "If the issue persists, contact an administrator.");
+            }
+        } while(!success);
+
+    }
 
 }
