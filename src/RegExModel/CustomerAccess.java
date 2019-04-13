@@ -339,6 +339,7 @@ public class CustomerAccess implements AutoCloseable{
         String dest_has_addr = "none";
 
         // detect zip code IDs for origin & destination
+        /* edit: nope
         do {
             if (o_zip.getInt(1) == o_zip_numeric ){
                 origin_has_addr = o_zip.getString(2);
@@ -356,7 +357,23 @@ public class CustomerAccess implements AutoCloseable{
         if(dest_has_addr.equals("none")){
             d_zip.first();
             dest_has_addr = d_zip.getString(2);
+        } */
+
+        if(o_zip.next()){
+            origin_has_addr = o_zip.getString("ID");
+        } else {
+            o_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(origin_zip));
+            o_zip.next();
+            origin_has_addr = o_zip.getString("ID");
         }
+        if(d_zip.next()){
+            dest_has_addr = d_zip.getString("ID");
+        } else {
+            d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(destination_zip));
+            d_zip.next();
+            dest_has_addr = d_zip.getString("ID");
+        }
+
 
         // get address fks
         ResultSet origin_RS = createNewAddress(origin_company, origin_attention, origin_street1, origin_street2,
