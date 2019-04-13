@@ -28,24 +28,6 @@
     margin-right: 0;
 }
 
-a.btn-primary {
-    color: #ffffff;
-    text-decoration: none;
-    display: block;
-    width: 110px;
-}
-
-a.btn-primary:hover {
-    color: #ffffff;
-    box-shadow: 0 5px 15px 0 rgba(0,0,0,0.3);
-    background-color: #4378db;
-}
-
-a.btn-primary:active {
-    color: #ffffff;
-    background-color: #578bec;
-}
-
 @media screen and (max-width: 675px) {
     #login-form, #create-form {
         width: 100%;

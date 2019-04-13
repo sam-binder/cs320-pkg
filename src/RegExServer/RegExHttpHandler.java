@@ -405,7 +405,29 @@ public class RegExHttpHandler implements HttpHandler {
                     case "/view-package/index.html":
                         // gets the packageID from the map (will be null if none is there)
                         String packageID = (String)requestParameters.get("package-id");
-                        responseBody = new RegExViewPackage(packageID, userRegExSession != null).getPageContent();
+                        responseBody = new RegExViewPackage(
+                            packageID,
+                            userRegExSession != null
+                        ).getPageContent();
+                        break;
+                    case "/account-info/index.html":
+                        // if the user attempts to access a protected page without a session
+                        if(sessionExpired || userRegExSession == null) {
+                            // redirect user to home page
+                            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                            // attaches a location header for the browser to go to root (login)
+                            redirectUser(
+                                    exchange,
+                                    DOMAIN_ROOT + "/"
+                            );
+
+                            // empty response body
+                            responseBody = new byte[]{};
+                        } else {
+                            // simple gets the page content for this user
+                            responseBody = new RegExAccountInfo(userRegExSession).getPageContent();
+                        }
                         break;
                     case "/logout/index.html":
                         // deletes cookie from browser
@@ -591,6 +613,11 @@ public class RegExHttpHandler implements HttpHandler {
         );
     }
 
+    /**
+     * Generates a random session ID to set as a cookie in the browser.
+     *
+     * @return  A random string of characters which represent the session ID.
+     */
     private String getNewSessionId() {
         Random random = new Random();
         String availableChars = "abcdefghijklmnopqrstuvwxyz0123456789";
