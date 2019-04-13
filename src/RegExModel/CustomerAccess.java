@@ -168,7 +168,23 @@ public class CustomerAccess implements AutoCloseable{
         }
 
         return does_it_exist;
+    }
 
+    /**
+     * Small method to return basic user information.
+     *
+     * @return  A ResultSet containing the basic user information.
+     */
+    public ResultSet getUserInformation() {
+        // queries from the user table to get this user's information
+        return H2Access.createAndExecuteQuery(
+            this.connection,
+            "SELECT username, customer.*, address.* " +
+            "FROM user " +
+            "INNER JOIN customer ON general_fk=customer.account_number " +
+            "INNER JOIN address ON customer.mailing_address_ID_fk=address.ID " +
+            "WHERE username='" + this.username + "';"
+        );
     }
 
     /**
@@ -364,7 +380,6 @@ public class CustomerAccess implements AutoCloseable{
         // also empty - result of update query
 
         return pkg;
-
     }
 
     /**

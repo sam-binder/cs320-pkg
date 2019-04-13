@@ -39,7 +39,7 @@ public class RegExSession {
     /**
      * User's password
      */
-    private String password;
+    public String password;
 
     /**
      * The date this session expires.

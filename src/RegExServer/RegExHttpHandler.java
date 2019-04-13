@@ -343,8 +343,8 @@ public class RegExHttpHandler implements HttpHandler {
                                         tempCustomerAccess.enterAddress(
                                             (String)requestParameters.get("company"),
                                             (String)requestParameters.get("attention"),
-                                            (String)requestParameters.get("street-line-1"),
-                                            (String)requestParameters.get("street-line-2"),
+                                            (String)requestParameters.get("address-line-1"),
+                                            (String)requestParameters.get("address-line-2"),
                                             (String)requestParameters.get("zip")
                                         );
                                     } catch (SQLException sqle) {

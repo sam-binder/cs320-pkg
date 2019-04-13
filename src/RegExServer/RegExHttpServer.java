@@ -2,6 +2,7 @@ package RegExServer;
 
 // FILE: RegExHttpServer.java
 
+import RegExModel.H2Access;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 
@@ -40,5 +41,8 @@ public class RegExHttpServer {
         RegExLogger.logBootup("server is started", RegExLogger.NO_LEVEL);
         // then begins to listen for connections
         server.start();
+
+        // grants public rights on startup
+//        H2Access.grantPublicRights();
     }
 }

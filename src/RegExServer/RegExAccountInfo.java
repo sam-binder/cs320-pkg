@@ -1,9 +1,13 @@
 package RegExServer;
 
+import RegExModel.CustomerAccess;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class RegExAccountInfo extends RegExPage {
     /**
@@ -46,6 +50,36 @@ public class RegExAccountInfo extends RegExPage {
         pageContent = this.userRegExSession.replaceVarPlaceholders(pageContent);
 
         // next we have to replace all of the editable content
+        try {
+            // creates a customer access
+            CustomerAccess tempCustomerAccess = new CustomerAccess(
+                this.userRegExSession.userName,
+                this.userRegExSession.password
+            );
+
+            // gets the user's information
+            ResultSet userDetails = tempCustomerAccess.getUserInformation();
+
+
+            // if there exists userDetails next row (it always will)
+            if(userDetails.next()) {
+                // replace all of the information we just grabbed
+                pageContent = pageContent.replace(
+                    "@{first-name}",
+                    userDetails.getString(6)
+                ).replace (
+                    "@{last-name}",
+                    userDetails.getString(7)
+                ).replace(
+                    "@{phone-number}",
+                    userDetails.getString(8)
+                );
+            }
+        } catch (SQLException sqle) {
+            sqle.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // returns the byte-level form of the page content
         return pageContent.getBytes();
