@@ -395,7 +395,7 @@ public class CustomerAccess implements AutoCloseable{
         int _l = Integer.parseInt(dim_length);
         int _d = Integer.parseInt(dim_depth);
         int _w = Integer.parseInt(weight);
-        int dim_break = rates.getInt(5);
+        int dim_break = rates.getInt("dim_rating_break");
 
         billable_weight = _h * _l * _d;
         billable_weight /= dim_break;
