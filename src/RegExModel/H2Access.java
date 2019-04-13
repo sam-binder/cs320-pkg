@@ -76,7 +76,7 @@ public class H2Access {
 	 */
 	public static ResultSet createAndExecuteQuery(Connection conn, String query) {
 		try {
-			Statement stmt = conn.createStatement();
+			Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 			return stmt.executeQuery(query);
 		} catch (SQLException e) {
 			e.printStackTrace();
