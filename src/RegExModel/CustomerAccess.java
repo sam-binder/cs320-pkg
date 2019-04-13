@@ -367,6 +367,7 @@ public class CustomerAccess implements AutoCloseable{
             origin_has_addr = o_zip.getString("ID");
         }
         if(d_zip.next()){
+            // wet code, don't care.
             dest_has_addr = d_zip.getString("ID");
         } else {
             d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(destination_zip));
