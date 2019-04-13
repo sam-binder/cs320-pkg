@@ -33,20 +33,20 @@ public class Util {
      * @return returns true or false as to whether the check digit is correct.
      * @throws BadTrackingNumberFormatException when you provide not 15 characters
      */
-    public static boolean validateCheckDigit(String tracking_num) throws BadTrackingNumberFormatException{
+    public static boolean validateCheckDigit(String tracking_num) {
         if(tracking_num.length() != 15){
-            throw new BadTrackingNumberFormatException();
-        }
-        int accum = 0;
-        for(int i = 0 ; i < 14; i++){
-            accum += (int) tracking_num.charAt(i);
-        }
-        accum %= 17;
+            return false;
+        } else {
+            int accum = 0;
+            for (int i = 0; i < 14; i++) {
+                accum += (int) tracking_num.charAt(i);
+            }
+            accum %= 17;
 
-        accum += 74;
-        char chk = (char) accum;
-        return (chk == tracking_num.charAt(14));
-
+            accum += 74;
+            char chk = (char) accum;
+            return (chk == tracking_num.charAt(14));
+        }
     }
 
     public class Package{
