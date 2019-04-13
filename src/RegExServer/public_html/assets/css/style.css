@@ -255,7 +255,7 @@ label {
     font-weight: 700;
 }
 
-.regex-std-input, .regex-alt-input {
+.regex-std-input, .regex-alt-input, .regex-std-select {
     /*display: block;*/
     padding: 10px;
     min-height: 25px;
@@ -265,6 +265,14 @@ label {
     font-size: 1rem;
     font-weight: 300;
     border-radius: .25rem;
+}
+
+.regex-std-select {
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right .75rem center/8px 10px;
+    padding-right: 1.75rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
 }
 
 .regex-std-input {
@@ -425,6 +433,10 @@ a.btn-primary:active {
 }
 .mw-50 {
     max-width: 50%;
+}
+
+.ib {
+    display: inline-block!important;
 }
 
 @media screen and (max-width: 675px) {

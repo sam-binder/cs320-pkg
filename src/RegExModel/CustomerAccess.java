@@ -307,7 +307,7 @@ public class CustomerAccess implements AutoCloseable{
      */
     public ResultSet zipCodeLookupByCityState(String city, String state){
         String query =
-                "SELECT * FROM ZIP WHERE (CITY = '" + city + "') AND (STATE ='" + state + "');";
+                "SELECT * FROM ZIP_CODE WHERE (CITY = '" + city + "') AND (STATE ='" + state + "');";
         return h2.createAndExecuteQuery(connection, query);
     }
 
@@ -340,7 +340,7 @@ public class CustomerAccess implements AutoCloseable{
 
         // detect zip code IDs for origin & destination
         do {
-            if (o_zip.getInt(0) == o_zip_numeric ){
+            if (o_zip.getInt(1) == o_zip_numeric ){
                 origin_has_addr = o_zip.getString(1);
             }
         } while (o_zip.next());
@@ -348,7 +348,7 @@ public class CustomerAccess implements AutoCloseable{
             o_zip.first();
             origin_has_addr = o_zip.getString(1);
         }
-        do{
+        do {
             if (d_zip.getInt(0) == d_zip_numeric ){
                 dest_has_addr = d_zip.getString(1);
             }

@@ -30,7 +30,7 @@
                     </a>
                 </li>
                 <li class="navbar-link">
-                    <a href="/" title="View your account history.">
+                    <a href="/" title="View your account information.">
                         Account Info
                     </a>
                 </li>
@@ -43,50 +43,224 @@
 
         </div>
 
-        <div class="content">
+        <div class="content thin">
             <div id="heading-wrapper-1">
                 <div class="content-header mt-0">
                     <h1 class="header-smaller">Send Package</h1>
                 </div>
             </div>
-            <div class="row mt-3">
-                <h2>Account Details</h2>
-                <table class="regex-std-table mw-50">
-                    <tbody>
-                        <tr>
-                            <td class="text-right text-bold">
-                                User Name
-                            </td>
-                            <td class="text-left">
-                                @{user-name}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="text-right text-bold">
-                                First Name
-                            </td>
-                            <td class="text-left">
-                                @{first-name}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="text-right text-bold">
-                                Last Name
-                            </td>
-                            <td class="text-left">
-                                @{last-name}
-                            </td>
-                        </tr>
+            <form method="POST">
+                <div class="row mt-3">
+                    <h2>Package Details</h2>
+                </div>
+                <div class="input-row">
+                    <label for="length">Length</label>
+                    <input type="number"
+                           id="length"
+                           name="length"
+                           class="regex-std-input"
+                           onblur="this.value=Math.ceil(Math.abs(parseFloat(this.value)));"
+                           placeholder="Enter package length here (in inches)."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="width">Width</label>
+                    <input type="number"
+                           id="width"
+                           name="width"
+                           class="regex-std-input"
+                           onblur="this.value=Math.ceil(Math.abs(parseFloat(this.value)));"
+                           placeholder="Enter package width here (in inches)."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="height">Height</label>
+                    <input type="number"
+                           id="height"
+                           name="height"
+                           class="regex-std-input"
+                           onblur="this.value=Math.ceil(Math.abs(parseFloat(this.value)));"
+                           placeholder="Enter package height here (in inches)."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="weight">Weight</label>
+                    <input type="number"
+                           id="weight"
+                           name="weight"
+                           class="regex-std-input"
+                           onblur="this.value=Math.ceil(Math.abs(parseFloat(this.value)));"
+                           placeholder="Enter package weight here (nearest pound)."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="method">Shipping Method</label>
+                    <select id="method"
+                            name="method"
+                            class="regex-std-select"
+                            required>
+                        <option value=""> - Select method - </option>
+                        <option value="1">Ground</option>
+                        <option value="2">Ground Rush</option>
+                        <option value="3">Air</option>
+                        <option value="4">Air Rush</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <input type="checkbox"
+                           id="hazardous"
+                           name="hazardous"
+                           value="y" />
+                    <label for="hazardous" class="ib">Hazardous contents?</label>
+                </div>
 
-                    </tbody>
-                </table>
-            </div>
-            <div class="row mt-3">
-                <h2>Sent packages</h2>
-                <table class="regex-std-table">
-                    @{sent-packages-table}
-                </table>
-            </div>
+                <div class="input-row">
+                    <input type="checkbox"
+                           id="signature"
+                           name="signature"
+                           value="y" />
+                    <label for="signature" class="ib">Signature required?</label>
+                </div>
+
+                <div class="row mt-3">
+                    <h2>Package Origin</h2>
+                </div>
+                <div class="input-row">
+                    <label for="origin-company">Company Name</label>
+                    <input type="text"
+                           id="origin-company"
+                           name="origin-company"
+                           class="regex-std-input"
+                           placeholder="Enter origin company name here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="origin-attention">Attention <small>(optional)</small></label>
+                    <input type="text"
+                           id="origin-attention"
+                           name="origin-attention"
+                           class="regex-std-input"
+                           placeholder="Enter origin attention here." />
+                </div>
+                <div class="input-row">
+                    <label for="origin-address-line-1">Address Line 1</label>
+                    <input type="text"
+                           id="origin-address-line-1"
+                           name="origin-address-line-1"
+                           class="regex-std-input"
+                           placeholder="Enter origin address line 1 here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="origin-address-line-2">Address Line 2 <small>(optional)</small></label>
+                    <input type="text"
+                           id="origin-address-line-2"
+                           name="origin-address-line-2"
+                           class="regex-std-input"
+                           placeholder="Enter origin address line 2 here." />
+                </div>
+                <div class="input-row">
+                    <label for="origin-city">Address City</label>
+                    <input type="text"
+                           id="origin-city"
+                           name="origin-city"
+                           class="regex-std-input"
+                           placeholder="Enter origin city here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="origin-state">Address State</label>
+                    <input type="text"
+                           id="origin-state"
+                           name="origin-state"
+                           class="regex-std-input"
+                           placeholder="Enter origin state here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="origin-zip">Address Zip Code</label>
+                    <input type="text"
+                           id="origin-zip"
+                           name="origin-zip"
+                           class="regex-std-input"
+                           placeholder="Enter origin zip code here."
+                           required />
+                </div>
+                
+                <div class="row mt-3">
+                    <h2>Package Destination</h2>
+                </div>
+                <div class="input-row">
+                    <label for="destination-company">Company Name</label>
+                    <input type="text"
+                           id="destination-company"
+                           name="destination-company"
+                           class="regex-std-input"
+                           placeholder="Enter destination company name here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="destination-attention">Attention <small>(optional)</small></label>
+                    <input type="text"
+                           id="destination-attention"
+                           name="destination-attention"
+                           class="regex-std-input"
+                           placeholder="Enter destination attention here." />
+                </div>
+                <div class="input-row">
+                    <label for="destination-address-line-1">Address Line 1</label>
+                    <input type="text"
+                           id="destination-address-line-1"
+                           name="destination-address-line-1"
+                           class="regex-std-input"
+                           placeholder="Enter destination address line 1 here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="destination-address-line-2">Address Line 2 <small>(optional)</small></label>
+                    <input type="text"
+                           id="destination-address-line-2"
+                           name="destination-address-line-2"
+                           class="regex-std-input"
+                           placeholder="Enter destination address line 2 here." />
+                </div>
+                <div class="input-row">
+                    <label for="destination-city">Address City</label>
+                    <input type="text"
+                           id="destination-city"
+                           name="destination-city"
+                           class="regex-std-input"
+                           placeholder="Enter destination city here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="destination-state">Address State</label>
+                    <input type="text"
+                           id="destination-state"
+                           name="destination-state"
+                           class="regex-std-input"
+                           placeholder="Enter destination state here."
+                           required />
+                </div>
+                <div class="input-row">
+                    <label for="destination-zip">Address Zip Code</label>
+                    <input type="text"
+                           id="destination-zip"
+                           name="destination-zip"
+                           class="regex-std-input"
+                           placeholder="Enter destination zip code here."
+                           required />
+                </div>
+
+                <div class="input-row">
+                    <button type="submit"
+                            id="send-submit"
+                            name="send-submit"
+                            class="btn-primary btn-center">
+                        Send Package
+                    </button>
+                </div>
+            </form>
         </div>
 
         <script src="/assets/js/collapsible-trigger.js"></script>
