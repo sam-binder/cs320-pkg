@@ -430,7 +430,7 @@ public class CustomerAccess implements AutoCloseable{
         ResultSet currentBalance = h2.createAndExecuteQuery(connection, QcurrentBal);
         due += currentBalance.getDouble(1);
         // update billing table
-        String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + "WHERE account_number_fk = " + acct + ";";
+        String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
         return h2.createAndExecuteQuery(connection, QupdateOutstanding);
 
 
@@ -478,8 +478,8 @@ public class CustomerAccess implements AutoCloseable{
         String QInsert = "INSERT INTO CHARGE (PRICE, ACCOUNT_NUMBER_FK, PACKAGE_SERIAL_FK, SERVICE_ID, PAID) " +
                             "VALUES(" +
                             totalprice + ", " +
-                            account_number_fk + ", " +
-                            serial + ", " +
+                            account_number_fk + ", '" +
+                            serial + "', " +
                             service_id + ", " +
                             "0 );";
         return h2.createAndExecuteQuery(connection, QInsert);
@@ -518,7 +518,7 @@ public class CustomerAccess implements AutoCloseable{
     private ResultSet createPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
                                     String dim_depth, String weight, String origin, String destination){
 
-        String getLast = "SELECT MAX(serial) FROM package WHERE account_number_fk = " + account_number_fk + ";";
+        String getLast = "SELECT MAX(serial) FROM package WHERE account_number_fk = '" + account_number_fk + "';";
 
         ResultSet last = h2.createAndExecuteQuery(connection, getLast);
         // GET the last serial this customer has sent, add 1
@@ -672,8 +672,8 @@ public class CustomerAccess implements AutoCloseable{
     }
 
     public ResultSet viewAccount(String account_number){
-        String query = "(SELECT * FROM Customer WHERE account_number = " + account_number + ") UNION " +
-                        "(SELECT * FROM Billing WHERE account_number_fk = " + account_number + ");";
+        String query = "(SELECT * FROM Customer WHERE account_number = '" + account_number + "') UNION " +
+                        "(SELECT * FROM Billing WHERE account_number_fk = '" + account_number + "');";
         return h2.createAndExecuteQuery(connection, query);
 
 
