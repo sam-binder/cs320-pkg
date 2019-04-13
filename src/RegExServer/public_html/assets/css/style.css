@@ -255,9 +255,8 @@ label {
     font-weight: 700;
 }
 
-.regex-std-input {
+.regex-std-input, .regex-alt-input {
     /*display: block;*/
-    width: 30rem;
     padding: 10px;
     min-height: 25px;
     border: none;
@@ -268,11 +267,20 @@ label {
     border-radius: .25rem;
 }
 
-.regex-std-input:hover {
+.regex-std-input {
+    width: 30rem;
+}
+
+.regex-alt-input {
+    width: calc(100% - 20px);
+    background: transparent;
+}
+
+.regex-std-input:hover, .regex-alt-input:hover {
     background-color: #f4f7ff;
 }
 
-.regex-std-input:focus {
+.regex-std-input:focus, .regex-alt-input:focus {
     background-color: #eff2f9;
     border-bottom-color: #366ed6;
 }
@@ -357,6 +365,11 @@ a.btn-primary:active {
     background-color: #578bec;
 }
 
+.btn-center {
+    display: block;
+    margin: 0 auto;
+}
+
 .center-div {
     display: flex;
     justify-content: center;
@@ -397,6 +410,9 @@ a.btn-primary:active {
 }
 .mt-0 {
     margin-top: 0;
+}
+.mt-1 {
+    margin-top: 1rem;
 }
 .mt-3 {
     margin-top: 3rem;
