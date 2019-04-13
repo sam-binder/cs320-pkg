@@ -244,16 +244,14 @@ public class CustomerAccess implements AutoCloseable{
                 "INSERT INTO address "+
                 "(COMPANY, ATTN, STREET_LINE_1, STREET_LINE_2, ZIP_FK, ACCOUNT_NUMBER_FK)" +
                 " VALUES(" +
-                company + ", " +
-                attention + ", " +
-                streetLine1 + ", " +
-                streetLine2 + ", " +
-                zip_ID_fk_numeric + ", " +
-                account_number_fk_numeric + ");";
+                "'" + company + "', " +
+                "'" + attention + "', " +
+                "'" + streetLine1 + "', " +
+                "'" + streetLine2 + "', " +
+                "'" + zip_ID_fk_numeric + "', " +
+                "'" + account_number_fk_numeric + "');";
 
-
-
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
