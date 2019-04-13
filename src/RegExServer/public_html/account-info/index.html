@@ -51,63 +51,142 @@
         </div>
         <div class="row mt-3">
             <h2>Account Details</h2>
-            <table class="regex-std-table mw-50">
-                <tbody>
-                    <tr>
-                        <td class="text-right text-bold">
-                            User Name
-                        </td>
-                        <td class="text-left">
-                            @{user-name}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right text-bold">
-                            First Name
-                        </td>
-                        <td class="text-left">
-                            @{first-name}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right text-bold">
-                            Last Name
-                        </td>
-                        <td class="text-left">
-                            @{last-name}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right text-bold">
-                            Phone Number
-                        </td>
-                        <td class="text-left">
-                            @{phone-number}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" class="text-bold">
-                            Primary Address
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right text-bold">
-                            Address Line 1
-                        </td>
-                        <td class="text-left">
-                            @{address-line-1}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="text-right text-bold">
-                            Address Line 2
-                        </td>
-                        <td class="text-left">
-                            @{address-line-2}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <form method="POST">
+                <table class="regex-std-table">
+                    <tbody>
+                        <tr>
+                            <td class="text-right text-bold">
+                                User Name
+                            </td>
+                            <td class="text-left">
+                                @{user-name}
+                            </td>
+                            <td class="text-right text-bold">
+                                First Name
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="first-name"
+                                       name="first-name"
+                                       class="regex-alt-input"
+                                       placeholder="Enter contact first name here (required)."
+                                       value="@{first-name}"
+                                       required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-right text-bold">
+                                Last Name
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="last-name"
+                                       name="last-name"
+                                       class="regex-alt-input"
+                                       placeholder="Enter contact last name here (required)."
+                                       value="@{last-name}"
+                                       required />
+                            </td>
+                            <td class="text-right text-bold">
+                                Phone
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="phone-number"
+                                       name="phone-number"
+                                       class="regex-alt-input"
+                                       placeholder="###-###-#### (required)"
+                                       value="@{phone-number}"
+                                       required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-bold">
+                                Primary Address
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-right text-bold">
+                                Company
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="company"
+                                       name="company"
+                                       class="regex-alt-input"
+                                       placeholder="Enter company name here (not required)."
+                                       value="@{company}" />
+                            </td>
+                            <td class="text-right text-bold">
+                                Attn
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="attn"
+                                       name="attn"
+                                       class="regex-alt-input"
+                                       placeholder="Enter attention line here (required)."
+                                       value="@{attn}"
+                                       required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-right text-bold">
+                                Line 1
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="address-line-1"
+                                       name="address-line-1"
+                                       class="regex-alt-input"
+                                       placeholder="Enter address line 1 here (required)."
+                                       value="@{address-line-1}"
+                                       required/>
+                            </td>
+                            <td class="text-right text-bold">
+                                Line 2
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="address-line-2"
+                                       name="address-line-2"
+                                       class="regex-alt-input"
+                                       placeholder="Enter address line 2 here (not required)."
+                                       value="@{address-line-2}" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-right text-bold">
+                                City
+                            </td>
+                            <td class="text-left">
+                                @{city}
+                            </td>
+                            <td class="text-right text-bold">
+                                State
+                            </td>
+                            <td class="text-left">
+                                @{state}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-right text-bold">
+                                Zip Code
+                            </td>
+                            <td class="text-left">
+                                <input type="text"
+                                       id="zip"
+                                       name="zip"
+                                       class="regex-alt-input"
+                                       placeholder="Enter zip code here (required)."
+                                       value="@{zip}"
+                                       required />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="submit" class="btn-primary btn-center mt-1">Update Account Info</button>
+            </form>
         </div>
         <div class="row mt-3">
             <h2>Sent packages</h2>

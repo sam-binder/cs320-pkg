@@ -73,12 +73,31 @@ public class RegExAccountInfo extends RegExPage {
                 ).replace(
                     "@{phone-number}",
                     userDetails.getString(8)
+                ).replace(
+                    "@{company}",
+                    userDetails.getString(10)
+                ).replace(
+                    "@{attn}",
+                    userDetails.getString(11)
+                ).replace(
+                    "@{address-line-1}",
+                    userDetails.getString(12)
+                ).replace(
+                    "@{address-line-2}",
+                    userDetails.getString(13)
+                ).replace(
+                    "@{city}",
+                    userDetails.getString(16)
+                ).replace(
+                    "@{state}",
+                    userDetails.getString(17)
+                ).replace(
+                    "@{zip}",
+                    userDetails.getString(14)
                 );
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+            /* most likely this will never happen */
         }
 
         // returns the byte-level form of the page content
