@@ -405,7 +405,7 @@ public class EmployeeAccess implements AutoCloseable{
                 // Get package information
                 int acctNum = Integer.parseInt(pkg.substring(0, 6));
                 String serial = pkg.substring(8, 14);
-                if (!testpackageId(acctNum, serial)) {
+                if ((!testpackageId(acctNum, serial))||(Util.validateCheckDigit(pkg))){
                     System.out.println("That package does not exists." +
                             " Please verify the information was entered correctly.");
                     return;
