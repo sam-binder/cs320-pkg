@@ -526,6 +526,8 @@ public class RegExHttpHandler implements HttpHandler {
                                     (String) requestParameters.get("destination-address-line-2") : "";
 
                             // makes a package send request
+                            // there are lots of parameters needed to send a package,
+                            // each one is on its own line for better readability
                             tempCustomerAccess.sendPackage(
                                     String.format("%d", H2Access.getUserFK(userRegExSession.userName)),
                                     serviceIDString,
