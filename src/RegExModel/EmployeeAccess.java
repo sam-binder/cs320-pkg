@@ -252,7 +252,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewPackageCurrentLocation(int account_num, String serial) {
         String query = "SELECT location_ID_fk FROM transaction WHERE account_number_fk = " + account_num +
                 " AND package_serial_fk = " + serial + " AND ID = SELECT MAX(T.ID) FROM transaction AS T WHERE " +
-                "T.account_number_fk = " + account_num + " AND package_serial_fk = " + serial + ";";
+                "T.account_number_fk = " + account_num + " AND package_serial_fk = '" + serial + "';";
         return h2.createAndExecuteQuery(connection, query);
     }
 
@@ -263,8 +263,8 @@ public class EmployeeAccess implements AutoCloseable{
      * @param serial serial of the package
      */
     public void putSignature(String receiver, String account_num, String serial) {
-        String query = "UPDATE package SET signed_for_by = " + receiver + " WHERE account_number_fk = " +
-                account_num + " AND serial = " + serial + ";";
+        String query = "UPDATE package SET signed_for_by = '" + receiver + "' WHERE account_number_fk = " +
+                account_num + " AND serial = '" + serial + "';";
         h2.createAndExecute(connection, query);
     }
 
@@ -286,9 +286,11 @@ public class EmployeeAccess implements AutoCloseable{
      * @param serial the serial of the package
      * @return the resultSet of the service of the package
      */
+    //00013114B9IWEA9
+    //SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE account_number_fk = 131 AND serial = 'B9IWEA');
     public ResultSet viewService(int account_num, String serial) {
         String query = "SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE" +
-                " account_number_fk = " + account_num + " AND serial = " + serial + ");";
+                " account_number_fk = " + account_num + " AND serial = '" + serial + "');";
         return h2.createAndExecuteQuery(connection, query);
     }
 
@@ -316,7 +318,21 @@ public class EmployeeAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
 
-
+    public String getPackageDestination(int acctNumber, String pkgSerial){
+        // If it doesn't exist, return None
+        if(!testpackageId(acctNumber, pkgSerial))
+            return null;
+        String query = "SELECT destination_fk FROM package WHERE account_number_fk=%d and serial='%s'";
+        query = String.format(query, acctNumber, pkgSerial);
+        ResultSet r = H2Access.createAndExecuteQuery(connection, query);
+        try{
+            if(r.next())
+                return r.getString(1);
+        } catch (SQLException e){
+            return null;
+        }
+        return null;
+    }
 
     /**
      * Tests if this location ID is valid
@@ -352,65 +368,123 @@ public class EmployeeAccess implements AutoCloseable{
         System.out.flush();
     }
 
+    /**
+     *
+     * @param in: A scanner to get user input
+     * @param locationID: The location Id of the employee (must be either a hub or vehicle). Ignored
+     *                  if dropOff (as in to it's final destination) is true
+     * @param dropOff: If this package is being dropped off
+     */
+    private void scanPackage(Scanner in, String locationID, boolean dropOff){
+        String pkg = "";
+        // While drivers don't switch from scanning in to going out on delivery,
+        // and hub employee's haven't quit.
+        while(true){
+            // Scan the package, Sample Package: 00013114B9IWEA9
+            System.out.print("Please scan a package: ");
+            pkg = in.nextLine();
+            if(pkg.equalsIgnoreCase("T") || pkg.equalsIgnoreCase("Q"))
+                break;
+
+            // Make sure the ID is correctly formatted
+            if(pkg.length() < 15 && !(pkg.equalsIgnoreCase("T") || pkg.equalsIgnoreCase("Q"))){
+                System.out.println("Not enough digits entered.");
+            } else if(pkg.length() > 15){
+                System.out.println("Too many digits entered");
+            } else {
+                // Get package information
+                int acctNum = Integer.parseInt(pkg.substring(0, 6));
+                String serial = pkg.substring(8, 14);
+                if (!testpackageId(acctNum, serial)) {
+                    System.out.println("That package does not exists." +
+                            " Please verify the information was entered correctly.");
+                    return;
+                }
+                if(!dropOff) {
+                    // Get the account number and serial from the package
+                    updatePackageLocation(locationID, acctNum, serial);
+                    System.out.println("Package location updated!");
+                } else {
+                    // Add a transaction that this package has reached it's destination
+                    ResultSet r = viewService(acctNum, serial);
+                    try{
+                        if(r.next() && r.getInt("Signature_req") == 1){
+                            System.out.print("A signature is required, " +
+                                    "please have the receiver sign their name: ");
+                            String signature = in.nextLine();
+                            // Update the package with a signature
+                            putSignature(signature, acctNum+"", serial);
+                        }
+
+                        // Update the package with its destination
+                        updatePackageLocation(getPackageDestination(acctNum, serial), acctNum, serial);
+                        System.out.println("Package successfully delivered!");
+                    } catch (SQLException e){
+                        e.printStackTrace();
+                        System.out.println("A fault has been detected with the database. Please" +
+                                " contact a system administrator.");
+                    }
+                }
+            }
+        }
+    }
+
     public static void main(String[] args){
         Scanner in = new Scanner(System.in);
         boolean success = false;
         do {
+            // Get the username and password
             System.out.print("Username: ");
             String username = in.nextLine();
             System.out.print("Password: ");
             String password = in.nextLine();
             try {
+                // Get the employee's type of user
                 String employeeType =  H2Access.getUserType(username);
+                // If the username doesn't exists in the system, eneter
                 if(employeeType == null)
                     System.out.println("This username doesn't exists, please try again.");
+                // Customers are not allowed to enter this view
                 else if(employeeType.equalsIgnoreCase("customer"))
                     System.out.println("Customers are not allowed to access this portal.");
                 else {
+                    // Log the employee in
                     EmployeeAccess employee = new EmployeeAccess(username, password, employeeType);
                     success = true;
-                    System.out.print("\033[H\033[2J");
-                    System.out.flush();
                     System.out.println("Congratulations! You've been logged in as a(n) " +
                             employeeType.replace("_", " ") + ".");
+                    // Package employee view
                     if(employeeType.equalsIgnoreCase("package_employee")){
-                        boolean idSuccess = true;
+                        boolean idSuccess;
                         do {
-                            // Sample number: TOPHP7TTMYLN
+                            // Sample number: VGLJPA1YKP5G
                             System.out.print("Please enter your location ID: ");
                             String locationID = in.nextLine();
+
+                            // Test if this is a valid location
                             idSuccess = employee.testLocationId(locationID);
                             if (!employee.testLocationId(locationID)) {
                                 System.out.println("That location does not exists, please try again.");
-                            } else {
-                                System.out.println("Tracking number received, you may now start scanning packages.");
-                                while(true){
-                                    // Sample Package: 00013114B9IWEA9
-                                    System.out.print("Please scan a package (or Q to quit): ");
-                                    String pkg = in.nextLine();
-                                    if(pkg.equalsIgnoreCase("Q")){
-                                        System.out.println("Have a nice day!");
-                                        return;
-                                    } else {
-                                        if(pkg.length() < 15){
-                                            System.out.println("Not enough digits entered.");
-                                        } else if(pkg.length() > 15){
-                                            System.out.println("Too many digits entered");
-                                        } else {
-                                            // TODO add a check for required signature if the location starts with TD
-                                            // TODO packages orgins and destination get set on creation
-                                            int acctNum = Integer.parseInt(pkg.substring(0, 6));
-                                            String serial = pkg.substring(8, 14);
-                                            System.out.println("Account: " + acctNum + " Serial: " + serial);
-                                            if(!employee.testpackageId(acctNum, serial)){
-                                                System.out.println("That package does not exists." +
-                                                        " Please verify the information was entered correctly.");
-                                            } else {
-                                                System.out.println("Package location updated!");
-                                                employee.updatePackageLocation(locationID, acctNum, serial);
-                                            }
-                                        }
-                                    }
+                            }
+                            // Employee's can only work at hubs or in vehicles
+                            else if (locationID.startsWith("TD") || locationID.startsWith("TO")){
+                                System.out.println("Employees cannot sign into origins or destinations.");
+                            }
+                            // Employees working at hubs just scan packages, employees who work on
+                            // vehicles first scan packages onto the truck, then off for delivery.
+                            else {
+                                if(locationID.startsWith("H")) {
+                                    // workers at hubs just scan
+                                    System.out.println("Tracking number received, " +
+                                            "you may now start scanning packages (or Q to quit).");
+                                    employee.scanPackage(in, locationID, false);
+                                }else {
+                                    System.out.println("You are currently scanning packages to load" +
+                                            " on to your truck. Press T to go out on delivery.");
+                                    employee.scanPackage(in, locationID, false);
+                                    System.out.println("You are currently out on delivery. " +
+                                            "Please scan packages as they're dropped off (or Q to quit).");
+                                    employee.scanPackage(in, locationID, true);
                                 }
                             }
                         }
@@ -423,7 +497,5 @@ public class EmployeeAccess implements AutoCloseable{
                         "If the issue persists, contact an administrator.");
             }
         } while(!success);
-
     }
-
 }
