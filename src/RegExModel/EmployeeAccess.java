@@ -96,7 +96,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet getCustomersWhere(String conditional){
         String query = "SELECT * from customer WHERE " +  conditional + ";";
         return h2.createAndExecuteQuery(connection, query);
-}
+    }
 
     /**
      * The method to view the customer info by customer account, first name and last name.
@@ -293,19 +293,6 @@ public class EmployeeAccess implements AutoCloseable{
                 " account_number_fk = " + account_num + " AND serial = '" + serial + "');";
         return h2.createAndExecuteQuery(connection, query);
     }
-
-    /**
-     * modify the service of the package if necessary
-     * @param account_num the account number of the customer
-     * @param serial the serial of the package
-     * @param service_id the new service
-     */
-    public void modifyService(int account_num, String serial, int service_id) {
-        String query = "UPDATE package SET service_id = " + service_id + " WHERE account_number_fk = " +
-                account_num + " AND serial = " + serial + ";";
-        h2.createAndExecute(connection, query);
-    }
-
 
     /**
      * Method to view the priority of the package
