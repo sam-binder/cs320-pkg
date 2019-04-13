@@ -341,21 +341,21 @@ public class CustomerAccess implements AutoCloseable{
         // detect zip code IDs for origin & destination
         do {
             if (o_zip.getInt(1) == o_zip_numeric ){
-                origin_has_addr = o_zip.getString(1);
+                origin_has_addr = o_zip.getString(2);
             }
         } while (o_zip.next());
         if(origin_has_addr.equals("none")){
             o_zip.first();
-            origin_has_addr = o_zip.getString(1);
+            origin_has_addr = o_zip.getString(2);
         }
         do {
-            if (d_zip.getInt(0) == d_zip_numeric ){
-                dest_has_addr = d_zip.getString(1);
+            if (d_zip.getInt(1) == d_zip_numeric ){
+                dest_has_addr = d_zip.getString(2);
             }
         } while (d_zip.next());
         if(dest_has_addr.equals("none")){
             d_zip.first();
-            dest_has_addr = d_zip.getString(1);
+            dest_has_addr = d_zip.getString(2);
         }
 
         // get address fks
@@ -377,7 +377,7 @@ public class CustomerAccess implements AutoCloseable{
         int _l = Integer.parseInt(dim_length);
         int _d = Integer.parseInt(dim_depth);
         int _w = Integer.parseInt(weight);
-        int dim_break = rates.getInt(4);
+        int dim_break = rates.getInt(5);
 
         billable_weight = _h * _l * _d;
         billable_weight /= dim_break;
