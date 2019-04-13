@@ -221,7 +221,7 @@ public class CustomerAccess implements AutoCloseable{
                 "(ATTN = '" + attention +"') AND " +
                 "(STREET_LINE_1 = '" + streetLine1 + "') AND " +
                 "(STREET_LINE_2 = '" + streetLine2 + "') AND " +
-                "(ZIP_ID_FK = "+ zip_ID_fk_numeric + ") AND " +
+                "(ZIP_FK = "+ zip_ID_fk_numeric + ") AND " +
                 "(ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ");";
         return h2.createAndExecuteQuery(connection, query);
     }
@@ -242,7 +242,7 @@ public class CustomerAccess implements AutoCloseable{
         int account_number_fk_numeric = Integer.parseInt(account_number_fk);
         String query =
                 "INSERT INTO address "+
-                "(COMPANY, ATTN, STREET_LINE_1, STREET_LINE_2, ZIP_ID_FK, ACCOUNT_NUMBER_FK)" +
+                "(COMPANY, ATTN, STREET_LINE_1, STREET_LINE_2, ZIP_FK, ACCOUNT_NUMBER_FK)" +
                 " VALUES(" +
                 company + ", " +
                 attention + ", " +
