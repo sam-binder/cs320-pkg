@@ -179,11 +179,11 @@ public class CustomerAccess implements AutoCloseable{
         // queries from the user table to get this user's information
         return H2Access.createAndExecuteQuery(
             this.connection,
-            "SELECT username, customer.*, address.*, zip_code.city, zip_code.state " +
+            "SELECT username, customer.*, address.*, zip_code.zip_code, zip_code.city, zip_code.state " +
             "FROM user " +
             "INNER JOIN customer ON general_fk=customer.account_number " +
             "INNER JOIN address ON customer.mailing_address_ID_fk=address.ID " +
-            "INNER JOIN zip_code ON address.zip_fk=zip_code.zip_code " +
+            "INNER JOIN zip_code ON address.zip_fk=zip_code.id " +
             "WHERE username='" + this.username + "';"
         );
     }

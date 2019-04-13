@@ -23,7 +23,7 @@ public class RegExAccountInfo extends RegExPage {
     /**
      * Creates a new RegExAccountInfo page
      *
-     * @param userRegExSession  The session to render the page for.
+     * @param userRegExSession The session to render the page for.
      */
     public RegExAccountInfo(RegExSession userRegExSession) {
         this.userRegExSession = userRegExSession;
@@ -32,18 +32,18 @@ public class RegExAccountInfo extends RegExPage {
     /**
      * Returns the byte-level form of the page's content.
      *
-     * @return  The byte-level form of the page's content.
-     * @throws IOException  If any IOException is encountered, it is thrown out to the caller.
+     * @return The byte-level form of the page's content.
+     * @throws IOException If any IOException is encountered, it is thrown out to the caller.
      */
     @Override
     public byte[] getPageContent() throws IOException {
         // attempts to return our login screen if an error is
         // encountered an IOException is thrown
         String pageContent = new String(
-            Files.readAllBytes(
-                Paths.get(pageURI)
-            ),
-            StandardCharsets.UTF_8
+                Files.readAllBytes(
+                        Paths.get(pageURI)
+                ),
+                StandardCharsets.UTF_8
         );
 
         // dumps in all of the session values
@@ -53,47 +53,46 @@ public class RegExAccountInfo extends RegExPage {
         try {
             // creates a customer access
             CustomerAccess tempCustomerAccess = new CustomerAccess(
-                this.userRegExSession.userName,
-                this.userRegExSession.password
+                    this.userRegExSession.userName,
+                    this.userRegExSession.password
             );
 
             // gets the user's information
             ResultSet userDetails = tempCustomerAccess.getUserInformation();
 
-
             // if there exists userDetails next row (it always will)
-            if(userDetails.next()) {
+            if (userDetails.next()) {
                 // replace all of the information we just grabbed
                 pageContent = pageContent.replace(
-                    "@{first-name}",
-                    userDetails.getString(6)
-                ).replace (
-                    "@{last-name}",
-                    userDetails.getString(7)
+                        "@{first-name}",
+                        userDetails.getString(6)
                 ).replace(
-                    "@{phone-number}",
-                    userDetails.getString(8)
+                        "@{last-name}",
+                        userDetails.getString(7)
                 ).replace(
-                    "@{company}",
-                    userDetails.getString(10)
+                        "@{phone-number}",
+                        userDetails.getString(8)
                 ).replace(
-                    "@{attn}",
-                    userDetails.getString(11)
+                        "@{company}",
+                        userDetails.getString(10)
                 ).replace(
-                    "@{address-line-1}",
-                    userDetails.getString(12)
+                        "@{attn}",
+                        userDetails.getString(11)
                 ).replace(
-                    "@{address-line-2}",
-                    userDetails.getString(13)
+                        "@{address-line-1}",
+                        userDetails.getString(12)
                 ).replace(
-                    "@{city}",
-                    userDetails.getString(16)
+                        "@{address-line-2}",
+                        userDetails.getString(13)
                 ).replace(
-                    "@{state}",
-                    userDetails.getString(17)
+                        "@{city}",
+                        userDetails.getString(17)
                 ).replace(
-                    "@{zip}",
-                    userDetails.getString(14)
+                        "@{state}",
+                        userDetails.getString(18)
+                ).replace(
+                        "@{zip}",
+                        userDetails.getString(16)
                 );
             }
         } catch (SQLException sqle) {
