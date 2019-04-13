@@ -339,20 +339,24 @@ public class CustomerAccess implements AutoCloseable{
         String dest_has_addr = "none";
 
         // detect zip code IDs for origin & destination
-        do {
-            if (o_zip.getInt(1) == o_zip_numeric ){
-                origin_has_addr = o_zip.getString(2);
-            }
-        } while (o_zip.next());
+        if(o_zip.next()) {
+            do {
+                if (o_zip.getInt(1) == o_zip_numeric ){
+                    origin_has_addr = o_zip.getString(2);
+                }
+            } while (o_zip.next());
+        }
         if(origin_has_addr.equals("none")){
             o_zip.first();
             origin_has_addr = o_zip.getString(2);
         }
-        do {
-            if (d_zip.getInt(1) == d_zip_numeric ){
-                dest_has_addr = d_zip.getString(2);
-            }
-        } while (d_zip.next());
+        if(d_zip.next()) {
+            do {
+                if (d_zip.getInt(1) == d_zip_numeric ){
+                    dest_has_addr = d_zip.getString(2);
+                }
+            } while (d_zip.next());
+        }
         if(dest_has_addr.equals("none")){
             d_zip.first();
             dest_has_addr = d_zip.getString(2);
