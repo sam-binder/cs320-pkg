@@ -244,16 +244,14 @@ public class CustomerAccess implements AutoCloseable{
                 "INSERT INTO address "+
                 "(COMPANY, ATTN, STREET_LINE_1, STREET_LINE_2, ZIP_FK, ACCOUNT_NUMBER_FK)" +
                 " VALUES(" +
-                company + ", " +
-                attention + ", " +
-                streetLine1 + ", " +
-                streetLine2 + ", " +
-                zip_ID_fk_numeric + ", " +
-                account_number_fk_numeric + ");";
+                "'" + company + "', " +
+                "'" + attention + "', " +
+                "'" + streetLine1 + "', " +
+                "'" + streetLine2 + "', " +
+                "'" + zip_ID_fk_numeric + "', " +
+                "'" + account_number_fk_numeric + "');";
 
-
-
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -362,7 +360,7 @@ public class CustomerAccess implements AutoCloseable{
         if(o_zip.next()){
             origin_has_addr = o_zip.getString("ID");
         } else {
-            o_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(origin_zip));
+            o_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(origin_zip));
             o_zip.next();
             origin_has_addr = o_zip.getString("ID");
         }
@@ -370,7 +368,7 @@ public class CustomerAccess implements AutoCloseable{
             // wet code, don't care.
             dest_has_addr = d_zip.getString("ID");
         } else {
-            d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(destination_zip));
+            d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(destination_zip));
             d_zip.next();
             dest_has_addr = d_zip.getString("ID");
         }
