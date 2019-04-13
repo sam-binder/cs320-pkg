@@ -324,32 +324,37 @@ public class RegExHttpHandler implements HttpHandler {
                             // attempts to create a customer account and responds based on the method return
                             switch(H2Access.createCustomer(username, password)) {
                                 case 0:
-                                    try {
-                                        // if we make it here we need to do some more processing with the user
-                                        CustomerAccess tempCustomerAccess = new CustomerAccess(username, password);
+                                    // if we make it here we need to do some more processing with the user
+                                    CustomerAccess tempCustomerAccess = new CustomerAccess(username, password);
 
-                                        // sets up the user's billing info to default
-                                        tempCustomerAccess.setUpBillingInfo();
+                                    // sets up the user's billing info to default
+                                    tempCustomerAccess.setUpBillingInfo();
 
-                                        // next we need to do things with the customer's account, like set their
-                                        // basic information
-                                        tempCustomerAccess.changeBasicInformation(
-                                            (String)requestParameters.get("first-name"),
-                                            (String)requestParameters.get("last-name"),
-                                            (String)requestParameters.get("phone-number")
-                                        );
+                                    // next we need to do things with the customer's account, like set their
+                                    // basic information
+                                    tempCustomerAccess.changeBasicInformation(
+                                        (String)requestParameters.get("first-name"),
+                                        (String)requestParameters.get("last-name"),
+                                        (String)requestParameters.get("phone-number")
+                                    );
 
-                                        // next is to set in place the customer's address information
-                                        tempCustomerAccess.enterAddress(
-                                            (String)requestParameters.get("company"),
-                                            (String)requestParameters.get("attention"),
-                                            (String)requestParameters.get("address-line-1"),
-                                            (String)requestParameters.get("address-line-2"),
-                                            (String)requestParameters.get("zip")
-                                        );
-                                    } catch (SQLException sqle) {
-                                        /* legitimately this will NEVER happen */
-                                    }
+                                    // pulls out the correct "form" of these
+                                    String company = requestParameters.get("company") != null ?
+                                            (String)requestParameters.get("company") :
+                                            "";
+                                    String addressLine2 = requestParameters.get("address-line-2") != null ?
+                                            (String)requestParameters.get("address-line-2") :
+                                            "";
+
+                                    // next is to set in place the customer's address information
+                                    tempCustomerAccess.enterAddress(
+                                        company,
+                                        (String)requestParameters.get("attention"),
+                                        (String)requestParameters.get("address-line-1"),
+                                        addressLine2,
+                                        (String)requestParameters.get("zip")
+                                    );
+
                                     // redirect them to the home page
                                     responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
@@ -418,15 +423,57 @@ public class RegExHttpHandler implements HttpHandler {
 
                             // attaches a location header for the browser to go to root (login)
                             redirectUser(
-                                    exchange,
-                                    DOMAIN_ROOT + "/"
+                                exchange,
+                                DOMAIN_ROOT + "/"
                             );
 
                             // empty response body
                             responseBody = new byte[]{};
                         } else {
-                            // simple gets the page content for this user
-                            responseBody = new RegExAccountInfo(userRegExSession).getPageContent();
+                            // first we have to read if the user has attempted to update their account
+                            if(requestParameters.containsKey("update-submit")) {
+                                // we have to call the customer access update method
+                                CustomerAccess tempCustomerAccess = new CustomerAccess(
+                                    userRegExSession.userName,
+                                    userRegExSession.password
+                                );
+
+                                // changes the user's first, last and phone
+                                tempCustomerAccess.changeBasicInformation(
+                                    (String)requestParameters.get("first-name"),
+                                    (String)requestParameters.get("last-name"),
+                                    (String)requestParameters.get("phone-number")
+                                );
+
+                                String company = requestParameters.get("company") != null ?
+                                                    (String)requestParameters.get("company") :
+                                                    "";
+
+                                String addressLine2 = requestParameters.get("address-line-2") != null ?
+                                                        (String)requestParameters.get("address-line-2") :
+                                                        "";
+
+                                // then changes their address
+                                tempCustomerAccess.enterAddress(
+                                    company,
+                                    (String)requestParameters.get("attention"),
+                                    (String)requestParameters.get("address-line-1"),
+                                    addressLine2,
+                                    (String)requestParameters.get("zip")
+                                );
+
+                                // then redirect the user to the same page to clear the post request
+                                // (destroys refresh loop)
+                                responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+                                redirectUser(
+                                    exchange,
+                                    DOMAIN_ROOT + "/account-info/"
+                                );
+                                responseBody = new byte[]{};
+                            } else {
+                                // simple gets the page content for this user
+                                responseBody = new RegExAccountInfo(userRegExSession).getPageContent();
+                            }
                         }
                         break;
                     case "/logout/index.html":
@@ -483,7 +530,7 @@ public class RegExHttpHandler implements HttpHandler {
             responseCode = HttpURLConnection.HTTP_NOT_FOUND;
             // get the error response page for our error
             responseBody = getErrorPage(responseCode);
-        } catch(IOException e) {
+        } catch(Exception e) {
             // logs that some exception was hit
             RegExLogger.error("issue with loading page - internal server error", 1);
             // our response code is set to 500 INTERNAL ERROR
