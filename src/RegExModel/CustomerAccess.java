@@ -392,9 +392,12 @@ public class CustomerAccess implements AutoCloseable{
     private ResultSet updateBillingAmountDue(String acct) throws SQLException{
         // get current outstanding charges (from charge)
         // & get total paid (from charge)
-        String Qoutstanding = "SELECT SUM(price), SUM(paid) FROM CHARGE WHERE account_number_fk = '" + acct + "';";
+        String Qoutstanding = "SELECT SUM(price) FROM CHARGE WHERE account_number_fk = '" + acct + "' AND paid = 0;";
         ResultSet outstanding = h2.createAndExecuteQuery(connection, Qoutstanding);
-        double due = outstanding.getDouble(0) - outstanding.getDouble(1);
+        double due = outstanding.getDouble(0);
+        String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
+        ResultSet currentBalance = h2.createAndExecuteQuery(connection, QcurrentBal);
+        due += currentBalance.getDouble(0);
         // update billing table
         String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + "WHERE account_number_fk = " + acct + ";";
         return h2.createAndExecuteQuery(connection, QupdateOutstanding);
