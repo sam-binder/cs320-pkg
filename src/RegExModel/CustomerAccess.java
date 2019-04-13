@@ -188,6 +188,19 @@ public class CustomerAccess implements AutoCloseable{
         );
     }
 
+    public ResultSet getSentPackages() {
+        // queries the packages table to get a list of all the packages this user has sent
+        int userFK = H2Access.getUserFK(this.username);
+
+        // returns all of the packages
+        return H2Access.createAndExecuteQuery(
+            this.connection,
+            "SELECT account_number_fk, service_id_fk, serial " +
+            "FROM package " +
+            "WHERE account_number_fk='" + userFK + "';"
+        );
+    }
+
     /**
      * helper function for @function createNewAddress
      * @param company

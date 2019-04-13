@@ -23,6 +23,10 @@ public class RegExHttpServer {
      * @throws IOException  Any IOException encountered will be thrown out to jvm.
      */
     public static void main(String[] args) throws IOException {
+        RegExLogger.logBootup(
+            "starting server with debug logging " + (RegExLogger.DEBUG ? "ENABLED" : "DISABLED"),
+            RegExLogger.NO_LEVEL);
+
         // logs that we are about to be open for business
         RegExLogger.logBootup("opening RegEx connection on port 80", RegExLogger.NO_LEVEL);
 
@@ -41,8 +45,5 @@ public class RegExHttpServer {
         RegExLogger.logBootup("server is started", RegExLogger.NO_LEVEL);
         // then begins to listen for connections
         server.start();
-
-        // grants public rights on startup
-//        H2Access.grantPublicRights();
     }
 }

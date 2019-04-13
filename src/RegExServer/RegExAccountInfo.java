@@ -94,6 +94,62 @@ public class RegExAccountInfo extends RegExPage {
                         "@{zip}",
                         userDetails.getString(16)
                 );
+
+                // last but not least we have to drop in the packages table
+                ResultSet sentPackages = tempCustomerAccess.getSentPackages();
+
+                // builds our sent packages table
+                StringBuilder sentPackagesTable = new StringBuilder();
+                // if there were no packages
+                if (!sentPackages.next()) {
+                    // report that here
+                    pageContent = pageContent.replace(
+                        "@{sent-packages-table}",
+                        "<tr><td class='text-bold text-center text-italic'>No packages yet.</td></tr>"
+                    );
+                } else {
+                    int count = 0;
+                    do {
+                        // start a new row if we are on an even 3
+                        if (count % 3 == 0) {
+                            sentPackagesTable.append("<tr>");
+                        }
+
+                        // generates the package tracking ID
+                        String trackingID = generateTrackingID(
+                            sentPackages.getInt(1),
+                            sentPackages.getInt(2),
+                            sentPackages.getString(3)
+                        );
+
+
+                        // append the link to this package
+                        sentPackagesTable.append(
+                                "<td>" +
+                                    "<a href='/view-package/?package-id='" + trackingID + "'>" + trackingID + "</a>" +
+                                "</td>"
+                        );
+
+                        // increments count
+                        ++count;
+
+                        // closes the row if we need to
+                        if (count % 3 == 0) {
+                            sentPackagesTable.append("</tr>");
+                        }
+                    } while (sentPackages.next());
+
+                    // adds a closing row if it was not done in the loop
+                    if (count % 3 != 0) {
+                        sentPackagesTable.append("</tr>");
+                    }
+
+                    // throw it into the table
+                    pageContent = pageContent.replace(
+                            "@{sent-packages-table}",
+                            sentPackagesTable.toString()
+                    );
+                }
             }
         } catch (SQLException sqle) {
             /* most likely this will never happen */
@@ -101,5 +157,29 @@ public class RegExAccountInfo extends RegExPage {
 
         // returns the byte-level form of the page content
         return pageContent.getBytes();
+    }
+
+    private String generateTrackingID(int accountID, int serviceID, String packageSerial) {
+        // the trackingID stringbuilder
+        StringBuilder trackingID = new StringBuilder();
+
+        trackingID.append(String.format("%06d", accountID));
+        trackingID.append(String.format("%02d", serviceID));
+        trackingID.append(packageSerial);
+
+
+        // our total sum will be made using this variable
+        int sum = 0;
+
+        for (char c : trackingID.toString().toCharArray()) {
+            // add the ascii value of the char at index i
+            sum += c;
+        }
+
+        // appends the checkBit
+        trackingID.append((char) ((sum % 17) + 74));
+
+        // returns true if the check digit matches the sum mod 17
+        return trackingID.toString();
     }
 }

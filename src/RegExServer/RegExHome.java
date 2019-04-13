@@ -72,7 +72,7 @@ public class RegExHome extends RegExPage{
                         lastThreeTransTable.append(
                                 generateTableRow(
                                         generateTrackingID(
-                                                131,
+                                                lastThreeTrans.getInt(3),
                                                 lastThreeTrans.getString(6),
                                                 lastThreeTrans.getString(4)
                                         ),

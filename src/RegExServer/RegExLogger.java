@@ -19,7 +19,7 @@ public class RegExLogger {
     /**
      * Set to false to stop seeing log messages.
      */
-    private static final boolean DEBUG = true;
+    public static final boolean DEBUG = true;
 
     /**
      * The ANSI text coloring "RESET" signal.
