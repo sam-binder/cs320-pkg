@@ -52,15 +52,40 @@ public class Util {
     public class Package{
         private String account_number;
         private String serial;
-        public Package(String acct_no, String serial){
+        private String serviceID;
+
+
+        public Package(String acct_no, String serial, String serviceID){
             this.account_number = acct_no;
             this.serial = serial;
+            this.serviceID = serviceID;
+        }
+        public Package(String tracking_num){
+            String a = tracking_num.substring(0,5);
+            String s = tracking_num.substring(6,7);
+            String n = tracking_num.substring(8,13);
+            this.account_number = a;
+            this.serial = n;
+            this.serviceID = s;
+
         }
         public String getAccount_number(){
             return account_number;
         }
         public String getSerial(){
             return serial;
+        }
+        public String getServiceID(){
+            return serviceID;
+        }
+        public char getCheckDigit(){
+            String trackingnum = account_number + serviceID + serial;
+            try {
+                trackingnum = findCheckDigit(trackingnum);
+            } catch (BadTrackingNumberFormatException e){
+                e.printStackTrace();
+            }
+            return trackingnum.charAt(14);
         }
     }
 }
