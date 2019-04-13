@@ -554,15 +554,13 @@ public class CreateNewDatabase {
             this.service();
             this.zipCodes();
             this.users();
-            this.buildFunctions();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Initialize all the functions
-     */
+    /* THESE DONT EXIST IN H2 - PRETTY NEAT WE GOT TO LEARN ABOUT EM THO
     public void buildFunctions() throws SQLException{
         // Tracking function
         buildTrackingFunction();
@@ -571,10 +569,7 @@ public class CreateNewDatabase {
 
     }
 
-    /**
-     * builds the tracking function
-     * @throws SQLException
-     */
+
     public void buildTrackingFunction() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE FUNCTION get_tracking(account_number_fk int, package_serial_fk int)"
@@ -591,6 +586,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
     }
+    */
 
 
 }
