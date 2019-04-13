@@ -362,7 +362,7 @@ public class CustomerAccess implements AutoCloseable{
         if(o_zip.next()){
             origin_has_addr = o_zip.getString("ID");
         } else {
-            o_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(origin_zip));
+            o_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(origin_zip));
             o_zip.next();
             origin_has_addr = o_zip.getString("ID");
         }
@@ -370,7 +370,7 @@ public class CustomerAccess implements AutoCloseable{
             // wet code, don't care.
             dest_has_addr = d_zip.getString("ID");
         } else {
-            d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIPCODE = " + Integer.parseInt(destination_zip));
+            d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(destination_zip));
             d_zip.next();
             dest_has_addr = d_zip.getString("ID");
         }
@@ -425,10 +425,10 @@ public class CustomerAccess implements AutoCloseable{
         // & get total paid (from charge)
         String Qoutstanding = "SELECT SUM(price) FROM CHARGE WHERE account_number_fk = '" + acct + "' AND paid = 0;";
         ResultSet outstanding = h2.createAndExecuteQuery(connection, Qoutstanding);
-        double due = outstanding.getDouble(0);
+        double due = outstanding.getDouble(1);
         String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
         ResultSet currentBalance = h2.createAndExecuteQuery(connection, QcurrentBal);
-        due += currentBalance.getDouble(0);
+        due += currentBalance.getDouble(1);
         // update billing table
         String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + "WHERE account_number_fk = " + acct + ";";
         return h2.createAndExecuteQuery(connection, QupdateOutstanding);
