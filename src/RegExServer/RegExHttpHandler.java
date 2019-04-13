@@ -324,6 +324,32 @@ public class RegExHttpHandler implements HttpHandler {
                             // attempts to create a customer account and responds based on the method return
                             switch(H2Access.createCustomer(username, password)) {
                                 case 0:
+                                    try {
+                                        // if we make it here we need to do some more processing with the user
+                                        CustomerAccess tempCustomerAccess = new CustomerAccess(username, password);
+
+                                        // sets up the user's billing info to default
+                                        tempCustomerAccess.setUpBillingInfo();
+
+                                        // next we need to do things with the customer's account, like set their
+                                        // basic information
+                                        tempCustomerAccess.changeBasicInformation(
+                                            (String)requestParameters.get("first-name"),
+                                            (String)requestParameters.get("last-name"),
+                                            (String)requestParameters.get("phone-number")
+                                        );
+
+                                        // next is to set in place the customer's address information
+                                        tempCustomerAccess.enterAddress(
+                                            (String)requestParameters.get("company"),
+                                            (String)requestParameters.get("attention"),
+                                            (String)requestParameters.get("street-line-1"),
+                                            (String)requestParameters.get("street-line-2"),
+                                            (String)requestParameters.get("zip")
+                                        );
+                                    } catch (SQLException sqle) {
+                                        /* legitimately this will NEVER happen */
+                                    }
                                     // redirect them to the home page
                                     responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
@@ -379,7 +405,29 @@ public class RegExHttpHandler implements HttpHandler {
                     case "/view-package/index.html":
                         // gets the packageID from the map (will be null if none is there)
                         String packageID = (String)requestParameters.get("package-id");
-                        responseBody = new RegExViewPackage(packageID, userRegExSession != null).getPageContent();
+                        responseBody = new RegExViewPackage(
+                            packageID,
+                            userRegExSession != null
+                        ).getPageContent();
+                        break;
+                    case "/account-info/index.html":
+                        // if the user attempts to access a protected page without a session
+                        if(sessionExpired || userRegExSession == null) {
+                            // redirect user to home page
+                            responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
+
+                            // attaches a location header for the browser to go to root (login)
+                            redirectUser(
+                                    exchange,
+                                    DOMAIN_ROOT + "/"
+                            );
+
+                            // empty response body
+                            responseBody = new byte[]{};
+                        } else {
+                            // simple gets the page content for this user
+                            responseBody = new RegExAccountInfo(userRegExSession).getPageContent();
+                        }
                         break;
                     case "/logout/index.html":
                         // deletes cookie from browser
@@ -565,6 +613,11 @@ public class RegExHttpHandler implements HttpHandler {
         );
     }
 
+    /**
+     * Generates a random session ID to set as a cookie in the browser.
+     *
+     * @return  A random string of characters which represent the session ID.
+     */
     private String getNewSessionId() {
         Random random = new Random();
         String availableChars = "abcdefghijklmnopqrstuvwxyz0123456789";

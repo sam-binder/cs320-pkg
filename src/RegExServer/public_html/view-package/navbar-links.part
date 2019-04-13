@@ -15,8 +15,8 @@
         </a>
     </li>
     <li class="navbar-link">
-        <a href="../account-history/" title="View your account history.">
-            Account History
+        <a href="../account-info/" title="View your account history.">
+            Account Info
         </a>
     </li>
     <li class="navbar-link">

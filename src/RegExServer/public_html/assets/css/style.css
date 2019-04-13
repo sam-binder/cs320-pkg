@@ -245,6 +245,11 @@ label {
     margin-bottom: 8px;
 }
 
+.required:after {
+    content: "*";
+    color: #ff0000;
+}
+
 .label-header {
     font-size: 1.5rem;
     font-weight: 700;
@@ -330,6 +335,25 @@ label {
     background-color: #4378db;
 }
 .btn-primary:active {
+    background-color: #578bec;
+}
+
+a.btn-primary {
+    color: #ffffff;
+    text-decoration: none;
+    display: block;
+    width: 110px;
+    text-align: center;
+}
+
+a.btn-primary:hover {
+    color: #ffffff;
+    box-shadow: 0 5px 15px 0 rgba(0,0,0,0.3);
+    background-color: #4378db;
+}
+
+a.btn-primary:active {
+    color: #ffffff;
     background-color: #578bec;
 }
 

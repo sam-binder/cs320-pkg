@@ -107,7 +107,7 @@ public class CustomerAccess implements AutoCloseable{
      * @return an error code, 0 for success
      */
     public int enterAddress(String company, String attention, String streetLineOne,
-                            String streetLineTwo, int zipCode){
+                            String streetLineTwo, String zipCode){
         String zipQuery = "SELECT id FROM zip_code WHERE zip_code = " + zipCode + ";";
         String addressQuery = "INSERT INTO " +
                 "address(company, attn, street_line_1, street_line_2, zip_fk, account_number_fk) " +

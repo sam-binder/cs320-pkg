@@ -1,14 +1,21 @@
 /*
     FILE: style.login.css
-    DESC: Styling for the loging page for the RegEx Intranet.
+    DESC: Styling for the login and account creation pages for the RegEx Intranet.
     AUTH: Kevin J. Becker 
     VERS: 03/23/2019
 */
 
-.login {
-    margin-top: 100px;
+.login, .create-account {
     display: flex;
     justify-content: center;
+}
+
+.login {
+    margin-top: 100px;
+}
+
+.create-account {
+    margin-top: 60px;
 }
 
 .error~.login {
@@ -21,26 +28,8 @@
     margin-right: 0;
 }
 
-a.btn-primary {
-    color: #ffffff;
-    text-decoration: none;
-    display: block;
-    width: 110px;
-}
-
-a.btn-primary:hover {
-    color: #ffffff;
-    box-shadow: 0 5px 15px 0 rgba(0,0,0,0.3);
-    background-color: #4378db;
-}
-
-a.btn-primary:active {
-    color: #ffffff;
-    background-color: #578bec;
-}
-
 @media screen and (max-width: 675px) {
-    #login-form {
+    #login-form, #create-form {
         width: 100%;
     }
 }
