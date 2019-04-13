@@ -69,7 +69,7 @@ public class Util {
             this.serviceID = s;
 
         }
-        public String getAccount_number(){
+        public String getAccountNumber(){
             return account_number;
         }
         public String getSerial(){
