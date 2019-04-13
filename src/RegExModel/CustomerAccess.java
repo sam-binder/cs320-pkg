@@ -612,13 +612,6 @@ public class CustomerAccess implements AutoCloseable{
 
     }
 
-    //Stubbed out method for future functionality
-    public void addMoneyToAccount(){
-
-    }
-
-
-
     /**
      * Function required to be implemented by AutoCloseable.
      * Lets CustomerAccess be used in a 'try with resources' block
