@@ -312,104 +312,121 @@ public class H2Access {
 	}
 
 	/**
+	 * Method to grant customer SELECT access on user and customer.
+	 */
+	public static void grantPublicRights() {
+		try {
+			Connection conn = createConnection("me", "password");
+			String query = "GRANT all ON user, customer, zip_code, address TO PUBLIC;";
+			createAndExecute(conn, query);
+			closeConnection(conn);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Starts and runs the database
 	 *
 	 * @param args: not used but you can use them
 	 */
 	public static void main(String[] args) {
-		//H2Access h2 = new H2Access();
+		boolean clearDatabase = false;
+		if (clearDatabase) {
+			H2Access.clearDatabase();
+		} else {
+			//NOTE: Set to true if AND ONLY IF this is the first time running the code.
+			boolean firstTime = false;
+			if (firstTime) {
+				new CreateNewDatabase().initDatabase();
+				grantPublicRights();
+			} else {
+				// Example creating a Customer
+				System.out.println("Creating the customer returned: " + createCustomer("Walter", "password"));
+				try (CustomerAccess c = new CustomerAccess("Walter", "password")) {
+					System.out.println(c.changeBasicInformation("Walter", "Schartl", "585-867-5309"));
+					System.out.println(c.changeBasicInformation(null, "Schaertl", null));
+					System.out.println(c.setUpBillingInfo());
+					System.out.println(c.enterAddress("this co", "Walter S", "1123 lone rd", "", "14548"));
+					System.out.println(c.enterAddress("this co", "Walter s", "Bahamas", "", "14540"));
+					ResultSet r = c.getAllAddresses(H2Access.getUserFK("Walter") + "");
+					if (r.next()) {
+						int id = r.getInt(1);
+						c.setHomeAddress(id);
+					}
 
-		//NOTE: Set to true if AND ONLY IF this is the first time running the code.
-		boolean firstTime = false;
-		if (firstTime)
-			new CreateNewDatabase().initDatabase();
-		//H2Access.clearDatabase();
+					System.out.println(c.setHomeAddress(200));
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 
-		// Example creating a Customer
-		System.out.println("Creating the customer returned: " + createCustomer("Walter", "password"));
-		try (CustomerAccess c = new CustomerAccess("Walter", "password")) {
-			System.out.println(c.changeBasicInformation("Walter", "Schartl", "585-867-5309"));
-			System.out.println(c.changeBasicInformation(null, "Schaertl", null));
-			System.out.println(c.setUpBillingInfo());
-			System.out.println(c.enterAddress("this co", "Walter S", "1123 lone rd", "", "14548"));
-			System.out.println(c.enterAddress("this co", "Walter s", "Bahamas", "", "14540"));
-			ResultSet r = c.getAllAddresses(H2Access.getUserFK("Walter") + "");
-			if (r.next()) {
-				int id = r.getInt(1);
-				c.setHomeAddress(id);
+
+				// Example usage of ease functions
+				System.out.println("\nSample checking a user's type.");
+				System.out.println(getUserType("AAAA"));
+
+				System.out.println("\nSample Package Employee updating a packages location.");
+				try (EmployeeAccess employee1 = new EmployeeAccess("CCCC", "password", getUserType("CCCC"))) {
+					System.out.println("User ID: " + employee1.getId());
+					employee1.updatePackageLocation("TOT0MYPN2PLK", 131, "B9IWEA");
+				} catch (SQLException sqle) {
+					sqle.printStackTrace();
+				}
+
+				try (EmployeeAccess employee2 = new EmployeeAccess("BBBB", "password", getUserType("BBBB"))) {
+					System.out.println("\nSample Accounting Employee looking up customers named Amy.");
+					ResultSet results = employee2.getCustomersWhere("first_name='Amy'");
+					while (results.next()) {
+						System.out.printf("Person %d: %d %d %d %s %s\n",
+								results.getInt(1),
+								results.getInt(2),
+								results.getInt(3),
+								results.getInt(4),
+								results.getString(5),
+								results.getString(6));
+					}
+					System.out.println("\nSample Accounting Employee viewing billing " +
+							"information for customer with account number 16.");
+					results = employee2.viewCustomerBilling(16);
+					while (results.next()) {
+						System.out.printf("Billing %d: %f %s %d %d\n",
+								results.getInt(1),
+								results.getDouble(2),
+								results.getString(3),
+								results.getInt(4),
+								results.getInt(5));
+					}
+					System.out.println("\nSample Accounting Employee tracking a packages location.");
+					results = employee2.viewPackageHistory(131, "B9IWEA");
+					while (results.next()) {
+						System.out.printf("Package History %d: %s %s %d %s %d %s\n",
+								results.getInt(1),
+								results.getDate(2),
+								results.getTime(3),
+								results.getInt(4),
+								results.getString(3),
+								results.getInt(4),
+								results.getString(5));
+					}
+					System.out.println("\nSample Accounting Employee viewing a package information.");
+					results = employee2.viewPackageData(131, "B9IWEA");
+					while (results.next()) {
+						System.out.printf("Package Date %d: %d %s %d %d %d %d %s %s %s\n",
+								results.getInt(1),
+								results.getInt(2),
+								results.getString(3),
+								results.getInt(4),
+								results.getInt(5),
+								results.getInt(6),
+								results.getInt(7),
+								results.getString(8),
+								results.getString(9),
+								results.getString(10));
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 			}
-
-			System.out.println(c.setHomeAddress(200));
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
-
-
-		// Example usage of ease functions
-		System.out.println("\nSample checking a user's type.");
-		System.out.println(getUserType("AAAA"));
-
-		System.out.println("\nSample Package Employee updating a packages location.");
-		try (EmployeeAccess employee1 = new EmployeeAccess("CCCC", "password", getUserType("CCCC"))) {
-			System.out.println("User ID: " + employee1.getId());
-			employee1.updatePackageLocation("TOT0MYPN2PLK", 131, "B9IWEA");
-		} catch (SQLException sqle) {
-			sqle.printStackTrace();
-		}
-
-		try (EmployeeAccess employee2 = new EmployeeAccess("BBBB", "password", getUserType("BBBB"))) {
-			System.out.println("\nSample Accounting Employee looking up customers named Amy.");
-			ResultSet results = employee2.getCustomersWhere("first_name='Amy'");
-			while (results.next()) {
-				System.out.printf("Person %d: %d %d %d %s %s\n",
-						results.getInt(1),
-						results.getInt(2),
-						results.getInt(3),
-						results.getInt(4),
-						results.getString(5),
-						results.getString(6));
-			}
-			System.out.println("\nSample Accounting Employee viewing billing " +
-					"information for customer with account number 16.");
-			results = employee2.viewCustomerBilling(16);
-			while (results.next()) {
-				System.out.printf("Billing %d: %f %s %d %d\n",
-						results.getInt(1),
-						results.getDouble(2),
-						results.getString(3),
-						results.getInt(4),
-						results.getInt(5));
-			}
-			System.out.println("\nSample Accounting Employee tracking a packages location.");
-			results = employee2.viewPackageHistory(131, "B9IWEA");
-			while (results.next()) {
-				System.out.printf("Package History %d: %s %s %d %s %d %s\n",
-						results.getInt(1),
-						results.getDate(2),
-						results.getTime(3),
-						results.getInt(4),
-						results.getString(3),
-						results.getInt(4),
-						results.getString(5));
-			}
-			System.out.println("\nSample Accounting Employee viewing a package information.");
-			results = employee2.viewPackageData(131, "B9IWEA");
-			while (results.next()) {
-				System.out.printf("Package Date %d: %d %s %d %d %d %d %s %s %s\n",
-						results.getInt(1),
-						results.getInt(2),
-						results.getString(3),
-						results.getInt(4),
-						results.getInt(5),
-						results.getInt(6),
-						results.getInt(7),
-						results.getString(8),
-						results.getString(9),
-						results.getString(10));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
 	}
 }

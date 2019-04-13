@@ -147,7 +147,8 @@ public class CustomerAccess implements AutoCloseable{
     }
 
     /**
-     * Call this one when adding an address
+     * Call this one when adding an address; any address; will look to see if it exists first,
+     * then return any existing one or a new address of that type.
      * @param company
      * @param attention
      * @param streetLine1
@@ -167,9 +168,35 @@ public class CustomerAccess implements AutoCloseable{
         }
 
         return does_it_exist;
-
     }
 
+    /**
+     * Small method to return basic user information.
+     *
+     * @return  A ResultSet containing the basic user information.
+     */
+    public ResultSet getUserInformation() {
+        // queries from the user table to get this user's information
+        return H2Access.createAndExecuteQuery(
+            this.connection,
+            "SELECT username, customer.*, address.* " +
+            "FROM user " +
+            "INNER JOIN customer ON general_fk=customer.account_number " +
+            "INNER JOIN address ON customer.mailing_address_ID_fk=address.ID " +
+            "WHERE username='" + this.username + "';"
+        );
+    }
+
+    /**
+     * helper function for @function createNewAddress
+     * @param company
+     * @param attention
+     * @param streetLine1
+     * @param streetLine2
+     * @param zip_ID_fk
+     * @param account_number_fk
+     * @return
+     */
     private ResultSet retrieveAddress(String company, String attention, String streetLine1, String streetLine2,
                                       String zip_ID_fk, String account_number_fk){
         int zip_ID_fk_numeric = Integer.parseInt(zip_ID_fk);
@@ -185,7 +212,8 @@ public class CustomerAccess implements AutoCloseable{
         return h2.createAndExecuteQuery(connection, query);
     }
     /**
-     * create a new address for a customer. Called after querying whether this address already exists.
+     * helper function for createNewAddress
+     * adds new address for a customer. Called after querying whether this address already exists.
      * @param company
      * @param attention
      * @param streetLine1
@@ -261,7 +289,7 @@ public class CustomerAccess implements AutoCloseable{
      *
      * @param city
      * @param state
-     * @return
+     * @return ResultSet of zips for that city/state combo
      */
     public ResultSet zipCodeLookupByCityState(String city, String state){
         String query =
@@ -348,17 +376,22 @@ public class CustomerAccess implements AutoCloseable{
         // charges should be the result of an insert query, so empty;
 
         // call billing update method
-        ResultSet billing = updateBilling(account_number_fk);
+        ResultSet billing = updateBillingAmountDue(account_number_fk);
         // also empty - result of update query
 
         return pkg;
-
     }
 
-    private ResultSet updateBilling(String acct) throws SQLException{
+    /**
+     * updates billing amount due
+     * @param acct
+     * @return
+     * @throws SQLException
+     */
+    private ResultSet updateBillingAmountDue(String acct) throws SQLException{
         // get current outstanding charges (from charge)
         // & get total paid (from charge)
-        String Qoutstanding = "SELECT SUM(price) SUM(paid) FROM CHARGE WHERE account_number_fk = '" + acct + "';";
+        String Qoutstanding = "SELECT SUM(price), SUM(paid) FROM CHARGE WHERE account_number_fk = '" + acct + "';";
         ResultSet outstanding = h2.createAndExecuteQuery(connection, Qoutstanding);
         double due = outstanding.getDouble(0) - outstanding.getDouble(1);
         // update billing table
@@ -369,6 +402,18 @@ public class CustomerAccess implements AutoCloseable{
 
     }
 
+    /**
+     * Calculates charges based on rates, billable weight, service.
+     * Adds record in charge table
+     * returns empty ResultSet
+     * @param rate
+     * @param account_number_fk
+     * @param serial
+     * @param billable_weight
+     * @param service_id
+     * @return
+     * @throws SQLException
+     */
     private ResultSet createCharges(ResultSet rate, String account_number_fk, String serial,
                                     int billable_weight, String service_id) throws SQLException{
         int service = Integer.parseInt(service_id);
@@ -406,8 +451,13 @@ public class CustomerAccess implements AutoCloseable{
 
     }
 
-
-    private ResultSet getCustomerRates(String account_number) throws SQLException{
+    /**
+     * gets customer's current negotiated rates.
+     * @param account_number
+     * @return
+     * @throws SQLException
+     */
+    public ResultSet getCustomerRates(String account_number) throws SQLException{
         String QrateID = "SELECT negotiated_rate_ID_fk FROM CUSTOMER WHERE account_number = '" + account_number + "';";
         ResultSet rateID = h2.createAndExecuteQuery(connection, QrateID);
         int rate_fk = rateID.getInt(0);
@@ -417,6 +467,19 @@ public class CustomerAccess implements AutoCloseable{
 
     }
 
+    /**
+     * helper method for sendPackage
+     * Creates package serial.
+     * @param account_number_fk
+     * @param service_id_fk
+     * @param dim_height
+     * @param dim_length
+     * @param dim_depth
+     * @param weight
+     * @param origin
+     * @param destination
+     * @return
+     */
     private ResultSet createPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
                                     String dim_depth, String weight, String origin, String destination){
 
@@ -494,6 +557,14 @@ public class CustomerAccess implements AutoCloseable{
 
     }
 
+    /**
+     * helper method for finding location strings based on address ID + whether is destination
+     * or origin
+     * @param address_id_fk
+     * @param constraint
+     * @return location string
+     * @throws SQLException
+     */
     // Use capital letters; not set up to handle lower case
     private String find_location(String address_id_fk, char constraint) throws SQLException {
         String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID_FK = " + address_id_fk + ";";
@@ -556,13 +627,6 @@ public class CustomerAccess implements AutoCloseable{
 
     }
 
-    //Stubbed out method for future functionality
-    public void addMoneyToAccount(){
-
-    }
-
-
-
     /**
      * Function required to be implemented by AutoCloseable.
      * Lets CustomerAccess be used in a 'try with resources' block
@@ -570,5 +634,14 @@ public class CustomerAccess implements AutoCloseable{
     @Override
     public void close(){
         h2.closeConnection(this.connection);
+    }
+
+    public ResultSet viewAccount(String account_number){
+        String query = "(SELECT * FROM Customer WHERE account_number = " + account_number + ") UNION " +
+                        "(SELECT * FROM Billing WHERE account_number_fk = " + account_number + ");";
+        return h2.createAndExecuteQuery(connection, query);
+
+
+
     }
 }

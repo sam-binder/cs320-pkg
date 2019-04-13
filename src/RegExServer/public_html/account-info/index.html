@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name = "viewport" content = "width=device-width, initial-scale=1, maximum-scale=1">
         <link href="/assets/css/style.css" rel="stylesheet" />
-        <title>RegEx Intranet &bull; Account History</title>
+        <title>RegEx Intranet &bull; Account Info</title>
     </head>
     <body>
     <div class="header full">
@@ -77,22 +77,42 @@
                             @{last-name}
                         </td>
                     </tr>
+                    <tr>
+                        <td class="text-right text-bold">
+                            Phone Number
+                        </td>
+                        <td class="text-left">
+                            @{phone-number}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" class="text-bold">
+                            Primary Address
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right text-bold">
+                            Address Line 1
+                        </td>
+                        <td class="text-left">
+                            @{address-line-1}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right text-bold">
+                            Address Line 2
+                        </td>
+                        <td class="text-left">
+                            @{address-line-2}
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
         <div class="row mt-3">
             <h2>Sent packages</h2>
             <table class="regex-std-table">
-                <thead>
-                    <tr>
-                        <th>Tracking ID</th>
-                        <th>Status</th>
-                        <th>Last Update</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @{sent-packages-table}
-                </tbody>
+                @{sent-packages-table}
             </table>
         </div>
     </div>
