@@ -223,7 +223,7 @@ public class CustomerAccess implements AutoCloseable{
                 "(STREET_LINE_2 = '" + streetLine2 + "') AND " +
                 "(ZIP_FK = "+ zip_ID_fk_numeric + ") AND " +
                 "(ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ");";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
     /**
      * helper function for createNewAddress
@@ -262,7 +262,7 @@ public class CustomerAccess implements AutoCloseable{
     public ResultSet getAllAddresses(String account_number_fk){
         int account_number_fk_numeric = Integer.parseInt(account_number_fk);
         String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ");";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -306,7 +306,7 @@ public class CustomerAccess implements AutoCloseable{
     public ResultSet zipCodeLookupByCityState(String city, String state){
         String query =
                 "SELECT * FROM ZIP_CODE WHERE (CITY = '" + city + "') AND (STATE ='" + state + "');";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /*
@@ -331,10 +331,8 @@ public class CustomerAccess implements AutoCloseable{
                                  String destination_zip) throws SQLException{
         ResultSet o_zip = zipCodeLookupByCityState(origin_city, origin_state);
         ResultSet d_zip = zipCodeLookupByCityState(destination_city, destination_state);
-        int o_zip_numeric = Integer.parseInt(origin_zip);
-        int d_zip_numeric = Integer.parseInt(destination_zip);
-        String origin_has_addr = "none";
-        String dest_has_addr = "none";
+        String origin_has_addr;
+        String dest_has_addr;
 
         // detect zip code IDs for origin & destination
         /* edit: nope
@@ -360,7 +358,7 @@ public class CustomerAccess implements AutoCloseable{
         if(o_zip.next()){
             origin_has_addr = o_zip.getString("ID");
         } else {
-            o_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(origin_zip));
+            o_zip = H2Access.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(origin_zip));
             o_zip.next();
             origin_has_addr = o_zip.getString("ID");
         }
@@ -368,7 +366,7 @@ public class CustomerAccess implements AutoCloseable{
             // wet code, don't care.
             dest_has_addr = d_zip.getString("ID");
         } else {
-            d_zip = h2.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(destination_zip));
+            d_zip = H2Access.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(destination_zip));
             d_zip.next();
             dest_has_addr = d_zip.getString("ID");
         }
@@ -426,18 +424,18 @@ public class CustomerAccess implements AutoCloseable{
         // get current outstanding charges (from charge)
         // & get total paid (from charge)
         String Qoutstanding = "SELECT SUM(price) FROM CHARGE WHERE account_number_fk = '" + acct + "' AND paid = 0;";
-        ResultSet outstanding = h2.createAndExecuteQuery(connection, Qoutstanding);
+        ResultSet outstanding = H2Access.createAndExecuteQuery(connection, Qoutstanding);
         if(outstanding.next()) {
             double due = outstanding.getDouble(1);
             String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
-            ResultSet currentBalance = h2.createAndExecuteQuery(connection, QcurrentBal);
+            ResultSet currentBalance = H2Access.createAndExecuteQuery(connection, QcurrentBal);
             if (currentBalance.next()) {
                 due += currentBalance.getDouble(1);
                 // update billing table
                 String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
-                if( h2.createAndExecute(connection, QupdateOutstanding)){
+                if( H2Access.createAndExecute(connection, QupdateOutstanding)){
                     String QpullUpdate = "SELECT * FROM billing WHERE account_number_fk = '" + acct + "';";
-                    return h2.createAndExecuteQuery(connection, QpullUpdate);
+                    return H2Access.createAndExecuteQuery(connection, QpullUpdate);
                 } else {
                     return null;
                 }
@@ -447,8 +445,6 @@ public class CustomerAccess implements AutoCloseable{
         } else {
             return null;
         }
-
-
     }
 
     /**
@@ -483,7 +479,7 @@ public class CustomerAccess implements AutoCloseable{
         } else {
             base = rate.getDouble(1);
         }
-        if(1 == priority % 1){
+        if(1 == priority % 2){
             rush = rate.getDouble(3);
         } else {
             rush = 1.0;
@@ -496,10 +492,10 @@ public class CustomerAccess implements AutoCloseable{
                             serial + "', " +
                             service_id + ", " +
                             "0 );";
-        if(h2.createAndExecute(connection, QInsert)){
+        if(H2Access.createAndExecute(connection, QInsert)){
             String Qecho =  "SELECT * FROM CHARGE WHERE ACCOUNT_NUMBER_FK = '" + account_number_fk +
                             "' and PACKAGE_SERIAL_FK = '" + serial + "';";
-            return h2.createAndExecuteQuery(connection, Qecho);
+            return H2Access.createAndExecuteQuery(connection, Qecho);
         } else{
             return null;
         }
@@ -514,11 +510,11 @@ public class CustomerAccess implements AutoCloseable{
      */
     public ResultSet getCustomerRates(String account_number) throws SQLException{
         String QrateID = "SELECT negotiated_rate_ID_fk FROM CUSTOMER WHERE account_number = '" + account_number + "';";
-        ResultSet rateID = h2.createAndExecuteQuery(connection, QrateID);
+        ResultSet rateID = H2Access.createAndExecuteQuery(connection, QrateID);
         if(rateID.next()){
             int rate_fk = rateID.getInt("negotiated_rate_ID_fk");
             String QGetRates = "SELECT * FROM RATE WHERE negotiated_rate_ID = " + rate_fk + ";";
-            ResultSet rates = h2.createAndExecuteQuery(connection, QGetRates);
+            ResultSet rates = H2Access.createAndExecuteQuery(connection, QGetRates);
             return rates;
         } else {
             return null;
@@ -545,7 +541,7 @@ public class CustomerAccess implements AutoCloseable{
 
         String getLast = "SELECT MAX(serial) FROM package WHERE account_number_fk = '" + account_number_fk + "';";
 
-        ResultSet last = h2.createAndExecuteQuery(connection, getLast);
+        ResultSet last = H2Access.createAndExecuteQuery(connection, getLast);
         // GET the last serial this customer has sent, add 1
         String lastSerial;
         if(last.next()){
@@ -596,6 +592,11 @@ public class CustomerAccess implements AutoCloseable{
                 carry = false;
             }
         }
+        while(i >= 0){
+            nextSerial[i] = lastSerial.charAt(i);
+            i--;
+            // this should now copy over everything that isn't carry-digited
+        }
 
 
         String query =  "INSERT INTO PACKAGE " +
@@ -610,13 +611,13 @@ public class CustomerAccess implements AutoCloseable{
                         weight + ", " +
                         "'" + origin + "', " +
                         "'" + destination + "');";
-        if(h2.createAndExecute(connection, query)) {
+        if(H2Access.createAndExecute(connection, query)) {
 
             String query2 = "SELECT * FROM PACKAGE" +
                     " WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk +
                     ") AND (SERIAL = '" + new String(nextSerial) + "');";
 
-            ResultSet ins_new_rec = h2.createAndExecuteQuery(connection, query2);
+            ResultSet ins_new_rec = H2Access.createAndExecuteQuery(connection, query2);
             return ins_new_rec;
         } else {
             return null;
@@ -665,7 +666,6 @@ public class CustomerAccess implements AutoCloseable{
         //      create new ones
         // CASE: 'H' / 'V' - create new
         Random r = new Random();
-        String new_Location_ID;
         String query2;
         ResultSet ok;
         char[] ch_to_array = new char[12];
@@ -688,11 +688,33 @@ public class CustomerAccess implements AutoCloseable{
             ch_to_array[10] = (char)(r.nextInt(26) + 'A');
             ch_to_array[11] = (char)(r.nextInt(26) + 'A');
             query2 = "SELECT * FROM LOCATION WHERE ID = '" + String.copyValueOf(ch_to_array) + "';";
-            ok = h2.createAndExecuteQuery(connection, query2);
+            ok = H2Access.createAndExecuteQuery(connection, query2);
 
         } while (ok.next());
         return String.copyValueOf(ch_to_array);
 
+    }
+
+    /**
+     * A function which returns a ResultSet containing the last three transactions involved with this account.
+     *
+     * @param accntNum  The account number to get the last three transactions on.
+     * @return  A ResultSet containing UP TO 3 transactions.
+     */
+    public ResultSet getLastThreeTransactions(int accntNum) {
+        String query = "SELECT date, time, transaction.account_number_fk, " +
+                "package_serial_fk, location_ID_fk, package.service_id_fk " +
+                "FROM transaction " +
+                "INNER JOIN package ON package_serial_fk = package.serial " +
+                "WHERE transaction.account_number_fk = " + accntNum + " " +
+                "ORDER BY date, time " +
+                "LIMIT 3;";
+        try {
+            Connection conn = H2Access.createConnection("me", "password");
+            return H2Access.createAndExecuteQuery(conn, query);
+        } catch (SQLException e) {
+            return null;
+        }
     }
 
     /**
@@ -701,15 +723,6 @@ public class CustomerAccess implements AutoCloseable{
      */
     @Override
     public void close(){
-        h2.closeConnection(this.connection);
-    }
-
-    public ResultSet viewAccount(String account_number){
-        String query = "(SELECT * FROM Customer WHERE account_number = '" + account_number + "') UNION " +
-                        "(SELECT * FROM Billing WHERE account_number_fk = '" + account_number + "');";
-        return h2.createAndExecuteQuery(connection, query);
-
-
-
+        H2Access.closeConnection(this.connection);
     }
 }

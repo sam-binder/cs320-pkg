@@ -2,6 +2,7 @@ package RegExServer;
 
 // FILE: RegExHome.java
 
+import RegExModel.CustomerAccess;
 import RegExModel.H2Access;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -59,11 +60,18 @@ public class RegExHome extends RegExPage{
         // we have to build out "last 3 transactions" table
         StringBuilder lastThreeTransTable = new StringBuilder();
 
-        // gets the resultset for the last (up to) three transactions on this account
-        ResultSet lastThreeTrans = H2Access.getLastThreeTransactions(this.userRegExSession.accountNumber);
-
         // attempts to load in all of the three things
         try {
+            CustomerAccess tempCustomerAccess = new CustomerAccess(
+                    this.userRegExSession.userName,
+                    this.userRegExSession.password
+            );
+
+            // gets the resultset for the last (up to) three transactions on this account
+            ResultSet lastThreeTrans = tempCustomerAccess.getLastThreeTransactions(
+                this.userRegExSession.accountNumber
+            );
+
             // if the resultset has actual data
             if(lastThreeTrans != null) {
                 // load up the first transaction if it exists
