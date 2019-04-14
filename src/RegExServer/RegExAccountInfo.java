@@ -138,7 +138,7 @@ public class RegExAccountInfo extends RegExPage {
                         // append the link to this package
                         sentPackagesTable.append(
                                 "<td>" +
-                                    "<a href='/view-package/?package-id='" + trackingID + "'>" + trackingID + "</a>" +
+                                    "<a href='/view-package/?package-id=" + trackingID + "'>" + trackingID + "</a>" +
                                 "</td>"
                         );
 
