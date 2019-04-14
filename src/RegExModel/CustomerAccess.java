@@ -600,7 +600,7 @@ public class CustomerAccess implements AutoCloseable{
      */
     // Use capital letters; not set up to handle lower case
     private String find_location(String address_id_fk, char constraint) throws SQLException {
-        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID_FK = " + address_id_fk + ";";
+        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + address_id_fk + ";";
         ResultSet matches = H2Access.createAndExecuteQuery(connection, query);
         // new changes
         if( ((constraint == 'O')||(constraint == 'D')||(constraint == 'o')||(constraint == 'd'))&&(matches.next())) {
