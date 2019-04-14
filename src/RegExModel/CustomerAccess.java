@@ -596,6 +596,10 @@ public class CustomerAccess implements AutoCloseable{
                 carry = false;
             }
         }
+        while(i >= 0){
+            nextSerial[i] = lastSerial.charAt(i);
+            i--;
+        }
 
 
         String query =  "INSERT INTO PACKAGE " +
