@@ -427,14 +427,21 @@ public class CustomerAccess implements AutoCloseable{
         // & get total paid (from charge)
         String Qoutstanding = "SELECT SUM(price) FROM CHARGE WHERE account_number_fk = '" + acct + "' AND paid = 0;";
         ResultSet outstanding = h2.createAndExecuteQuery(connection, Qoutstanding);
-        double due = outstanding.getDouble(1);
-        String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
-        ResultSet currentBalance = h2.createAndExecuteQuery(connection, QcurrentBal);
-        due += currentBalance.getDouble(1);
-        // update billing table
-        String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
-        return h2.createAndExecuteQuery(connection, QupdateOutstanding);
-
+        if(outstanding.next()) {
+            double due = outstanding.getDouble(1);
+            String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
+            ResultSet currentBalance = h2.createAndExecuteQuery(connection, QcurrentBal);
+            if (currentBalance.next()) {
+                due += currentBalance.getDouble(1);
+                // update billing table
+                String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
+                return h2.createAndExecuteQuery(connection, QupdateOutstanding);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
 
 
     }
