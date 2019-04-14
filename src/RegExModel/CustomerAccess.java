@@ -541,22 +541,25 @@ public class CustomerAccess implements AutoCloseable{
      * @return
      */
     private ResultSet createPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
-                                    String dim_depth, String weight, String origin, String destination){
+                                    String dim_depth, String weight, String origin, String destination) throws SQLException{
 
         String getLast = "SELECT MAX(serial) FROM package WHERE account_number_fk = '" + account_number_fk + "';";
 
         ResultSet last = h2.createAndExecuteQuery(connection, getLast);
         // GET the last serial this customer has sent, add 1
         String lastSerial;
+        if(last.next()){
+
+            lastSerial = last.getString(1);
+
+        } else {
+            lastSerial = "AAAAAA";
+        }
         char nextSerial[] = new char[6];
         boolean carry = false;
 
 
-        try {
-            lastSerial = last.getString(0);
-        } catch (SQLException e) {
-            lastSerial = "AAAAAA";
-        }
+
 
         int i = 5;
         if (lastSerial.charAt(i) == 'Z') {
