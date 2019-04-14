@@ -925,7 +925,6 @@ public class CustomerAccess implements AutoCloseable {
      * @return A location string.
      * @throws SQLException  Any SQLException is thrown out to the caller.
      */
-    // Use capital letters; not set up to handle lower case
     private String findLocation(String addressID, char locationType) throws SQLException {
         // a query which selects all information from location which has an address ID of addressID
         String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + addressID + ";";
@@ -937,15 +936,13 @@ public class CustomerAccess implements AutoCloseable {
                 // performs a switch based on the location type
                 switch (locationType) {
                     case 'O':
-                    case 'o':
                         // if the string matches on the second character ("TO...")
                         if (matches.getString(1).charAt(1) == 'O') {
                             return matches.getString(1);
                         }
                         break;
                     case 'D':
-                    case 'd':
-                        // do the same thing as above for O
+                        // do the same thing as above for O, except for destinations
                         if (matches.getString(1).charAt(1) == 'D') {
                             return matches.getString(1);
                         }
@@ -960,10 +957,8 @@ public class CustomerAccess implements AutoCloseable {
 
         // creates a new random generator
         Random rand = new Random();
-
         // a result set used to determine if a location ID exists
         ResultSet locationIDExistsQuery;
-
         // a StringBuilder which will be used to house the location ID
         StringBuilder locationIDBuilder = new StringBuilder(12);
 
@@ -977,6 +972,12 @@ public class CustomerAccess implements AutoCloseable {
 
         // keeps generating location IDs until we find a unique one
         do {
+            // if the locationIDBuilder has a length greater than 2
+            if(locationIDBuilder.length() > 2) {
+                // delete the excess characters
+                locationIDBuilder.delete(2, 12);
+            }
+
             // appends 12 characters to the string builder
             for(int i = 2; i < 12; ++i) {
                 locationIDBuilder.append(rand.nextInt(26) + 'A');
