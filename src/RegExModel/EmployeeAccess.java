@@ -3,11 +3,8 @@ import com.sun.org.apache.xpath.internal.SourceTree;
 import sun.font.TrueTypeFont;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.Time;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.HashMap;
 import java.util.Scanner;
 
 /**
@@ -177,23 +174,29 @@ public class EmployeeAccess implements AutoCloseable{
 
     /**
      * The way to create an entry to rates table.
-     * @param negotiatedID the negotiated id
      * @param groundRate the ground rate of the package
      * @param airRate the air rate of the package
      * @param rushRate the rush rate of the package
      * @param DRB dim_rating_break
+     * @return the PK of the new rate
      */
-    public void CreateRate(String negotiatedID, String groundRate, String airRate, String rushRate, String DRB) {
+    public int CreateRate(double groundRate, double airRate, double rushRate, int DRB) {
         int employeeID = this.getId();
-        int negotiated = Integer.parseInt(negotiatedID);
-        double ground = Double.parseDouble(groundRate);
-        double air = Double.parseDouble(airRate);
-        double rush = Double.parseDouble(rushRate);
-        int drb = Integer.parseInt(DRB);
-        String query = String.format("INSERT INTO rates(NEGOTIATED_RATE_ID, GROUND_RATE, AIR_RATE, RUSH_RATE, " +
-                "DIM_RATING_BREAK, EMPLOYEEID) VALUES (\"%d\",\"%f\",\"%f\",\"%f\",\"%d\",\"%d\");",
-                negotiated, ground, air, rush, drb, employeeID);
-        h2.createAndExecute(connection, query);
+        String query = String.format("INSERT INTO rate(GROUND_RATE, AIR_RATE, RUSH_RATE, " +
+                        "DIM_RATING_BREAK, EMPLOYEE_ID) VALUES (%f, %f, %f, %d, %d);",
+                groundRate, airRate, rushRate, DRB, employeeID);
+        try {
+            PreparedStatement prep = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            prep.executeUpdate();
+            ResultSet keys = prep.getGeneratedKeys();
+            if (keys.next())
+                return keys.getInt("negotiated_rate_id");
+            else
+                return -1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
     }
 
     /**
@@ -215,18 +218,12 @@ public class EmployeeAccess implements AutoCloseable{
      * @param rushRate the new rush rate to be set up
      * @param DRB the new dim_rating_break to be set up
      */
-    public void modifyRates(String negotiatedID, String groundRate, String airRate, String rushRate, String DRB) {
+    public void modifyRates(int negotiatedID, double groundRate, double airRate, double rushRate, int DRB) {
         int employeeID = this.getId();
-        int negotiated = Integer.parseInt(negotiatedID);
-        double ground = Double.parseDouble(groundRate);
-        double air = Double.parseDouble(airRate);
-        double rush = Double.parseDouble(rushRate);
-        int drb = Integer.parseInt(DRB);
-        String query = String.format("UPDATE rates SET GROUND_RATE = \"" + ground + "\", AIR_RATE = \"" +
-                air + "\", RUSH_rATE = \"" + rush + "\", DIM_RATING_BREAK = \"" + drb + "\", EMPLOYEEID =\""
-                + employeeID + "WHERE NEGOTIATED_RATE_ID = \"" + negotiated + "\";");
-
-        h2.createAndExecute(connection, query);
+        String query = String.format("UPDATE rate SET GROUND_RATE=%f, AIR_RATE=%f, RUSH_RATE=%f, " +
+                "DIM_RATING_BREAK=%d, EMPLOYEE_ID=%d WHERE negotiated_rate_id=%d;", groundRate,
+                airRate, rushRate, DRB, employeeID, negotiatedID);
+        H2Access.createAndExecute(connection, query);
     }
 
     /**
@@ -342,6 +339,7 @@ public class EmployeeAccess implements AutoCloseable{
         }
         return null;
     }
+
 
     /**
      * Tests if this location ID is valid
@@ -513,7 +511,8 @@ public class EmployeeAccess implements AutoCloseable{
         basePage();
         System.out.println("[1] Generate customer invoices.");
         System.out.println("[2] Edit a customers billing.");
-        System.out.println("[3] Track a package.");
+        System.out.println("[3] Negotiate custom rates.");
+        System.out.println("[4] Track a package.");
         System.out.print("Please enter a choice: ");
         String userStr = getUserInput(new String[]{"1", "2", "3", "H", "B", "Q"});
         switch (userStr){
@@ -530,26 +529,162 @@ public class EmployeeAccess implements AutoCloseable{
                 acctHomePage();
                 break;
             case "2":
-                //editCustomerBilling();
+                editCustomerBilling();
+                acctHomePage();
                 break;
             case "3":
+                setUpCustomRates();
+                acctHomePage();
+                break;
+            case "4":
                 //trackAPackage();
                 break;
         }
 
     }
 
-    private void generateCustomerInvoices(){
+    private void setUpCustomRates(){
         Scanner in = new Scanner(System.in);
+        String rates[];
+        boolean success = false;
+        int customerId = selectCustomer("Which customer would you like to edit the rates of?");
+        basePage();
+        do {
+            // If the customer has a rate id of 1, it's the default and to edit it a new one
+            // must be create. Otherwise, the object can just be modified.
+            System.out.println("After negotiating, please enter the new Ground Rate, Air Rate, " +
+                    "Rush Rate, and Dimension Rating Break, in that order separated by spaces.");
+            System.out.print("New Rates: ");
+            rates = in.nextLine().split(" ");
+            if (rates.length != 4)
+                System.out.printf("Exactly four numbers are expected, %d were received.\n", rates.length);
+            else {
+                try {
+                    double groundRate = Double.parseDouble(rates[0]);
+                    double airRate = Double.parseDouble(rates[1]);
+                    double rushRate = Double.parseDouble(rates[2]);
+                    int DRB = Integer.parseInt(rates[3]);
+                    int rateId = getRateId(customerId);
+                    if (rateId == 1 || rateId == -1) {
+                        int newID = CreateRate(groundRate, airRate, rushRate, DRB);
+                        String query = "UPDATE customer SET negotiated_rate_id_fk = %d WHERE account_number = %d";
+                        H2Access.createAndExecute(connection, String.format(query, newID, customerId));
+
+                    } else {
+                        modifyRates(rateId, groundRate, airRate, rushRate, DRB);
+                    }
+                    success = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("The numbers were malformed, please try again.");
+                }
+            }
+        } while(!success);
+    }
+
+    private int getRateId(int acctNum){
+        String query = "SELECT negotiated_rate_id_fk FROM customer WHERE account_number=" + acctNum;
+        ResultSet r = H2Access.createAndExecuteQuery(connection, query);
+        try {
+            if(r.next())
+                return r.getInt("negotiated_rate_id_fk");
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    private void editCustomerBilling(){
+        Scanner in = new Scanner(System.in);
+        int customerId = selectCustomer("Which customer would you like to edit the billing of?");
+        basePage();
+        System.out.println("[1] Add money to customer balance.");
+        System.out.println("[2] Change customer billing period.");
+        System.out.print("Please enter a choice: ");
+        String userStr = getUserInput(new String[]{"1", "2", "H", "B", "Q"});
+        switch (userStr){
+            case "H":
+                acctHomePage();
+                break;
+            case "B":
+                break;
+            case "Q":
+                System.exit(0);
+                break;
+            case "1":
+                double amt = 0;
+                do {
+                    System.out.print("How much money should be added: ");
+                    amt = in.nextDouble();
+                    if(amt <= 0)
+                        System.out.println("You can only add money to an account.");
+                    else{
+                        if(addMoney(amt, customerId)) {
+                            System.out.print("Money successfully added, new customer balance: ");
+                            System.out.printf("%.2f\n", getBalance(customerId));
+                        } else {
+                            System.out.println("Could not add money to the account, contact a" +
+                                    " systems administrator.");
+                        }
+                    }
+                }while (amt <= 0);
+                break;
+            case "2":
+                String newPeriod = "";
+                System.out.println("What should the new pay period be?");
+                System.out.println("[1] Annually");
+                System.out.println("[2] Bi-Annually");
+                System.out.println("[3] Quarterly");
+                System.out.println("[4] Monthly");
+                int choice = Integer.parseInt(getUserInput(new String[]{"1", "2", "3", "4"}));
+                switch (choice){
+                    case 1:
+                        newPeriod = "annually";
+                        break;
+                    case 2:
+                        newPeriod = "bi-annually";
+                        break;
+                    case 3:
+                        newPeriod = "quarterly";
+                        break;
+                    default:
+                        newPeriod = "monthly";
+                        break;
+                }
+                if(updateBillingPeriod(newPeriod, customerId))
+                    System.out.println("Billing period successfully updated.");
+                else
+                    System.out.println("Could not update the billing period.\n" +
+                            "Contact a systems administrator.");
+                break;
+        }
+    }
+
+    private boolean addMoney(double amount, int acctNum){
+        String query = "UPDATE billing SET balance_to_date = balance_to_date + %f WHERE id = %d";
+        String lastTouchedQuery = "UPDATE billing SET employee_id = " + getId();
+
+        H2Access.createAndExecute(connection, lastTouchedQuery);
+        return H2Access.createAndExecute(connection, String.format(query, amount, acctNum));
+    }
+
+    private boolean updateBillingPeriod(String period, int acctNum){
+        String query = "UPDATE billing SET pay_model = '%s' WHERE id = %d";
+        String lastTouchedQuery = "UPDATE billing SET employee_id = " + getId();
+
+        H2Access.createAndExecute(connection, lastTouchedQuery);
+        return H2Access.createAndExecute(connection, String.format(query, period, acctNum));
+    }
+
+    // returns customerID
+    private int selectCustomer(String prompt){
         String desired = "";
-        int customerId = 0;
+        Scanner in = new Scanner(System.in);
         while(!desired.equals("Y")) {
             basePage();
-            System.out.println("Which customer would you like to generate an invoice for?");
+            System.out.println(prompt);
             System.out.println("[1] First and Last name");
             System.out.println("[2] Account number");
             System.out.println("[3] Customer username");
-            //System.out.println("[4] All based on pay period");
             System.out.print("Please enter the number of how you'd like to select a customer: ");
             String method = getUserInput(new String[]{"1", "2", "3", "4"});
             ResultSet r;
@@ -562,7 +697,7 @@ public class EmployeeAccess implements AutoCloseable{
                         name = in.nextLine().split(" ");
                         if (name.length != 2)
                             System.out.println("Please enter exactly two names.");
-                    } while(name.length != 2);
+                    } while (name.length != 2);
                     query = String.format("first_name='%s' AND last_name='%s'", name[0], name[1]);
                     break;
                 case "2":
@@ -575,13 +710,6 @@ public class EmployeeAccess implements AutoCloseable{
                     String username = in.nextLine();
                     query = "account_number=" + getId(username);
                     break;
-//                case "4":
-//                    System.out.println("Please enter the pay period you'd like to generate" +
-//                            "charges for.");
-//                    String[] choices = {"annually", "bi-annually", "quarterly", "monthly"};
-//                    String payPeriod = getUserInput(choices);
-//                    query = "";
-//                    // TODO this
             }
             r = getCustomersWhere(query);
             try {
@@ -591,16 +719,21 @@ public class EmployeeAccess implements AutoCloseable{
                     printCustomer(r);
                     System.out.print("Is this the desired user? [Y/N]");
                     desired = getUserInput(new String[]{"Y", "N"});
-                    if(desired.equalsIgnoreCase("Y")) {
+                    if (desired.equalsIgnoreCase("Y")) {
                         r.beforeFirst();
-                        if(r.next())
-                            customerId = r.getInt("account_number");
+                        if (r.next())
+                            return r.getInt("account_number");
                     }
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+        return -1;
+    }
+
+    private void generateCustomerInvoices(){
+        int customerId = selectCustomer("Which customer would you like to generate an invoice for?");
         System.out.println("Generating Invoice...");
 
         int numCharges = 0;
@@ -658,6 +791,9 @@ public class EmployeeAccess implements AutoCloseable{
             newBalance -= amountDue;
             String payChargeQuery = "UPDATE charge SET paid = 1 where account_number_fk = " + acct;
             String editBalanceQuery = "UPDATE billing SET balance_to_date = %f WHERE account_number_fk = %d";
+            String lastTouchedQuery = "UPDATE billing SET employee_id = " + getId();
+
+            H2Access.createAndExecute(connection, lastTouchedQuery);
             H2Access.createAndExecute(connection, payChargeQuery);
             H2Access.createAndExecute(connection, String.format(editBalanceQuery, newBalance, acct));
         }

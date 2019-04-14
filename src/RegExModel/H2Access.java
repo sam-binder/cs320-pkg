@@ -295,8 +295,13 @@ public class H2Access {
 	public static void grantPublicRights() {
 		try {
 			Connection conn = createConnection("me", "password");
-			String query = "GRANT all ON user, customer, zip_code, address TO PUBLIC;";
-			createAndExecute(conn, query);
+			String[] tables = {"accounting_employee", "address", "billing",
+					"charge", "customer", "location", "package", "package_employee", "priority",
+							"rate", "service", "transaction", "user", "zip_code"};
+			for(String table: tables) {
+				String query = String.format("GRANT all ON %s TO PUBLIC;", table);
+				createAndExecute(conn, query);
+			}
 			closeConnection(conn);
 		} catch (SQLException e) {
 			e.printStackTrace();

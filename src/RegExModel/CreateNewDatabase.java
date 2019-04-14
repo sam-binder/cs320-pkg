@@ -429,7 +429,7 @@ public class CreateNewDatabase {
     public void rates() throws SQLException{
         Connection conn = new H2Access().createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS rate("
-                + "NEGOTIATED_RATE_ID INT PRIMARY KEY,"
+                + "NEGOTIATED_RATE_ID INT PRIMARY KEY auto_increment,"
                 + "GROUND_RATE DOUBLE,"
                 + "AIR_RATE DOUBLE,"
                 + "RUSH_RATE DOUBLE,"
