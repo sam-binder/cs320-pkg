@@ -918,75 +918,81 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * helper method for finding location strings based on address ID + whether is destination
-     * or origin
+     * A helper method used for finding location string based on an address ID and whether it is a destination or origin.
      *
-     * @param address_id_fk
-     * @param constraint
-     * @return location string
-     * @throws SQLException
+     * @param addressID  The ID of this address.
+     * @param locationType  The location type (destination or origin)
+     * @return A location string.
+     * @throws SQLException  Any SQLException is thrown out to the caller.
      */
     // Use capital letters; not set up to handle lower case
-    private String findLocation(String address_id_fk, char constraint) throws SQLException {
-        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + address_id_fk + ";";
-        ResultSet matches = H2Access.createAndExecuteQuery(connection, query);
-        // new changes
-        if (((constraint == 'O') || (constraint == 'D') || (constraint == 'o') || (constraint == 'd')) && (matches.next())) {
-            do {
+    private String findLocation(String addressID, char locationType) throws SQLException {
+        // a query which selects all information from location which has an address ID of addressID
+        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + addressID + ";";
+        ResultSet matches = H2Access.createAndExecuteQuery(this.connection, query);
 
-                switch (constraint) {
+        // if there was a returned result from the query
+        if (matches.next()) {
+            do {
+                // performs a switch based on the location type
+                switch (locationType) {
                     case 'O':
                     case 'o':
+                        // if the string matches on the second character ("TO...")
                         if (matches.getString(1).charAt(1) == 'O') {
                             return matches.getString(1);
                         }
                         break;
                     case 'D':
                     case 'd':
+                        // do the same thing as above for O
                         if (matches.getString(1).charAt(1) == 'D') {
                             return matches.getString(1);
                         }
                         break;
                     default:
-                        // Vehicle & Hub cases here, I guess?
-                        // they shouldn't work, regardless - no address ID fk on those entries
+                        // this is not good
                         break;
-
                 }
             } while (matches.next());
         }
 
-        // CASE: origin/destination not found
-        //      create new ones
-        // CASE: 'H' / 'V' - create new
-        Random r = new Random();
-        String query2;
-        ResultSet ok;
-        char[] ch_to_array = new char[12];
-        if ((constraint == 'O') || (constraint == 'D')) {
-            ch_to_array[0] = 'T';
-            ch_to_array[1] = constraint;
+
+        // creates a new random generator
+        Random rand = new Random();
+
+        // a result set used to determine if a location ID exists
+        ResultSet locationIDExistsQuery;
+
+        // a StringBuilder which will be used to house the location ID
+        StringBuilder locationIDBuilder = new StringBuilder(12);
+
+        if ((locationType == 'O') || (locationType == 'D')) {
+            locationIDBuilder.append('T');
+            locationIDBuilder.append(locationType);
         } else {
-            ch_to_array[0] = constraint;
-            ch_to_array[1] = (char) (r.nextInt(10) + '0');
+            locationIDBuilder.append(locationType);
+            locationIDBuilder.append(rand.nextInt(10) + '0');
         }
+
+        // keeps generating location IDs until we find a unique one
         do {
-            ch_to_array[2] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[3] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[4] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[5] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[6] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[7] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[8] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[9] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[10] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[11] = (char) (r.nextInt(26) + 'A');
-            query2 = "SELECT * FROM LOCATION WHERE ID = '" + String.copyValueOf(ch_to_array) + "';";
-            ok = H2Access.createAndExecuteQuery(connection, query2);
+            // appends 12 characters to the string builder
+            for(int i = 2; i < 12; ++i) {
+                locationIDBuilder.append(rand.nextInt(26) + 'A');
+            }
 
-        } while (ok.next());
-        return String.copyValueOf(ch_to_array);
+            // queries the database to see if the location ID has been taken
+            locationIDExistsQuery = H2Access.createAndExecuteQuery(
+                this.connection,
+                "SELECT * " +
+                "FROM LOCATION " +
+                "WHERE ID = '" + locationIDBuilder.toString() + "';"
+            );
+        } while (locationIDExistsQuery.next());
 
+        // once we find a new unique id, we return it
+        return locationIDBuilder.toString();
     }
 
     /**
