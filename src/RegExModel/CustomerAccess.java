@@ -569,7 +569,7 @@ public class CustomerAccess implements AutoCloseable{
 
 
         String query =  "INSERT INTO PACKAGE " +
-                        "(ACCOUNT_NUMBER_FK, SERVICE_ID_FK, SERIAL, DIM_HEIGHT, DIM_LENGTH, DIM_DEPTH, WEIGHT, ORIGIN_FK, DESTINATION_FK)" +
+                        "(ACCOUNT_NUMBER_FK, SERVICE_ID_FK, SERIAL, HEIGHT, LENGTH, DEPTH, WEIGHT, ORIGIN_FK, DESTINATION_FK)" +
                         " VALUES (" +
                         account_number_fk + ", " +
                         service_id_fk + ", " +
