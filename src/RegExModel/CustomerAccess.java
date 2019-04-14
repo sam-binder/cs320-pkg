@@ -742,14 +742,14 @@ public class CustomerAccess implements AutoCloseable {
     /**
      * Calculates the cost of a charge based on rate, billable weight and service type.
      *
-     * @param rate
-     * @param accountNumber
-     * @param serial
-     * @param billableWeight
-     * @param serviceId
+     * @param rate  The rate result set as found by the calling method.
+     * @param accountNumber  The account number of the user being charged.
+     * @param serial  The serial of the package to be charging for.
+     * @param billableWeight  The billable weight of the package.
+     * @param serviceId  The service ID being used to ship this package.
      *
-     * @return
-     * @throws SQLException
+     * @return  The just-inserted charge.
+     * @throws SQLException  Any SQLException is thrown out to the calling method.
      */
     private ResultSet createCharges(ResultSet rate,
                                     String accountNumber,
@@ -758,67 +758,99 @@ public class CustomerAccess implements AutoCloseable {
                                     String serviceId) throws SQLException {
         // parses the service ID
         int service = Integer.parseInt(serviceId);
-        // default sergice multiplier is 1.0
+        // default service multiplier is 1.0
         double serviceMultiplier = 1.0;
+
+        // the priority is the service ID INT divided by 4
         int priority = service / 4;
+
+        // calculates the hazardous value
         int hazardous = (service / 2) % 2;
+
+        // determines if a signature is needed
         int signature = (service % 2);
-        double base;
-        double rush;
+
+        // if no signature required
         if (signature == 0) {
+            // add .05 to the service multiplier
             serviceMultiplier += .05;
         }
+
+        // shipping hazardous material costs a bit more
         if (hazardous == 1) {
             serviceMultiplier += .15;
         }
-        if (priority > 2) {
-            base = rate.getDouble(2);
-        } else {
-            base = rate.getDouble(1);
-        }
-        if (1 == priority % 2) {
-            rush = rate.getDouble(3);
-        } else {
-            rush = 1.0;
-        }
-        double totalprice = ((double) billableWeight) * base * rush * serviceMultiplier;
-        String QInsert = "INSERT INTO CHARGE (PRICE, ACCOUNT_NUMBER_FK, PACKAGE_SERIAL_FK, SERVICE_ID, PAID) " +
-                "VALUES(" +
+
+        // gets the base based off of the priority level
+        double baseMultiplier = rate.getDouble((priority > 2) ? 2 : 1);
+
+        // gets the rush multiplier
+        double rushMultiplier = (priority % 2 == 1) ? rate.getDouble(3) : 1.0;
+
+        // calculates the total price: the billable weight multiplied by the base, the rush and service multipliers
+        double totalprice = billableWeight * baseMultiplier * rushMultiplier * serviceMultiplier;
+
+        String insertionQuery =
+            "INSERT INTO charge " +
+            "(price, account_number_fk, package_serial_fk, servive_id, paid) " +
+            "VALUES(" +
                 totalprice + ", " +
                 accountNumber + ", '" +
                 serial + "', " +
                 serviceId + ", " +
-                "0 );";
-        if (H2Access.createAndExecute(connection, QInsert)) {
-            String Qecho = "SELECT * FROM CHARGE WHERE ACCOUNT_NUMBER_FK = '" + accountNumber +
-                    "' and PACKAGE_SERIAL_FK = '" + serial + "';";
-            return H2Access.createAndExecuteQuery(connection, Qecho);
-        } else {
-            return null;
+                "0 " +
+            ");";
+
+        // attempts to insert the charge into the database
+        if (H2Access.createAndExecute(this.connection, insertionQuery)) {
+            // if that succeeds, return the row just created
+            return H2Access.createAndExecuteQuery(
+                this.connection,
+                "SELECT * " +
+                "FROM charge " +
+                "WHERE account_number_fk = '" + accountNumber + "' " +
+                "AND PACKAGE_SERIAL_FK = '" + serial + "';"
+            );
         }
 
+        // any fall through will return null
+        return null;
     }
 
     /**
-     * gets customer's current negotiated rates.
+     * Gets negotiated rates for a customer.
      *
-     * @param account_number
-     * @return
-     * @throws SQLException
+     * @param accountNumber  The account number for a customer.
+     *
+     * @return  The negotiated rate row from the database for that user.
+     * @throws SQLException  If any SQLException is encountered, it is thrown to the caller.
      */
-    public ResultSet getCustomerRates(String account_number) throws SQLException {
-        String QrateID = "SELECT negotiated_rate_ID_fk FROM CUSTOMER WHERE account_number = '" + account_number + "';";
-        ResultSet rateID = H2Access.createAndExecuteQuery(connection, QrateID);
-        if (rateID.next()) {
-            int rate_fk = rateID.getInt("negotiated_rate_ID_fk");
-            String QGetRates = "SELECT * FROM RATE WHERE negotiated_rate_ID = " + rate_fk + ";";
-            ResultSet rates = H2Access.createAndExecuteQuery(connection, QGetRates);
-            return rates;
-        } else {
-            return null;
+    private ResultSet getCustomerRates(String accountNumber) throws SQLException {
+        // builds the query to get the rate ID for this customer with accountNumber
+        String rateIDQuery =
+            "SELECT negotiated_rate_ID_fk " +
+            "FROM customer " +
+            "WHERE account_number = '" + accountNumber + "';";
+
+        // gets the rateID for the user
+        ResultSet rateIDQueryRes = H2Access.createAndExecuteQuery(connection, rateIDQuery);
+
+        // if there exists a row in the table
+        if (rateIDQueryRes.next()) {
+            // get the rate foreign key
+            int rateID = rateIDQueryRes.getInt("negotiated_rate_ID_fk");
+
+            String getRatesQuery =
+                "SELECT * " +
+                "FROM rate " +
+                "WHERE negotiated_rate_ID = " + rateID + ";";
+
+            // returns the query result of rate retrieval
+            return H2Access.createAndExecuteQuery(connection, getRatesQuery);
         }
 
-
+        // all fall through will return null
+        return null;
     }
 
     /**
