@@ -384,15 +384,12 @@ public class EmployeeAccess implements AutoCloseable{
     /**
      * Clears the screen on the CLI for neat formatting
      */
-    private void clearScreen(){
+    private static void clearScreen(){
         try {
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
         } catch (IOException | InterruptedException e){
             e.printStackTrace();
         }
-
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
     }
 
     /**
@@ -544,7 +541,9 @@ public class EmployeeAccess implements AutoCloseable{
      * Back returns back one page, quit returns to log in, home to home page
      */
     private void acctHomePage(){
-        System.out.println();
+        Scanner in = new Scanner(System.in);
+        clearScreen();
+        System.out.println("=== Home Page ===");
         basePage();
         System.out.println("[1] Generate customer invoices.");
         System.out.println("[2] Edit a customers billing.");
@@ -560,20 +559,25 @@ public class EmployeeAccess implements AutoCloseable{
                 acctHomePage();
                 break;
             case "Q":
+                clearScreen();
                 break;
             case "1":
+                clearScreen();
                 generateCustomerInvoices();
                 acctHomePage();
                 break;
             case "2":
+                clearScreen();
                 editCustomerBilling();
                 acctHomePage();
                 break;
             case "3":
+                clearScreen();
                 setUpCustomRates();
                 acctHomePage();
                 break;
             case "4":
+                clearScreen();
                 acctTrackPackage();
                 acctHomePage();
                 break;
@@ -588,7 +592,7 @@ public class EmployeeAccess implements AutoCloseable{
         Scanner in = new Scanner(System.in);
         String rates[];
         boolean success = false;
-        int customerId = selectCustomer("Which customer would you like to edit the rates of?");
+        int customerId = selectCustomer("=== Negotiating Custom Rates ===");
         if(customerId == -2 || customerId == -4)
             return;
         else if(customerId == -3){
@@ -615,7 +619,6 @@ public class EmployeeAccess implements AutoCloseable{
                             int newID = CreateRate(groundRate, airRate, rushRate, DRB);
                             String query = "UPDATE customer SET negotiated_rate_id_fk = %d WHERE account_number = %d";
                             H2Access.createAndExecute(connection, String.format(query, newID, customerId));
-
                         } else {
                             modifyRates(rateId, groundRate, airRate, rushRate, DRB);
                         }
@@ -626,6 +629,9 @@ public class EmployeeAccess implements AutoCloseable{
                 }
             } while (!success);
         }
+        System.out.println("Rates successfully updated!");
+        System.out.print("Continue...");
+        String cnt = in.nextLine();
     }
 
     /**
@@ -651,7 +657,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     private void acctTrackPackage() {
         Scanner in = new Scanner(System.in);
-        System.out.println();
+        System.out.println("=== Package Tracking ===");
         System.out.println("[1] Track package based on Tracking number.");
         System.out.println("[2] Track package based on Customer.");
         basePage();
@@ -689,6 +695,7 @@ public class EmployeeAccess implements AutoCloseable{
                             accountantPrintPackage(acctNum, serial, "");
                         }
                     } while (!success);
+                    break;
                 case "2":
                     int acctNum = selectCustomer("Which customer would you like to track packages of?");
                     if (acctNum == -3) {
@@ -712,6 +719,7 @@ public class EmployeeAccess implements AutoCloseable{
                             e.printStackTrace();
                         }
                     }
+                    break;
                 case "H":
                     acctHomePage();
                     break;
@@ -722,6 +730,8 @@ public class EmployeeAccess implements AutoCloseable{
                     break;
             }
         } while(back);
+        System.out.print("Continue...");
+        String cnt = new Scanner(System.in).nextLine();
     }
 
     /**
@@ -765,6 +775,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     private void editCustomerBilling(){
         Scanner in = new Scanner(System.in);
+        System.out.println("=== Customer Billing ===");
         int customerId = selectCustomer("Which customer would you like to edit the billing of?");
         if(customerId == -3){
             userLogin();
@@ -836,6 +847,8 @@ public class EmployeeAccess implements AutoCloseable{
                     break;
             }
         }
+        System.out.print("Continue...");
+        String cnt = in.nextLine();
     }
 
     /**
@@ -892,12 +905,12 @@ public class EmployeeAccess implements AutoCloseable{
             do {
                 back = false;
                 String choice;
-                System.out.println("\n" + prompt);
+                System.out.println(prompt);
                 basePage();
                 System.out.println("[1] First and Last name");
                 System.out.println("[2] Account number");
                 System.out.println("[3] Customer username");
-                System.out.print("Please enter the number of who you'd like to select a customer: ");
+                System.out.print("Please enter the number of how you'd like to select a customer: ");
                 method = getUserInput(new String[]{"1", "2", "3", "4", "B", "H", "Q"});
                 switch (method) {
                     case "1":
@@ -939,8 +952,7 @@ public class EmployeeAccess implements AutoCloseable{
                         }else if(choice.equalsIgnoreCase("H")) {
                             return -4;
                         }
-                        String username = in.nextLine();
-                        query = "account_number=" + getId(username);
+                        query = "account_number=" + getId(choice);
                         break;
                     case "B":
                         return -2;
@@ -975,6 +987,7 @@ public class EmployeeAccess implements AutoCloseable{
      * Allows an accounting employee to generate and pay customer invoices.
      */
     private void generateCustomerInvoices(){
+        System.out.println("=== Generating Invoices ===");
         int customerId = selectCustomer("Which customer would you like to generate an invoice for?");
         if(customerId == -3){
             userLogin();
@@ -1016,7 +1029,8 @@ public class EmployeeAccess implements AutoCloseable{
                 System.out.println("No action available.");
             }
         }
-
+        System.out.print("Continue...");
+        String cnt = new Scanner(System.in).nextLine();
     }
 
     /**
@@ -1090,8 +1104,10 @@ public class EmployeeAccess implements AutoCloseable{
     }
 
     public static void userLogin(){
+        clearScreen();
         Scanner in = new Scanner(System.in);
         do {
+            System.out.println(" === RegEx Employee access portal === ");
             // Get the username and password
             System.out.print("Username: ");
             String username = in.nextLine();
