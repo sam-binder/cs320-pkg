@@ -480,7 +480,13 @@ public class CustomerAccess implements AutoCloseable{
                             serial + "', " +
                             service_id + ", " +
                             "0 );";
-        return h2.createAndExecuteQuery(connection, QInsert);
+        if(h2.createAndExecute(connection, QInsert)){
+            String Qecho =  "SELECT * FROM CHARGE WHERE ACCOUNT_NUMBER_FK = '" + account_number_fk +
+                            "' and PACKAGE_SERIAL_FK = '" + serial + "';";
+            return h2.createAndExecuteQuery(connection, Qecho);
+        } else{
+            return null;
+        }
 
     }
 
