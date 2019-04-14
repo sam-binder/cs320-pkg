@@ -930,6 +930,8 @@ public class CustomerAccess implements AutoCloseable {
                     break;
                 }
             }
+        } else {
+            nextSerial[i] = (char)(lastSerial.charAt(i) + 1);
         }
 
         // go down through the remaining characters copying over the same character from the last serial
