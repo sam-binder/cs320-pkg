@@ -148,11 +148,11 @@ public class CustomerAccess implements AutoCloseable {
     /**
      * Lets the User enter in minimal information about their address. All foreign keys
      * are generated/looked up in the process.
-     * <p>
+     *
      * If not applicable, strings should be BLANK, not null.
-     * <p>
+     *
      * Error codes:
-     * 0  - success
+     *  0  - success
      * -1  - could not get user general purpose foreign key
      * -2  - zip code doesn't exists
      * -3  - an unexpected SQL exception occurred.
@@ -162,6 +162,7 @@ public class CustomerAccess implements AutoCloseable {
      * @param streetLineOne The first address line.
      * @param streetLineTwo The second address line.
      * @param zipCode       The 5 digit zip code.
+     *
      * @return An integer error code; 0 means success.
      */
     public int enterAddress(String company,
@@ -234,11 +235,11 @@ public class CustomerAccess implements AutoCloseable {
 
             // Set this Id as the users main address
             this.connection.createStatement().execute(
-                    String.format(
-                            customerQuery,
-                            addressID,
-                            accountNumber
-                    )
+                String.format(
+                    customerQuery,
+                    addressID,
+                    accountNumber
+                )
             );
 
             // once we get here, return a 0
@@ -364,13 +365,13 @@ public class CustomerAccess implements AutoCloseable {
                                       String zipID,
                                       String accountNumber) {
         String query =
-                "SELECT * FROM address " +
-                "WHERE (COMPANY = '" + company + "') AND " +
-                "(ATTN = '" + attention + "') AND " +
-                "(STREET_LINE_1 = '" + addressLine1 + "') AND " +
-                "(STREET_LINE_2 = '" + addressLine2 + "') AND " +
-                "(ZIP_FK = " + zipID + ") AND " +
-                "(ACCOUNT_NUMBER_FK = " + accountNumber + ");";
+            "SELECT * FROM address " +
+            "WHERE (COMPANY = '" + company + "') AND " +
+            "(ATTN = '" + attention + "') AND " +
+            "(STREET_LINE_1 = '" + addressLine1 + "') AND " +
+            "(STREET_LINE_2 = '" + addressLine2 + "') AND " +
+            "(ZIP_FK = " + zipID + ") AND " +
+            "(ACCOUNT_NUMBER_FK = " + accountNumber + ");";
 
         // returns the result of the select query
         return H2Access.createAndExecuteQuery(this.connection, query);
@@ -409,58 +410,94 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * Gets all addresses in customer's "rolodex", that they've ever sent packages from or to
+     * Gets all addresses that a customer has sent packages to.
      *
-     * @param account_number_fk
-     * @return ResultSet of all addresses with their account number associated
+     * @param accountNumber  The account number of the user.
+     *
+     * @return ResultSet of all addresses sent to by this user.
      */
-    public ResultSet getAllAddresses(String account_number_fk) {
-        int account_number_fk_numeric = Integer.parseInt(account_number_fk);
-        String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk_numeric + ");";
-        return H2Access.createAndExecuteQuery(connection, query);
+    public ResultSet getAllAddressesSentTo(String accountNumber) {
+        String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + accountNumber + ");";
+        // run the query
+        return H2Access.createAndExecuteQuery(this.connection, query);
     }
 
     /**
-     * Sets the customer's 'home' address from the address they've used
-     * Return code
-     * 0   Success
-     * 1   The address_id provided does not exist or does not belong to this user
-     * 2   The home address could not be updated to key of the new address
-     * 3   Unknown error
+     * Sets the customer's 'home' address from the address they've used.
      *
-     * @param addressId The ID of the address to set at the 'home' address
-     * @return an integer status code
+     * Return code
+     * 0 - Success
+     * 1 - The addressId provided does not exist or does not belong to this user
+     * 2 - The home address could not be updated to key of the new address
+     * 3 - Unknown error
+     *
+     * @param addressId The address ID to set as the "home" address.
+     *
+     * @return An integer status code.
      */
     public int setHomeAddress(int addressId) {
-        int accountNumber = H2Access.getUserFK(username);
+        // gets the account number of this user
+        int accountNumber = H2Access.getUserFK(this.username);
+
+        // a query to determine if a user already has this address as their home
         String existsQuery = "SELECT account_number_fk FROM address WHERE id=" + addressId;
+
+        // used to update a customer's mailing address ID
         String setQuery = "UPDATE customer SET mailing_address_id_fk=%d WHERE account_number=%d";
+
         try {
-            ResultSet r = H2Access.createAndExecuteQuery(connection, existsQuery);
-            if (r.next())
-                if (r.getInt(1) != accountNumber)
+            // executes the first select query to see if someone already uses this addressID as their home address
+            ResultSet queryResult = H2Access.createAndExecuteQuery(
+                this.connection,
+                existsQuery
+            );
+
+            // if the queryResult has a next value
+            if (queryResult.next()) {
+                // if the current user with this as their home address,
+                // return success (it's already been done)
+                if (queryResult.getInt(1) == accountNumber) {
+                    return 0;
+                }
+                // return 1 as this home address cannot be shared by multiple users
+                else {
                     return 1;
-                else
-                    return 1;
-            String formattedSetQuery = String.format(setQuery, addressId, accountNumber);
-            if (H2Access.createAndExecute(connection, formattedSetQuery))
+                }
+            }
+
+            // formats the set query
+            String formattedSetQuery = String.format(
+                setQuery,
+                addressId,
+                accountNumber
+            );
+
+            // returns if the createAndExecute method succeeded
+            if (H2Access.createAndExecute(this.connection, formattedSetQuery)) {
                 return 0;
+            }
         } catch (SQLException e) {
+            // and SQLException will return 3
             e.printStackTrace();
             return 3;
         }
+
+        // return the fact that it could not be set
         return 2;
     }
 
     /**
-     * @param city
-     * @param state
+     * A method that looks up a zip code based off of a city and a state.
+     *
+     * @param city  The city to look up.
+     * @param state  The state to look up.
+     *
      * @return ResultSet of zips for that city/state combo
      */
     public ResultSet zipCodeLookupByCityState(String city, String state) {
         String query =
                 "SELECT * FROM ZIP_CODE WHERE (CITY = '" + city + "') AND (STATE ='" + state + "');";
-        return H2Access.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(this.connection, query);
     }
 
     /*
@@ -476,108 +513,229 @@ public class CustomerAccess implements AutoCloseable {
 
         Does *NOT* create initial transaction - that needs to be done by a package employee
      */
-    public ResultSet sendPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
-                                 String dim_depth, String weight,
-                                 String origin_company, String origin_attention, String origin_street1,
-                                 String origin_street2, String origin_city, String origin_state, String origin_zip,
-                                 String destination_company, String destination_attention, String destination_street1,
-                                 String destination_street2, String destination_city, String destination_state,
-                                 String destination_zip) throws SQLException {
-        ResultSet o_zip = zipCodeLookupByCityState(origin_city, origin_state);
-        ResultSet d_zip = zipCodeLookupByCityState(destination_city, destination_state);
-        String origin_has_addr;
-        String dest_has_addr;
 
-        if (o_zip.next()) {
-            origin_has_addr = o_zip.getString("ID");
+    /**
+     *
+     * @param accountNumber  The account number of the user sending the package.
+     * @param serviceID  The service ID of the service being used.
+     * @param height  The height of the package.
+     * @param length  The length of the package.
+     * @param depth  The length of the package.
+     * @param weight  The weight of the package.
+     * @param originCompany  The origin company.
+     * @param originAttention  The origin attention line.
+     * @param originAddressLine1  The origin address line 1.
+     * @param originAddressLine2  The origin address line 2.
+     * @param originCity  The origin city.
+     * @param originState  The origin state.
+     * @param originZip  The origin zip code.
+     * @param destinationCompany  The destination company.
+     * @param destinationAttention  The destination attention.
+     * @param destinationAddressLine1  The destination address line 1.
+     * @param destinationAddressLine2  The destination address line 2.
+     * @param destinationCity  The destination city.
+     * @param destinationState  The destination state.
+     * @param destinationZip  The destination zip code.
+     *
+     * @return  A result set containing information about the package; or null if it could not be created.
+     * @throws SQLException  If any SQLException is encountered, it is thrown to the caller.
+     */
+    public ResultSet sendPackage(String accountNumber,
+                                 String serviceID,
+                                 String height,
+                                 String length,
+                                 String depth,
+                                 String weight,
+                                 String originCompany,
+                                 String originAttention,
+                                 String originAddressLine1,
+                                 String originAddressLine2,
+                                 String originCity,
+                                 String originState,
+                                 String originZip,
+                                 String destinationCompany,
+                                 String destinationAttention,
+                                 String destinationAddressLine1,
+                                 String destinationAddressLine2,
+                                 String destinationCity,
+                                 String destinationState,
+                                 String destinationZip) throws SQLException {
+        // looks up the origin zip
+        ResultSet originZipLookup = zipCodeLookupByCityState(originCity, originState);
+        // looks up the destination zip
+        ResultSet destinationZipLookup = zipCodeLookupByCityState(destinationCity, destinationState);
+
+        // these will be populated with whether the origin address and destination address exist already
+        String originZipID;
+        String destinationZipID;
+
+        // if there is a next result in the origin lookup
+        if (originZipLookup.next()) {
+            // get the ID of the zip
+            originZipID = originZipLookup.getString("ID");
+        // if there isn't an origin zip based off of city and state, look up via zip
         } else {
-            o_zip = H2Access.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(origin_zip));
-            o_zip.next();
-            origin_has_addr = o_zip.getString("ID");
+            // selects the ID of the zip based off of zip code
+            originZipLookup = H2Access.createAndExecuteQuery(
+                this.connection,
+                "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + originZip
+            );
+
+            // goes to the next result value
+            originZipLookup.next();
+            // gets the zip ID
+            originZipID = originZipLookup.getString("ID");
         }
-        if (d_zip.next()) {
-            // wet code, don't care.
-            dest_has_addr = d_zip.getString("ID");
+
+        // does the same thing as above for the destination
+        if (destinationZipLookup.next()) {
+            destinationZipID = destinationZipLookup.getString("ID");
         } else {
-            d_zip = H2Access.createAndExecuteQuery(connection, "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + Integer.parseInt(destination_zip));
-            d_zip.next();
-            dest_has_addr = d_zip.getString("ID");
+            destinationZipLookup = H2Access.createAndExecuteQuery(
+                this.connection,
+                "SELECT ID FROM ZIP_CODE WHERE ZIP_CODE = " + destinationZip);
+            destinationZipLookup.next();
+            destinationZipID = destinationZipLookup.getString("ID");
         }
 
 
-        // get address fks
-        ResultSet origin_RS = createNewAddress(origin_company, origin_attention, origin_street1, origin_street2,
-                origin_has_addr, account_number_fk);
-        ResultSet destination_RS = createNewAddress(destination_company, destination_attention, destination_street1,
-                destination_street2, dest_has_addr, account_number_fk);
+        // create new addresses for the origin and destination
+        createNewAddress(
+            originCompany,
+            originAttention,
+            originAddressLine1,
+            originAddressLine2,
+            originZipID,
+            accountNumber
+        );
+        createNewAddress(
+            destinationCompany,
+            destinationAttention,
+            destinationAddressLine1,
+            destinationAddressLine2,
+            destinationZipID,
+            accountNumber
+        );
 
-        // get location fks
-        String origin_id = find_location(origin_has_addr, 'O');
-        String destination_id = find_location(dest_has_addr, 'D');
+        // get the IDs of the addresses just inserted into the table
+        String originAddressID = findLocation(originZipID, 'O');
+        String destinationAddressID = findLocation(destinationZipID, 'D');
 
-        ResultSet pkg = createPackage(account_number_fk, service_id_fk, dim_height, dim_length, dim_depth, weight, origin_id, destination_id);
-        // ADD CHARGES
+        // creates the package and takes its return as packageCreation
+        ResultSet packageCreation = createPackage(
+            accountNumber,
+            serviceID,
+            height,
+            length,
+            depth,
+            weight,
+            originAddressID,
+            destinationAddressID
+        );
 
-        ResultSet rates = getCustomerRates(account_number_fk);
-        int billable_weight;
-        int _h = Integer.parseInt(dim_height);
-        int _l = Integer.parseInt(dim_length);
-        int _d = Integer.parseInt(dim_depth);
-        int _w = Integer.parseInt(weight);
-        if (rates.next() && pkg.next()) {
-            int dim_break = rates.getInt("dim_rating_break");
 
-            billable_weight = _h * _l * _d;
-            billable_weight /= dim_break;
+        // the next phase is to charge the customer
+        ResultSet rates = getCustomerRates(accountNumber);
+        int billableWeight;
+        // parses out the height, length, depth, and weight to ints
+        int _height = Integer.parseInt(height);
+        int _length = Integer.parseInt(length);
+        int _depth = Integer.parseInt(depth);
+        int _weight = Integer.parseInt(weight);
 
-            if (_w > billable_weight) {
-                billable_weight = _w;
+        // if getting the rates has a returned row AND package creation has a returned row
+        if (rates.next() && packageCreation.next()) {
+            // gets the dim_rating_break
+            int dimensionalDivisor = rates.getInt("dim_rating_break");
+            // calculates the billable weight
+            billableWeight = _height * _length * _depth;
+            // divides it by the dimensional divisor
+            billableWeight /= dimensionalDivisor;
+
+            // if the actual weight is larger than "billableWeight" based off of package dimensions
+            if (_weight > billableWeight) {
+                billableWeight = _weight;
             }
 
-            ResultSet charges = createCharges(rates, account_number_fk, pkg.getString("serial"), billable_weight, service_id_fk);
-            // charges should be the result of an insert query, so empty;
+            // creates the charge for the customer
+            createCharges(
+                rates,
+                accountNumber,
+                packageCreation.getString("serial"),
+                billableWeight,
+                serviceID
+            );
 
-            // call billing update method
-            ResultSet billing = updateBillingAmountDue(account_number_fk);
-            // also empty - result of update query
+            // updates the billing amount due
+            updateBillingAmountDue(accountNumber);
 
-            return pkg;
+            // returns the package creation
+            return packageCreation;
+        // returns null if the package could not be created
         } else {
             return null;
         }
     }
 
     /**
-     * updates billing amount due
+     * Updates the amount that is due by a customer.
      *
-     * @param acct
-     * @return
-     * @throws SQLException
+     * @param accountNumber  The account number of the user.
+     *
+     * @throws SQLException  If any SQLException is encountered, it is thrown out to the caller
      */
-    private ResultSet updateBillingAmountDue(String acct) throws SQLException {
-        // get current outstanding charges (from charge)
-        // & get total paid (from charge)
-        String Qoutstanding = "SELECT SUM(price) FROM CHARGE WHERE account_number_fk = '" + acct + "' AND paid = 0;";
-        ResultSet outstanding = H2Access.createAndExecuteQuery(connection, Qoutstanding);
-        if (outstanding.next()) {
-            double due = outstanding.getDouble(1);
-            String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
-            ResultSet currentBalance = H2Access.createAndExecuteQuery(connection, QcurrentBal);
+    private void updateBillingAmountDue(String accountNumber) throws SQLException {
+        // a query to select the current outstanding amount due by this customer
+        String currentUnpaidCharges =
+            "SELECT SUM(price) " +
+            "FROM CHARGE " +
+            "WHERE account_number_fk = '" + accountNumber + "' AND paid = 0;";
+
+        // queries the outstanding amount due
+        ResultSet queryUnpaidCharges = H2Access.createAndExecuteQuery(
+            this.connection,
+            currentUnpaidCharges
+        );
+
+        // if there is an outstanding amount returned above
+        if (queryUnpaidCharges.next()) {
+            // pulls out the amount due by this customer
+            double amountDue = queryUnpaidCharges.getDouble(1);
+
+            // a query used to get the balance to date
+            String currentBalanceToDate =
+                "SELECT balance_to_date " +
+                "FROM billing " +
+                "WHERE account_number_fk = '" + accountNumber + "';";
+            // runs the above query
+            ResultSet currentBalance = H2Access.createAndExecuteQuery(this.connection, currentBalanceToDate);
+
+            // if the above query returned a result
             if (currentBalance.next()) {
-                due += currentBalance.getDouble(1);
-                // update billing table
-                String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
-                if (H2Access.createAndExecute(connection, QupdateOutstanding)) {
-                    String QpullUpdate = "SELECT * FROM billing WHERE account_number_fk = '" + acct + "';";
-                    return H2Access.createAndExecuteQuery(connection, QpullUpdate);
-                } else {
-                    return null;
+                // the amount due gets updated with the current balance outstanding
+                amountDue += currentBalance.getDouble(1);
+
+                // builds a query to update the balance to date for this customer
+                String updateOutstandingBalanceDue =
+                    "UPDATE billing " +
+                    "SET balance_to_date = " + amountDue + " " +
+                    "WHERE account_number_fk = '" + accountNumber + "';";
+
+
+                // if this udpate runs to completion
+                if (H2Access.createAndExecute(
+                    this.connection,
+                    updateOutstandingBalanceDue
+                )) {
+                    // builds a query to get the amount due from billing
+                    String queryAmountDue =
+                        "SELECT * " +
+                        "FROM billing " +
+                        "WHERE account_number_fk = '" + accountNumber + "';";
+                    // returns the result of the query to get the amount due
+                    H2Access.createAndExecuteQuery(this.connection, queryAmountDue);
                 }
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
     }
 
@@ -760,102 +918,105 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * helper method for finding location strings based on address ID + whether is destination
-     * or origin
+     * A helper method used for finding location string based on an address ID and whether it is a destination or origin.
      *
-     * @param address_id_fk
-     * @param constraint
-     * @return location string
-     * @throws SQLException
+     * @param addressID  The ID of this address.
+     * @param locationType  The location type (destination or origin)
+     * @return A location string.
+     * @throws SQLException  Any SQLException is thrown out to the caller.
      */
-    // Use capital letters; not set up to handle lower case
-    private String find_location(String address_id_fk, char constraint) throws SQLException {
-        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + address_id_fk + ";";
-        ResultSet matches = H2Access.createAndExecuteQuery(connection, query);
-        // new changes
-        if (((constraint == 'O') || (constraint == 'D') || (constraint == 'o') || (constraint == 'd')) && (matches.next())) {
-            do {
+    private String findLocation(String addressID, char locationType) throws SQLException {
+        // a query which selects all information from location which has an address ID of addressID
+        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + addressID + ";";
+        ResultSet matches = H2Access.createAndExecuteQuery(this.connection, query);
 
-                switch (constraint) {
+        // if there was a returned result from the query
+        if (matches.next()) {
+            do {
+                // performs a switch based on the location type
+                switch (locationType) {
                     case 'O':
-                    case 'o':
+                        // if the string matches on the second character ("TO...")
                         if (matches.getString(1).charAt(1) == 'O') {
                             return matches.getString(1);
                         }
                         break;
                     case 'D':
-                    case 'd':
+                        // do the same thing as above for O, except for destinations
                         if (matches.getString(1).charAt(1) == 'D') {
                             return matches.getString(1);
                         }
                         break;
                     default:
-                        // Vehicle & Hub cases here, I guess?
-                        // they shouldn't work, regardless - no address ID fk on those entries
+                        // this is not good
                         break;
-
                 }
             } while (matches.next());
         }
 
-        // CASE: origin/destination not found
-        //      create new ones
-        // CASE: 'H' / 'V' - create new
-        Random r = new Random();
-        String query2;
-        ResultSet ok;
-        char[] ch_to_array = new char[12];
-        if ((constraint == 'O') || (constraint == 'D')) {
-            ch_to_array[0] = 'T';
-            ch_to_array[1] = constraint;
+
+        // creates a new random generator
+        Random rand = new Random();
+        // a result set used to determine if a location ID exists
+        ResultSet locationIDExistsQuery;
+        // a StringBuilder which will be used to house the location ID
+        StringBuilder locationIDBuilder = new StringBuilder(12);
+
+        if ((locationType == 'O') || (locationType == 'D')) {
+            locationIDBuilder.append('T');
+            locationIDBuilder.append(locationType);
         } else {
-            ch_to_array[0] = constraint;
-            ch_to_array[1] = (char) (r.nextInt(10) + '0');
+            locationIDBuilder.append(locationType);
+            locationIDBuilder.append(rand.nextInt(10) + '0');
         }
+
+        // keeps generating location IDs until we find a unique one
         do {
-            ch_to_array[2] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[3] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[4] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[5] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[6] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[7] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[8] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[9] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[10] = (char) (r.nextInt(26) + 'A');
-            ch_to_array[11] = (char) (r.nextInt(26) + 'A');
-            query2 = "SELECT * FROM LOCATION WHERE ID = '" + String.copyValueOf(ch_to_array) + "';";
-            ok = H2Access.createAndExecuteQuery(connection, query2);
+            // if the locationIDBuilder has a length greater than 2
+            if(locationIDBuilder.length() > 2) {
+                // delete the excess characters
+                locationIDBuilder.delete(2, 12);
+            }
 
-        } while (ok.next());
-        return String.copyValueOf(ch_to_array);
+            // appends 12 characters to the string builder
+            for(int i = 2; i < 12; ++i) {
+                locationIDBuilder.append(rand.nextInt(26) + 'A');
+            }
 
+            // queries the database to see if the location ID has been taken
+            locationIDExistsQuery = H2Access.createAndExecuteQuery(
+                this.connection,
+                "SELECT * " +
+                "FROM LOCATION " +
+                "WHERE ID = '" + locationIDBuilder.toString() + "';"
+            );
+        } while (locationIDExistsQuery.next());
+
+        // once we find a new unique id, we return it
+        return locationIDBuilder.toString();
     }
 
     /**
-     * A function which returns a ResultSet containing the last three transactions involved with this account.
+     * Simple method which will get the last three transactions of an account.
      *
-     * @param accntNum The account number to get the last three transactions on.
+     * @param accountNumber The account number to get the last three transactions on.
      * @return A ResultSet containing UP TO 3 transactions.
      */
-    public ResultSet getLastThreeTransactions(int accntNum) {
-        String query = "SELECT date, time, transaction.account_number_fk, " +
+    public ResultSet getLastThreeTransactions(int accountNumber) {
+        String query =
+            "SELECT date, time, transaction.account_number_fk, " +
                 "package_serial_fk, location_ID_fk, package.service_id_fk " +
-                "FROM transaction " +
-                "INNER JOIN package ON package_serial_fk = package.serial " +
-                "WHERE transaction.account_number_fk = " + accntNum + " " +
-                "ORDER BY date, time " +
-                "LIMIT 3;";
-        try {
-            Connection conn = H2Access.createConnection("me", "password");
-            return H2Access.createAndExecuteQuery(conn, query);
-        } catch (SQLException e) {
-            return null;
-        }
+            "FROM transaction " +
+            "INNER JOIN package ON package_serial_fk = package.serial " +
+            "WHERE transaction.account_number_fk = " + accountNumber + " " +
+            "ORDER BY date, time " +
+            "LIMIT 3;";
+        return H2Access.createAndExecuteQuery(this.connection, query);
     }
 
     /**
-     * Function required to be implemented by AutoCloseable.
-     * Lets CustomerAccess be used in a 'try with resources' block
+     * The AutoClosable portion of this class.  Will automatically close the
+     * connection to the database.
      */
     @Override
     public void close() {
