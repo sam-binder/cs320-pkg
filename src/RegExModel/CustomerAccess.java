@@ -435,7 +435,12 @@ public class CustomerAccess implements AutoCloseable{
                 due += currentBalance.getDouble(1);
                 // update billing table
                 String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
-                return h2.createAndExecuteQuery(connection, QupdateOutstanding);
+                if( h2.createAndExecute(connection, QupdateOutstanding)){
+                    String QpullUpdate = "SELECT * FROM billing WHERE account_number_fk = '" + acct + "';";
+                    return h2.createAndExecuteQuery(connection, QpullUpdate);
+                } else {
+                    return null;
+                }
             } else {
                 return null;
             }
