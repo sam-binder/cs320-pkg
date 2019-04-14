@@ -594,6 +594,11 @@ public class CustomerAccess implements AutoCloseable{
                 carry = false;
             }
         }
+        while(i >= 0){
+            nextSerial[i] = lastSerial.charAt(i);
+            i--;
+            // this should now copy over everything that isn't carry-digited
+        }
 
 
         String query =  "INSERT INTO PACKAGE " +
