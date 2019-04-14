@@ -1,8 +1,16 @@
 package RegExModel;
 
 /**
- * Created by sambi on 4/13/2019.
+ * A small exception used when verifying tracking numbers.
+ *
+ * @author Sam Binder
+ * @version 04/08/2019
  */
 public class BadTrackingNumberFormatException extends Exception {
-    public BadTrackingNumberFormatException(){ super("That tracking number is not correct");}
+    /**
+     * Just creates a blanket exception with a custom message.
+     */
+    public BadTrackingNumberFormatException(){
+        super("That tracking number is not correct.");
+    }
 }

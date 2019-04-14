@@ -1,91 +1,66 @@
 package RegExModel;
 
 /**
- * Created by sambi on 4/13/2019.
+ * Utility class of static methods used by the client.
+ *
+ * @author Sam Binder
+ * @version 04/13/2019
  */
 public class Util {
     /**
+     * Method used to calculate the check digit of the tracking number.
      *
-     * @param tracking_num - 14 char tracking number (acct#, svcID, pkg serial)
-     * @return returns full tracking number
-     * @throws BadTrackingNumberFormatException when tracking_num isn't 14 char
-     * @pre tracking_num does not have a check digit already
+     * @param trackingID  The tracking number without the check digit.
+     * @return The full tracking ID string with check digit.
+     * @throws BadTrackingNumberFormatException If the tracking ID is not formatted correctly, this will be thrown.
      */
-    public static String findCheckDigit(String tracking_num) throws BadTrackingNumberFormatException{
-        if (tracking_num.length() != 14) {
+    public static String findCheckDigit(String trackingID) throws BadTrackingNumberFormatException{
+        // checks to make sure the trackingID is the correct length
+        if (trackingID.length() != 14) {
             throw new BadTrackingNumberFormatException();
         }
-        int accum = 0;
+
+        // rolling-sum used to calculate the check digit
+        int sum = 0;
+
+        // goes through each character
         for(int i = 0 ; i < 14; i++){
-            accum += (int) tracking_num.charAt(i);
+            // adds its value to the sum
+            sum += trackingID.charAt(i);
         }
-        accum %= 17;
 
-        accum += 74;
-        char chk = (char) accum;
-        return (tracking_num + chk);
+        // mods the sum by 17 and adds 74
+        sum = (sum % 17) + 74;
 
+
+        // returns the trackingID with the check character appended
+        return trackingID + (char)sum;
     }
 
     /**
+     * Validates a trackingID to ensure it is correct.
      *
-     * @param tracking_num - 15 char tracking number
-     * @return returns true or false as to whether the check digit is correct.
-     * @throws BadTrackingNumberFormatException when you provide not 15 characters
+     * @param trackingID The 15-character tracking ID to validate.
+     * @return True if the trackingID validates, false otherwise.
      */
-    public static boolean validateCheckDigit(String tracking_num) {
-        if(tracking_num.length() != 15){
+    public static boolean validateCheckDigit(String trackingID) {
+        // returns false if the trackingID isn't the correct length
+        if(trackingID.length() != 15){
             return false;
         } else {
-            int accum = 0;
+            // else performs the checksum
+            int sum = 0;
+
+            // goes through each character of the trackingID that isn't a check digit
             for (int i = 0; i < 14; i++) {
-                accum += (int) tracking_num.charAt(i);
+                sum += trackingID.charAt(i);
             }
-            accum %= 17;
 
-            accum += 74;
-            char chk = (char) accum;
-            return (chk == tracking_num.charAt(14));
-        }
-    }
+            // normalizes the value
+            sum = (sum % 17) + 74;
 
-    public class Package{
-        private String account_number;
-        private String serial;
-        private String serviceID;
-
-
-        public Package(String acct_no, String serial, String serviceID){
-            this.account_number = acct_no;
-            this.serial = serial;
-            this.serviceID = serviceID;
-        }
-        public Package(String tracking_num){
-            String a = tracking_num.substring(0,5);
-            String s = tracking_num.substring(6,7);
-            String n = tracking_num.substring(8,13);
-            this.account_number = a;
-            this.serial = n;
-            this.serviceID = s;
-
-        }
-        public String getAccountNumber(){
-            return account_number;
-        }
-        public String getSerial(){
-            return serial;
-        }
-        public String getServiceID(){
-            return serviceID;
-        }
-        public char getCheckDigit(){
-            String trackingnum = account_number + serviceID + serial;
-            try {
-                trackingnum = findCheckDigit(trackingnum);
-            } catch (BadTrackingNumberFormatException e){
-                e.printStackTrace();
-            }
-            return trackingnum.charAt(14);
+            // returns whether the check digit matches the sum
+            return sum == trackingID.charAt(14);
         }
     }
 }

@@ -8,105 +8,123 @@ import java.sql.Statement;
 import java.util.Arrays;
 
 /**
- * Created by Walter Schaertl on 3/23/2019.
- */
-
-/**
- * This class is used to spin up a new clean database using the correlated
- * provided CSV files. Each table can be generated individually if it gets
- * corrupted or dropped and needs to be readded. NOTE: this should not
- * be run on existing tables, it will more than likely fair with primary
- * key conflicts.
+ * This class is used to spin up a new clean database using the correlated provided CSV files. Each table can be generated individually if it gets corrupted or dropped and needs to be readded. NOTE: this should not be run on existing tables, it will more than likely fair with primary key conflicts.
  * @author Walter Schaertl
  * @date 3/24/19
  */
 public class CreateNewDatabase {
-
     /**
-     * Public constructor to set up a the first database connection.
-     *  Uses the username password pair of "me", "password".
+     * Sets up the package_employee table from the package_employees.csv.
+     *
+     * @throws SQLException if any number of  things go wrong, from failure to establish a connection to failure to execute a query.
      */
-    public CreateNewDatabase(){
-        try {
-            Connection c = H2Access.createConnection("me", "password");
-            H2Access.closeConnection(c);
-        } catch(SQLException sqle) {
-            sqle.printStackTrace();
-        }
-    }
-
-    /**
-     * Sets up the package_employee table from the package_employees.csv
-     * @throws SQLException if any number of  things go wrong, from
-     * failure to establish a connection to failure to execute a query.
-     */
-    public void packageEmployees() throws SQLException {
+    private static void packageEmployees() throws SQLException {
+        // opens a connection
         Connection conn = H2Access.createConnection("me", "password");
+        // builds a query to create the table
         String query = "CREATE TABLE IF NOT EXISTS package_employee("
                 + "ID INT PRIMARY KEY,"
                 + ");" ;
-        Statement stmt = conn.createStatement();
-        stmt.execute(query);
+        // creates a statement object with the connection
+        conn.createStatement().execute(query);
+
+        // next we have to go through and ingest the CSV associated with this table
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/package_employees.csv"));
+            // creates a new buffered reader pointing to the file
+            BufferedReader br = new BufferedReader(
+                new FileReader("./src/RegExModel/CSVs/package_employees.csv")
+            );
+
+            // skips the first line which is always a "header" line
+            br.readLine();
+
+            // will be the line read in
             String line;
             while((line = br.readLine()) != null){
+                // split the line by comma
                 String[] split = line.split(",");
-                if(!split[0].equals("employeeID")) {
-                    query = String.format("INSERT INTO package_employee VALUES(%s);", split[0]);
-                    conn.createStatement().execute(query);
-                }
+
+                // builds a query
+                query = String.format("INSERT INTO package_employee VALUES(%s);", split[0]);
+                // creates and executes the query to insert the data
+                conn.createStatement().execute(query);
             }
+
+            // close the reader
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        // close connection to the database
         conn.close();
     }
 
     /**
-     * Sets up the transaction table, empty by default as nothing has happened yet
-     * @throws SQLException if any number of  things go wrong, from
-     * failure to establish a connection to failure to execute a query.
+     * Sets up the transaction table; will be empty by default as nothing has happened yet.
+     *
+     * @throws SQLException if any number of  things go wrong, from failure to establish a connection to failure to execute a query.
      */
-    public void transaction() throws SQLException {
+    private static void transaction() throws SQLException {
+        // creates a new connection to the database
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS transaction("
-                // Autoincrement for easy of adding future transactions
-                + "ID INT PRIMARY KEY auto_increment,"
-                + "DATE DATE,"
-                + "TIME TIME,"
-                + "EMPLOYEE_ID_FK INT,"
-                + "LOCATION_ID_FK CHAR(12),"
-                + "ACCOUNT_NUMBER_FK INT,"
-                + "PACKAGE_SERIAL_FK CHAR(6),"
+                    + "ID INT PRIMARY KEY auto_increment,"
+                    + "DATE DATE,"
+                    + "TIME TIME,"
+                    + "EMPLOYEE_ID_FK INT,"
+                    + "LOCATION_ID_FK CHAR(12),"
+                    + "ACCOUNT_NUMBER_FK INT,"
+                    + "PACKAGE_SERIAL_FK CHAR(6),"
                 + ");";
-        Statement stmt = conn.createStatement();
-        stmt.execute(query);
+
+        // builds and queries the table creation
+        conn.createStatement().execute(query);
+
+        // closes connection to the db
+        conn.close();
     }
 
     /**
-     * Sets up the accounting_employee table from the accounting_employees csv
+     * Sets up the accounting_employee table from the accounting_employees CSV.
+     *
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void accountingEmployees() throws SQLException {
+    private static void accountingEmployees() throws SQLException {
+        // creates a connection to database
         Connection conn = H2Access.createConnection("me", "password");
+        // builds a query string to create the table if it doesn't exist
         String query = "CREATE TABLE IF NOT EXISTS accounting_employee("
-                + "ID INT PRIMARY KEY,"
+                    + "ID INT PRIMARY KEY,"
                 + ");" ;
-        Statement stmt = conn.createStatement();
-        stmt.execute(query);
+
+        // builds a statement to execute the table creation query
+        conn.createStatement().execute(query);
+
+        // opens a buffered reader to ingest the CSV
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/accounting_employees.csv"));
+            BufferedReader br = new BufferedReader(
+                new FileReader("./src/RegExModel/CSVs/accounting_employees.csv")
+            );
+
+            // reads the "header" line to skip it
+            br.readLine();
+
+            // the line read in from the reader
             String line;
+
+            // keeps going until we run out of lines
             while((line = br.readLine()) != null){
+                // split the line
                 String[] split = line.split(",");
-                if(!split[0].equals("employeeID")) {
-                    query = String.format("INSERT INTO accounting_employee VALUES(%s);", split[0]);
-                    conn.createStatement().execute(query);
-                }
+                // builds a query to insert the data
+                query = String.format("INSERT INTO accounting_employee VALUES(%s);", split[0]);
+                // creates a statement and executes the query
+                conn.createStatement().execute(query);
             }
+
+            // close the reader after we're done with the file
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -114,37 +132,67 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the package table from the package csv
-     * @throws SQLException if any number of  things go wrong, from
-     * failure to establish a connection to failure to execute a query.
+     * Sets up the package table from the package CSV.
+     *
+     * @throws SQLException if any number of  things go wrong, from failure to establish a connection to failure to execute a query.
      */
-    public void packageInit() throws SQLException{
+    private static void packageInit() throws SQLException{
+        // creates a connection to the db
         Connection conn = H2Access.createConnection("me", "password");
+
+        // builds a query to create the table if it doesn't exist
         String query = "CREATE TABLE IF NOT EXISTS package("
-                + "ACCOUNT_NUMBER_FK INT,"
-                + "SERVICE_ID_FK INT,"
-                + "SERIAL CHAR(6),"
-                + "HEIGHT INT,"
-                + "LENGTH INT,"
-                + "DEPTH INT,"
-                + "WEIGHT INT,"
-                + "SIGNED_FOR_BY VARCHAR(255),"
-                + "ORIGIN_FK CHAR(12),"
-                + "DESTINATION_FK CHAR(12)"
+                    + "ACCOUNT_NUMBER_FK INT,"
+                    + "SERVICE_ID_FK INT,"
+                    + "SERIAL CHAR(6),"
+                    + "HEIGHT INT,"
+                    + "LENGTH INT,"
+                    + "DEPTH INT,"
+                    + "WEIGHT INT,"
+                    + "SIGNED_FOR_BY VARCHAR(255),"
+                    + "ORIGIN_FK CHAR(12),"
+                    + "DESTINATION_FK CHAR(12)"
                 + ");" ;
-        Statement stmt = conn.createStatement();
-        stmt.execute(query);
+        
+        // builds a statement and executes the table creation
+        conn.createStatement().execute(query);
+        
+        // next we have to ingest the data from the CSV
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/package.csv"));
+            // creates a new buffered reader
+            BufferedReader br = new BufferedReader(
+                new FileReader("./src/RegExModel/CSVs/package.csv")
+            );
+            
+            // skips the "header" line in the CSV
+            br.readLine();
+            
+            // the line being read
             String line;
+            // keeps going until we run out of lines
             while((line = br.readLine()) != null){
+                // split the line
                 String[] split = line.split(",");
-                if(!split[0].equals("account_number_fk")) {
-                    query = String.format("INSERT INTO package VALUES(%s,%s,'%s',%s,%s,%s,%s,'%s','%s','%s');",
-                            split[0], split[1], split[2], split[3], split[4], split[5], split[6], split[7], "null", "null");
-                    conn.createStatement().execute(query);
-                }
+                // builds a query to execute
+                query = String.format(
+                    "INSERT INTO package VALUES(%s,%s,'%s',%s,%s,%s,%s,'%s','%s','%s');",
+                    split[0], 
+                    split[1], 
+                    split[2], 
+                    split[3], 
+                    split[4], 
+                    split[5], 
+                    split[6], 
+                    split[7], 
+                    "null", 
+                    "null"
+                );
+                
+                // inserts the row
+                conn.createStatement().execute(query);
             }
+            
+            // after all rows read in, close the reader
             br.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -152,28 +200,31 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the customer table from the customer csv
-     * @throws SQLException if any number of  things go wrong, from
-     * failure to establish a connection to failure to execute a query.
+     * Sets up the customer table from the customer CSV.
+     * 
+     * @throws SQLException if any number of things go wrong, from failure to establish a connection to failure to execute a query.
      */
-    public void customers() throws SQLException {
+    private static void customers() throws SQLException {
+        // creates a connection to the database
         Connection conn = H2Access.createConnection("me", "password");
+        // builds a query to create the table if it doesn't exist
         String query = "CREATE TABLE IF NOT EXISTS customer("
-                // Autoincrement for easy of adding future customers
-                + "ACCOUNT_NUMBER INT PRIMARY KEY auto_increment,"
-                + "BILLING_FK INT,"
-                + "NEGOTIATED_RATE_ID_FK INT,"
-                + "MAILING_ADDRESS_ID_FK INT,"
-                + "FIRST_NAME VARCHAR(255),"
-                + "LAST_NAME VARCHAR(255),"
-                + "PHONE_NO VARCHAR(255),"
+                    + "ACCOUNT_NUMBER INT PRIMARY KEY auto_increment,"
+                    + "BILLING_FK INT,"
+                    + "NEGOTIATED_RATE_ID_FK INT,"
+                    + "MAILING_ADDRESS_ID_FK INT,"
+                    + "FIRST_NAME VARCHAR(255),"
+                    + "LAST_NAME VARCHAR(255),"
+                    + "PHONE_NO VARCHAR(255),"
                 + ");" ;
-        Statement stmt = conn.createStatement();
-        stmt.execute(query);
+
+        // creates and executes table creation query
+        conn.createStatement().execute(query);
 
         // goes through the CSV and ingests the data
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/customer.csv"));
+            // opens a reader
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/customer.csv"));
             String line;
             String account_num, billing_fk, negotiated_rate_ID_fk, mailing_address_ID_fk;
             while((line = br.readLine()) != null){
@@ -203,11 +254,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the billing table from the billing csv
+     * Sets up the billing table from the billing CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void billing() throws SQLException {
+    private static void billing() throws SQLException {
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS billing("
                 // Autoincrement for easy of adding future billing
@@ -220,7 +271,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/billing.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/billing.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -242,11 +293,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the user table from the user csv
+     * Sets up the user table from the user CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void users() throws  SQLException{
+    private static void users() throws  SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS user("
                 + "GENERAL_FK INT,"
@@ -257,7 +308,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/user.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/user.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -288,11 +339,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the address table from the address csv
+     * Sets up the address table from the address CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void address() throws SQLException{
+    private static void address() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS address("
                 // Autoincrement for easy of adding future addresses
@@ -307,7 +358,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/address.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/address.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -327,11 +378,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the charges table from the charges csv
+     * Sets up the charges table from the charges CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void charges() throws SQLException{
+    private static void charges() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS charge("
                 // Autoincrement for easy of adding future charges
@@ -345,7 +396,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/charges.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/charges.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -366,11 +417,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the location table from the location csv
+     * Sets up the location table from the location CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void location() throws SQLException{
+    private static void location() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS location("
                 + "ID CHAR(12) PRIMARY KEY,"
@@ -379,7 +430,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/location.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/location.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -399,11 +450,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the priority table from the priority csv
+     * Sets up the priority table from the priority CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void priority() throws SQLException{
+    private static void priority() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS priority("
                 + "ID INT PRIMARY KEY,"
@@ -413,7 +464,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/priority.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/priority.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -432,11 +483,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the rate table from the rates csv
+     * Sets up the rate table from the rates CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void rates() throws SQLException{
+    private static void rates() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS rate("
                 + "NEGOTIATED_RATE_ID INT PRIMARY KEY auto_increment,"
@@ -449,7 +500,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/rates.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/rates.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -471,11 +522,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the service table from the service csv
+     * Sets up the service table from the service CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void service() throws SQLException{
+    private static void service() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS service("
                 + "ID INT PRIMARY KEY,"
@@ -486,7 +537,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/service.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/service.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -506,11 +557,11 @@ public class CreateNewDatabase {
     }
 
     /**
-     * Sets up the zip_code table from the zipcodes csv
+     * Sets up the zip_code table from the zipcodes CSV
      * @throws SQLException if any number of  things go wrong, from
      * failure to establish a connection to failure to execute a query.
      */
-    public void zipCodes() throws SQLException{
+    private static void zipCodes() throws SQLException{
         Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS zip_code("
                 + "ID INT PRIMARY KEY,"
@@ -523,7 +574,7 @@ public class CreateNewDatabase {
         Statement stmt = conn.createStatement();
         stmt.execute(query);
         try {
-            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/zipcodes.csv"));
+            BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/CSVs/zipcodes.csv"));
             String line;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
@@ -544,7 +595,7 @@ public class CreateNewDatabase {
         }
     }
 
-    public void permissions() {
+    public static void permissions() {
         try {
             Connection conn = H2Access.createConnection("me", "password");
             Statement stmt = conn.createStatement();
@@ -558,10 +609,11 @@ public class CreateNewDatabase {
 
 
     /**
-     * Initializes all the tables.
+     * Simple method to initialize all of the database tables to their "default" state
      */
-    public void initDatabase(){
+    public static void initDatabase(){
         try {
+            // runs all of the methods to initialize the tables
             transaction();
             packageInit();
             customers();
@@ -581,6 +633,7 @@ public class CreateNewDatabase {
             e.printStackTrace();
         }
     }
+
 
     /* THESE DONT EXIST IN H2 - PRETTY NEAT WE GOT TO LEARN ABOUT EM THO
     public void buildFunctions() throws SQLException{
@@ -609,6 +662,4 @@ public class CreateNewDatabase {
         stmt.execute(query);
     }
     */
-
-
 }
