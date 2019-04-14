@@ -381,7 +381,7 @@ public class EmployeeAccess implements AutoCloseable{
         // While drivers don't switch from scanning in to going out on delivery,
         // and hub employee's haven't quit.
         while(true){
-            // Scan the package, Sample Package: 00013114B9IWEA9
+            // Scan the package, Sample Package: 00013114B9IWEAV
             System.out.print("Please scan a package: ");
             pkg = in.nextLine();
             if(pkg.equalsIgnoreCase("T") || pkg.equalsIgnoreCase("Q"))
@@ -498,7 +498,6 @@ public class EmployeeAccess implements AutoCloseable{
         System.out.println("[H] Home    [B] Back    [Q]    quit");
     }
     private void acctHomePage(){
-        Scanner in = new Scanner(System.in);
         // Generate Invoices
         // Make a new rate
         // Edit billing
@@ -531,19 +530,8 @@ public class EmployeeAccess implements AutoCloseable{
                 acctHomePage();
                 break;
             case "4":
-                boolean success = false;
-                do {
-                    System.out.print("Enter package tracking ID: ");
-                    String pkg = in.nextLine();
-                    int acctNum = Integer.parseInt(pkg.substring(0, 6));
-                    String serial = pkg.substring(8, 14);
-                    if ((!testpackageId(acctNum, serial)) || (Util.validateCheckDigit(pkg))) {
-                        System.out.println("That package does not exists." +
-                                " Please verify the information was entered correctly.");
-                    } else
-                        success = true;
-                    printPackageHistory(acctNum, serial);
-                } while(!success);
+                acctTrackPackage();
+                acctHomePage();
                 break;
         }
 
@@ -601,13 +589,70 @@ public class EmployeeAccess implements AutoCloseable{
 
     //tracking number: AAAAAAXXNNNNNNC
     //[last six digits of a customers account]+[service id]+[package serial]+[check character]
-    private void printPackageHistory(int acctNum, String serial){
-        ResultSet r = viewPackageHistory(acctNum, serial);
-        try {
-            while (r.next()) {
-                // TODO print packing informtion
+    private void acctTrackPackage(){
+        Scanner in = new Scanner(System.in);
+        System.out.println("[1] Track package based on Tracking number.");
+        System.out.println("[2] Track package based on Customer." );
+        System.out.print("How would you like to track a package: ");
+        String choice = getUserInput(new String[]{"1", "2"});
+        boolean success = false;
+        if(choice.equalsIgnoreCase("1")) {
+            do {
+                System.out.print("Enter package tracking ID: ");
+                String pkg = in.nextLine();
+                if(pkg.length() != 15)
+                    System.out.println("Package tracking IDs must be 15 digits long");
+                else {
+                    int acctNum = Integer.parseInt(pkg.substring(0, 6));
+                    String serial = pkg.substring(8, 14);
+                    if (!testpackageId(acctNum, serial) || !Util.validateCheckDigit(pkg)) {
+                        System.out.println("That package does not exists." +
+                                " Please verify the information was entered correctly.");
+                    } else
+                        success = true;
+                    accountantPrintPackage(acctNum, serial, "");
+                }
+            } while (!success);
+        } else if (choice.equalsIgnoreCase("2")){
+            int acctNum = selectCustomer("Which customer would you like to track packages of?");
+            ResultSet r = getPackagesByUser(acctNum);
+            try{
+                if(r.next()){
+                    do{
+                        String serial =  r.getString("serial");
+                        String id = String.format("%06d%02d%s",
+                                acctNum, r.getInt("service_id_fk"), serial);
+                        String ID = Util.findCheckDigit(id);
+                        System.out.println("Package ID:" + ID);
+                        accountantPrintPackage(acctNum, serial, "\t");
+                    }while(r.next());
+                }
+            } catch (SQLException | BadTrackingNumberFormatException e){
+                e.printStackTrace();
             }
-        } catch (SQLException e){
+        }
+    }
+
+    private ResultSet getPackagesByUser(int acctNum){
+        String query = "Select * from package where account_number_fk=" + acctNum;
+        return H2Access.createAndExecuteQuery(connection, query);
+    }
+    private void accountantPrintPackage(int acctNum, String serial, String offset){
+        ResultSet r = H2Access.trackPackage(acctNum, serial);
+        try {
+            if (r != null && r.next()) {
+                //Example 00013114B9IWEAV
+                System.out.println(offset + "   Date       Time       LocationID      City    State");
+                do {
+                    System.out.print(offset +r.getDate("date") + "\t");
+                    System.out.print(r.getTime("time") + "\t");
+                    System.out.print(r.getString("location_id_fk") + "\t");
+                    System.out.print(r.getString("city") + "    ");
+                    System.out.println(r.getString("state"));
+                } while (r.next());
+            } else
+                System.out.println(offset + "No tracking information yet.");
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
