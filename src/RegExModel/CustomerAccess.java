@@ -599,6 +599,7 @@ public class CustomerAccess implements AutoCloseable{
         while(i >= 0){
             nextSerial[i] = lastSerial.charAt(i);
             i--;
+            // this should now copy over everything that isn't carry-digited
         }
 
 
