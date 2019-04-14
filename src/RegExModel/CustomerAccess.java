@@ -163,7 +163,7 @@ public class CustomerAccess implements AutoCloseable{
 
         ResultSet does_it_exist = retrieveAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
         if (!does_it_exist.next()){ // this is how you check if its an empty ResultSet, per stack overflow
-            does_it_exist = createAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
+            createAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
             does_it_exist = retrieveAddress(company, attention, streetLine1, streetLine2, zip_ID_fk, account_number_fk);
         }
 
@@ -236,7 +236,7 @@ public class CustomerAccess implements AutoCloseable{
      * @param account_number_fk
      * @return the result of the query, which should be empty.
      */
-    private ResultSet createAddress(String company, String attention, String streetLine1, String streetLine2,
+    private void createAddress(String company, String attention, String streetLine1, String streetLine2,
                               String zip_ID_fk, String account_number_fk){
         int zip_ID_fk_numeric = Integer.parseInt(zip_ID_fk);
         int account_number_fk_numeric = Integer.parseInt(account_number_fk);
@@ -251,7 +251,7 @@ public class CustomerAccess implements AutoCloseable{
                 "'" + zip_ID_fk_numeric + "', " +
                 "'" + account_number_fk_numeric + "');";
 
-        return H2Access.createAndExecuteQuery(connection, query);
+        H2Access.createAndExecute(connection, query);
     }
 
     /**
@@ -600,8 +600,8 @@ public class CustomerAccess implements AutoCloseable{
      */
     // Use capital letters; not set up to handle lower case
     private String find_location(String address_id_fk, char constraint) throws SQLException {
-        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID = " + address_id_fk + ";";
-        ResultSet matches = h2.createAndExecuteQuery(connection, query);
+        String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID_FK = " + address_id_fk + ";";
+        ResultSet matches = H2Access.createAndExecuteQuery(connection, query);
         // new changes
         if( ((constraint == 'O')||(constraint == 'D')||(constraint == 'o')||(constraint == 'd'))&&(matches.next())) {
             do {
