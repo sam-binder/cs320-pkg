@@ -27,10 +27,9 @@ public class CreateNewDatabase {
      *  Uses the username password pair of "me", "password".
      */
     public CreateNewDatabase(){
-        H2Access h2 = new H2Access();
         try {
-            Connection c = h2.createConnection("me", "password");
-            h2.closeConnection(c);
+            Connection c = H2Access.createConnection("me", "password");
+            H2Access.closeConnection(c);
         } catch(SQLException sqle) {
             sqle.printStackTrace();
         }
@@ -42,7 +41,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void packageEmployees() throws SQLException {
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS package_employee("
                 + "ID INT PRIMARY KEY,"
                 + ");" ;
@@ -71,8 +70,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void transaction() throws SQLException {
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS transaction("
                 // Autoincrement for easy of adding future transactions
                 + "ID INT PRIMARY KEY auto_increment,"
@@ -93,8 +91,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void accountingEmployees() throws SQLException {
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS accounting_employee("
                 + "ID INT PRIMARY KEY,"
                 + ");" ;
@@ -228,9 +225,11 @@ public class CreateNewDatabase {
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("ID")) {
+                    String payModel = split[2].substring(1, split[2].length()-1);
                     query = String.format("INSERT INTO billing VALUES(%d, %f,'%s',%d,%d);",
                             Integer.parseInt(split[0].replace("\"","")),
-                            Double.parseDouble(split[1].replace("\"","")), split[2],
+                            Double.parseDouble(split[1].replace("\"","")),
+                            payModel,
                             Integer.parseInt(split[3].replace("\"","")),
                             Integer.parseInt(split[4].replace("\"","")));
                     conn.createStatement().execute(query);
