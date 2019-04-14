@@ -602,8 +602,9 @@ public class CustomerAccess implements AutoCloseable{
     private String find_location(String address_id_fk, char constraint) throws SQLException {
         String query = "SELECT * FROM LOCATION WHERE ADDRESS_ID_FK = " + address_id_fk + ";";
         ResultSet matches = h2.createAndExecuteQuery(connection, query);
-        if( (constraint == 'O')||(constraint == 'D')||(constraint == 'o')||(constraint == 'd')) {
+        if( ((constraint == 'O')||(constraint == 'D')||(constraint == 'o')||(constraint == 'd'))&&(matches.next())) {
             do {
+
                 switch (constraint) {
                     case 'O':
                     case 'o':
