@@ -740,32 +740,36 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * Calculates charges based on rates, billable weight, service.
-     * Adds record in charge table
-     * returns empty ResultSet
+     * Calculates the cost of a charge based on rate, billable weight and service type.
      *
      * @param rate
-     * @param account_number_fk
+     * @param accountNumber
      * @param serial
-     * @param billable_weight
-     * @param service_id
+     * @param billableWeight
+     * @param serviceId
+     *
      * @return
      * @throws SQLException
      */
-    private ResultSet createCharges(ResultSet rate, String account_number_fk, String serial,
-                                    int billable_weight, String service_id) throws SQLException {
-        int service = Integer.parseInt(service_id);
-        double svc_multiplier = 1.0;
+    private ResultSet createCharges(ResultSet rate,
+                                    String accountNumber,
+                                    String serial,
+                                    int billableWeight,
+                                    String serviceId) throws SQLException {
+        // parses the service ID
+        int service = Integer.parseInt(serviceId);
+        // default sergice multiplier is 1.0
+        double serviceMultiplier = 1.0;
         int priority = service / 4;
         int hazardous = (service / 2) % 2;
         int signature = (service % 2);
         double base;
         double rush;
         if (signature == 0) {
-            svc_multiplier += .05;
+            serviceMultiplier += .05;
         }
         if (hazardous == 1) {
-            svc_multiplier += .15;
+            serviceMultiplier += .15;
         }
         if (priority > 2) {
             base = rate.getDouble(2);
@@ -777,16 +781,16 @@ public class CustomerAccess implements AutoCloseable {
         } else {
             rush = 1.0;
         }
-        double totalprice = ((double) billable_weight) * base * rush * svc_multiplier;
+        double totalprice = ((double) billableWeight) * base * rush * serviceMultiplier;
         String QInsert = "INSERT INTO CHARGE (PRICE, ACCOUNT_NUMBER_FK, PACKAGE_SERIAL_FK, SERVICE_ID, PAID) " +
                 "VALUES(" +
                 totalprice + ", " +
-                account_number_fk + ", '" +
+                accountNumber + ", '" +
                 serial + "', " +
-                service_id + ", " +
+                serviceId + ", " +
                 "0 );";
         if (H2Access.createAndExecute(connection, QInsert)) {
-            String Qecho = "SELECT * FROM CHARGE WHERE ACCOUNT_NUMBER_FK = '" + account_number_fk +
+            String Qecho = "SELECT * FROM CHARGE WHERE ACCOUNT_NUMBER_FK = '" + accountNumber +
                     "' and PACKAGE_SERIAL_FK = '" + serial + "';";
             return H2Access.createAndExecuteQuery(connection, Qecho);
         } else {
@@ -900,7 +904,7 @@ public class CustomerAccess implements AutoCloseable {
         }
 
         // builds the insertion query to insert our package
-        String packagInsertion =
+        String packageInsertion =
             "INSERT INTO package" +
             "(account_number_fk, service_id_fk, serial, height, " +
                 "length, depth, weight, origin_fk, destination_fk) " +
@@ -917,7 +921,7 @@ public class CustomerAccess implements AutoCloseable {
             ");";
 
         // if the package is successfully inserted
-        if (H2Access.createAndExecute(this.connection, packagInsertion)) {
+        if (H2Access.createAndExecute(this.connection, packageInsertion)) {
             // return the package row just generated
             return H2Access.createAndExecuteQuery(
                 this.connection,
@@ -974,26 +978,25 @@ public class CustomerAccess implements AutoCloseable {
         Random rand = new Random();
         // a result set used to determine if a location ID exists
         ResultSet locationIDExistsQuery;
-        // a StringBuilder which will be used to house the location ID
-        StringBuilder locationIDBuilder = new StringBuilder(12);
+        StringBuilder locationIDBeginner = new StringBuilder();
 
         if ((locationType == 'O') || (locationType == 'D')) {
-            locationIDBuilder.append('T');
-            locationIDBuilder.append(locationType);
+            locationIDBeginner.append('T');
+            locationIDBeginner.append(locationType);
         } else {
-            locationIDBuilder.append(locationType);
-            locationIDBuilder.append(rand.nextInt(10) + '0');
+            locationIDBeginner.append(locationType);
+            locationIDBeginner.append(rand.nextInt(10) + '0');
         }
+
+        // a StringBuilder which will be used to house the location ID
+        StringBuilder locationIDBuilder;
 
         // keeps generating location IDs until we find a unique one
         do {
-            // if the locationIDBuilder has a length greater than 2
-            if(locationIDBuilder.length() > 2) {
-                // delete the excess characters
-                locationIDBuilder.delete(2, 12);
-            }
+            // creates a fresh locationID builder with a start of locationIDBeginner
+            locationIDBuilder = new StringBuilder(locationIDBeginner);
 
-            // appends 12 characters to the string builder
+            // appends the last 10 characters to the string builder
             for(int i = 2; i < 12; ++i) {
                 locationIDBuilder.append(rand.nextInt(26) + 'A');
             }
