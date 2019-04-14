@@ -192,7 +192,7 @@ public class RegExViewPackage extends RegExPage {
                             StandardCharsets.UTF_8
                         ).replace(
                             "@{error-dialog}",
-                            RegExErrorDialog.getErrorDialogHTML("Package does not exist.")
+                            RegExDialog.getErrorDialogHTML("Package does not exist.")
                         ).replace(
                             "@{entered-package-id}",
                             this.packageID
@@ -208,7 +208,7 @@ public class RegExViewPackage extends RegExPage {
                         StandardCharsets.UTF_8
                     ).replace(
                         "@{error-dialog}",
-                        RegExErrorDialog.getErrorDialogHTML(
+                        RegExDialog.getErrorDialogHTML(
                             "An error was encountered when trying to get package data. Please try again in a little bit."
                         )
                     ).replace(
@@ -239,7 +239,7 @@ public class RegExViewPackage extends RegExPage {
                 // puts in place our error dialog
                 specifiedIDPageContent = specifiedIDPageContent.replace(
                     "@{error-dialog}",
-                    RegExErrorDialog.getErrorDialogHTML(errorMsg)
+                    RegExDialog.getErrorDialogHTML(errorMsg)
                 ).replace(
                     "@{entered-package-id}",
                     this.packageID

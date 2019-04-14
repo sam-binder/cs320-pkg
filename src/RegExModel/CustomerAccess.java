@@ -217,8 +217,8 @@ public class CustomerAccess implements AutoCloseable {
 
             // creates a new prepared statement with our address insertion query
             PreparedStatement prep = this.connection.prepareStatement(
-                    addressQuery,
-                    Statement.RETURN_GENERATED_KEYS
+                addressQuery,
+                Statement.RETURN_GENERATED_KEYS
             );
             // executes the query
             prep.executeUpdate();
