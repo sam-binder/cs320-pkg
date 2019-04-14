@@ -305,16 +305,33 @@ public class EmployeeAccess implements AutoCloseable{
         return H2Access.createAndExecuteQuery(connection, query);
     }
 
+    /**
+     * Method to view the mailing address information when given the ID
+     * @param maillingId the primary key
+     * @return a result set of data associated with that key
+     */
     public ResultSet viewAddress(int maillingId){
         String query = "SELECT * FROM address WHERE id=" + maillingId;
         return H2Access.createAndExecuteQuery(connection, query);
     }
 
+    /**
+     * Method to view the zip code information when given the ID
+     * @param zipId the primary key
+     * @return a result set of data associated with that key
+     */
     public ResultSet viewZip(int zipId){
         String query = "SELECT * FROM zip_code WHERE id=" + zipId;
         return H2Access.createAndExecuteQuery(connection, query);
     }
 
+    /**
+     * When given a packages account number and serial, return the
+     * destination of the package.
+     * @param acctNumber The account number of the package
+     * @param pkgSerial The package serial
+     * @return A string of the location Id for the packages destination
+     */
     public String getPackageDestination(int acctNumber, String pkgSerial){
         // If it doesn't exist, return None
         if(!testpackageId(acctNumber, pkgSerial))
@@ -347,6 +364,12 @@ public class EmployeeAccess implements AutoCloseable{
         }
     }
 
+    /**
+     * Tests to see if a package matching this account number and serial exists
+     * @param acctNumber The account number
+     * @param pkgSerial The pacakage serial
+     * @return boolean, if the package exists
+     */
     private boolean testpackageId(int acctNumber, String pkgSerial){
         String query = "SELECT * FROM package WHERE account_number_fk=%d and serial='%s'";
         query = String.format(query, acctNumber, pkgSerial);
@@ -358,6 +381,9 @@ public class EmployeeAccess implements AutoCloseable{
         }
     }
 
+    /**
+     * Clears the screen on the CLI for neat formatting
+     */
     private void clearScreen(){
         try {
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
@@ -370,7 +396,7 @@ public class EmployeeAccess implements AutoCloseable{
     }
 
     /**
-     *
+     * Scans a package, making a transaction in the table.
      * @param in: A scanner to get user input
      * @param locationID: The location Id of the employee (must be either a hub or vehicle). Ignored
      *                  if dropOff (as in to it's final destination) is true
@@ -396,7 +422,7 @@ public class EmployeeAccess implements AutoCloseable{
                 // Get package information
                 int acctNum = Integer.parseInt(pkg.substring(0, 6));
                 String serial = pkg.substring(8, 14);
-                if ((!testpackageId(acctNum, serial))||(Util.validateCheckDigit(pkg))){
+                if (!testpackageId(acctNum, serial) || !Util.validateCheckDigit(pkg)){
                     System.out.println("That package does not exists." +
                             " Please verify the information was entered correctly.");
                     return;
@@ -430,6 +456,13 @@ public class EmployeeAccess implements AutoCloseable{
         }
     }
 
+    /**
+     * Prints the necessary information about a customer. Is used to
+     * show the account employees a confirmation this is who they want to do things with.
+     * @param customers A Result set of all the information related to a customer. Should contain:
+     *                  account_number, mailing_address_id_fk, negotiated_rate_id_fkm, first_name,
+     *                  last_name, and phone_no.
+     */
     private void printCustomer(ResultSet customers){
         try {
             int zipId;
@@ -483,6 +516,11 @@ public class EmployeeAccess implements AutoCloseable{
         }
     }
 
+    /**
+     * An easy way to get user input that's constrained to a set selection of choices
+     * @param choices A String array of options to pick
+     * @return The option the user selected.
+     */
     private String getUserInput(String[] choices){
         while(true) {
             Scanner in = new Scanner(System.in);
@@ -494,13 +532,19 @@ public class EmployeeAccess implements AutoCloseable{
         }
     }
 
+    /**
+     * The header at the top of each 'page' on the CLI
+     */
     private void basePage(){
-        System.out.println("[H] Home    [B] Back    [Q]    quit");
+        System.out.println("[H] Home    [B] Back    [Q]    Quit");
     }
+
+    /**
+     * The options available from the home page of an accountant.
+     * Back returns back one page, quit returns to log in, home to home page
+     */
     private void acctHomePage(){
-        // Generate Invoices
-        // Make a new rate
-        // Edit billing
+        System.out.println();
         basePage();
         System.out.println("[1] Generate customer invoices.");
         System.out.println("[2] Edit a customers billing.");
@@ -513,9 +557,9 @@ public class EmployeeAccess implements AutoCloseable{
                 acctHomePage();
                 break;
             case "B":
+                acctHomePage();
                 break;
             case "Q":
-                System.exit(0);
                 break;
             case "1":
                 generateCustomerInvoices();
@@ -537,44 +581,58 @@ public class EmployeeAccess implements AutoCloseable{
 
     }
 
+    /**
+     * A method that lets accountant negotiate new rates for a customer.
+     */
     private void setUpCustomRates(){
         Scanner in = new Scanner(System.in);
         String rates[];
         boolean success = false;
         int customerId = selectCustomer("Which customer would you like to edit the rates of?");
-        basePage();
-        do {
-            // If the customer has a rate id of 1, it's the default and to edit it a new one
-            // must be create. Otherwise, the object can just be modified.
-            System.out.println("After negotiating, please enter the new Ground Rate, Air Rate, " +
-                    "Rush Rate, and Dimension Rating Break, in that order separated by spaces.");
-            System.out.print("New Rates: ");
-            rates = in.nextLine().split(" ");
-            if (rates.length != 4)
-                System.out.printf("Exactly four numbers are expected, %d were received.\n", rates.length);
-            else {
-                try {
-                    double groundRate = Double.parseDouble(rates[0]);
-                    double airRate = Double.parseDouble(rates[1]);
-                    double rushRate = Double.parseDouble(rates[2]);
-                    int DRB = Integer.parseInt(rates[3]);
-                    int rateId = getRateId(customerId);
-                    if (rateId == 1 || rateId == -1) {
-                        int newID = CreateRate(groundRate, airRate, rushRate, DRB);
-                        String query = "UPDATE customer SET negotiated_rate_id_fk = %d WHERE account_number = %d";
-                        H2Access.createAndExecute(connection, String.format(query, newID, customerId));
+        if(customerId == -2 || customerId == -4)
+            return;
+        else if(customerId == -3){
+            userLogin();
+        } else {
+            basePage();
+            do {
+                // If the customer has a rate id of 1, it's the default and to edit it a new one
+                // must be create. Otherwise, the object can just be modified.
+                System.out.println("After negotiating, please enter the new Ground Rate, Air Rate, " +
+                        "Rush Rate, and Dimension Rating Break, in that order separated by spaces.");
+                System.out.print("New Rates: ");
+                rates = in.nextLine().split(" ");
+                if (rates.length != 4)
+                    System.out.printf("Exactly four numbers are expected, %d were received.\n", rates.length);
+                else {
+                    try {
+                        double groundRate = Double.parseDouble(rates[0]);
+                        double airRate = Double.parseDouble(rates[1]);
+                        double rushRate = Double.parseDouble(rates[2]);
+                        int DRB = Integer.parseInt(rates[3]);
+                        int rateId = getRateId(customerId);
+                        if (rateId == 1 || rateId == -1) {
+                            int newID = CreateRate(groundRate, airRate, rushRate, DRB);
+                            String query = "UPDATE customer SET negotiated_rate_id_fk = %d WHERE account_number = %d";
+                            H2Access.createAndExecute(connection, String.format(query, newID, customerId));
 
-                    } else {
-                        modifyRates(rateId, groundRate, airRate, rushRate, DRB);
+                        } else {
+                            modifyRates(rateId, groundRate, airRate, rushRate, DRB);
+                        }
+                        success = true;
+                    } catch (NumberFormatException e) {
+                        System.out.println("The numbers were malformed, please try again.");
                     }
-                    success = true;
-                } catch (NumberFormatException e) {
-                    System.out.println("The numbers were malformed, please try again.");
                 }
-            }
-        } while(!success);
+            } while (!success);
+        }
     }
 
+    /**
+     * Returns the rate primary key associated with a user's account.
+     * @param acctNum The account number
+     * @return The rate fk number
+     */
     private int getRateId(int acctNum){
         String query = "SELECT negotiated_rate_id_fk FROM customer WHERE account_number=" + acctNum;
         ResultSet r = H2Access.createAndExecuteQuery(connection, query);
@@ -587,61 +645,105 @@ public class EmployeeAccess implements AutoCloseable{
         return -1;
     }
 
-    //tracking number: AAAAAAXXNNNNNNC
-    //[last six digits of a customers account]+[service id]+[package serial]+[check character]
-    private void acctTrackPackage(){
+    /**
+     * A method that lets accounting employees track either a specific package or
+     * all the packages a specific customer sent.
+     */
+    private void acctTrackPackage() {
         Scanner in = new Scanner(System.in);
+        System.out.println();
         System.out.println("[1] Track package based on Tracking number.");
-        System.out.println("[2] Track package based on Customer." );
+        System.out.println("[2] Track package based on Customer.");
+        basePage();
         System.out.print("How would you like to track a package: ");
-        String choice = getUserInput(new String[]{"1", "2"});
+        String choice = getUserInput(new String[]{"1", "2", "H", "B", "Q"});
         boolean success = false;
-        if(choice.equalsIgnoreCase("1")) {
-            do {
-                System.out.print("Enter package tracking ID: ");
-                String pkg = in.nextLine();
-                if(pkg.length() != 15)
-                    System.out.println("Package tracking IDs must be 15 digits long");
-                else {
-                    int acctNum = Integer.parseInt(pkg.substring(0, 6));
-                    String serial = pkg.substring(8, 14);
-                    if (!testpackageId(acctNum, serial) || !Util.validateCheckDigit(pkg)) {
-                        System.out.println("That package does not exists." +
-                                " Please verify the information was entered correctly.");
-                    } else
-                        success = true;
-                    accountantPrintPackage(acctNum, serial, "");
-                }
-            } while (!success);
-        } else if (choice.equalsIgnoreCase("2")){
-            int acctNum = selectCustomer("Which customer would you like to track packages of?");
-            ResultSet r = getPackagesByUser(acctNum);
-            try{
-                if(r.next()){
-                    do{
-                        String serial =  r.getString("serial");
-                        String id = String.format("%06d%02d%s",
-                                acctNum, r.getInt("service_id_fk"), serial);
-                        String ID = Util.findCheckDigit(id);
-                        System.out.println("Package ID:" + ID);
-                        accountantPrintPackage(acctNum, serial, "\t");
-                    }while(r.next());
-                }
-            } catch (SQLException | BadTrackingNumberFormatException e){
-                e.printStackTrace();
+        boolean back;
+        do {
+            back = false;
+            switch (choice) {
+                case "1":
+                    do {
+                        System.out.print("Enter package tracking ID: ");
+                        String pkg = in.nextLine();
+                        if (pkg.equalsIgnoreCase("B")) {
+                            back = true;
+                            break;
+                        } else if (pkg.equalsIgnoreCase("H")){
+                            acctHomePage();
+                            return;
+                        } else if(pkg.equalsIgnoreCase("Q")){
+                            userLogin();
+                            return;
+                        }
+                        if (pkg.length() != 15)
+                            System.out.println("Package tracking IDs must be 15 digits long");
+                        else {
+                            int acctNum = Integer.parseInt(pkg.substring(0, 6));
+                            String serial = pkg.substring(8, 14);
+                            if (!testpackageId(acctNum, serial) || !Util.validateCheckDigit(pkg)) {
+                                System.out.println("That package does not exists." +
+                                        " Please verify the information was entered correctly.");
+                            } else
+                                success = true;
+                            accountantPrintPackage(acctNum, serial, "");
+                        }
+                    } while (!success);
+                case "2":
+                    int acctNum = selectCustomer("Which customer would you like to track packages of?");
+                    if (acctNum == -3) {
+                        userLogin();
+                    } else if (acctNum == -4 || acctNum == -2) {
+                        return;
+                    } else {
+                        ResultSet r = getPackagesByUser(acctNum);
+                        try {
+                            if (r.next()) {
+                                do {
+                                    String serial = r.getString("serial");
+                                    String id = String.format("%06d%02d%s",
+                                            acctNum, r.getInt("service_id_fk"), serial);
+                                    String ID = Util.findCheckDigit(id);
+                                    System.out.println("Package ID:" + ID);
+                                    accountantPrintPackage(acctNum, serial, "\t");
+                                } while (r.next());
+                            }
+                        } catch (SQLException | BadTrackingNumberFormatException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                case "H":
+                    acctHomePage();
+                    break;
+                case "B":
+                    break;
+                case "Q":
+                    userLogin();
+                    break;
             }
-        }
+        } while(back);
     }
 
+    /**
+     * Returns all the packages a customer has set
+     * @param acctNum The account number of the customer
+     * @return A result set that conatins pacakge data
+     */
     private ResultSet getPackagesByUser(int acctNum){
         String query = "Select * from package where account_number_fk=" + acctNum;
         return H2Access.createAndExecuteQuery(connection, query);
     }
+
+    /**
+     * Prints data about a package.
+     * @param acctNum: The number of the account of the customer who ordered it
+     * @param serial: The package serial
+     * @param offset: Used for print formatting, an offset from the left margin (ie '/t')
+     */
     private void accountantPrintPackage(int acctNum, String serial, String offset){
         ResultSet r = H2Access.trackPackage(acctNum, serial);
         try {
             if (r != null && r.next()) {
-                //Example 00013114B9IWEAV
                 System.out.println(offset + "   Date       Time       LocationID      City    State");
                 do {
                     System.out.print(offset +r.getDate("date") + "\t");
@@ -657,72 +759,92 @@ public class EmployeeAccess implements AutoCloseable{
         }
     }
 
+    /**
+     * Lets the accounting employee edit the customer billing. They can add money to the
+     * account when a customer sends them a check, or change how often a customer is billed.
+     */
     private void editCustomerBilling(){
         Scanner in = new Scanner(System.in);
         int customerId = selectCustomer("Which customer would you like to edit the billing of?");
-        basePage();
-        System.out.println("[1] Add money to customer balance.");
-        System.out.println("[2] Change customer billing period.");
-        System.out.print("Please enter a choice: ");
-        String userStr = getUserInput(new String[]{"1", "2", "H", "B", "Q"});
-        switch (userStr){
-            case "H":
-                acctHomePage();
-                break;
-            case "B":
-                break;
-            case "Q":
-                System.exit(0);
-                break;
-            case "1":
-                double amt;
-                do {
-                    System.out.print("How much money should be added: ");
-                    amt = in.nextDouble();
-                    if(amt <= 0)
-                        System.out.println("You can only add money to an account.");
-                    else{
-                        if(addMoney(amt, customerId)) {
-                            System.out.print("Money successfully added, new customer balance: ");
-                            System.out.printf("%.2f\n", getBalance(customerId));
-                        } else {
-                            System.out.println("Could not add money to the account, contact a" +
-                                    " systems administrator.");
+        if(customerId == -3){
+            userLogin();
+        } else if(customerId == -4 || customerId == -2){
+            return;
+        } else {
+            basePage();
+            System.out.println("[1] Add money to customer balance.");
+            System.out.println("[2] Change customer billing period.");
+            System.out.print("Please enter a choice: ");
+            String userStr = getUserInput(new String[]{"1", "2", "H", "B", "Q"});
+            switch (userStr) {
+                case "H":
+                    acctHomePage();
+                    break;
+                case "B":
+                    break;
+                case "Q":
+                    userLogin();
+                    break;
+                case "1":
+                    double amt;
+                    do {
+                        System.out.print("How much money should be added (0 to cancel): ");
+                        amt = in.nextDouble();
+                        if (amt < 0)
+                            System.out.println("You can only add money to an account (enter 0 to cancel).");
+                        else {
+                            if(amt > 0) {
+                                if (addMoney(amt, customerId)) {
+                                    System.out.print("Money successfully added, new customer balance: ");
+                                    System.out.printf("%.2f\n", getBalance(customerId));
+                                } else {
+                                    System.out.println("Could not add money to the account, contact a" +
+                                            " systems administrator.");
+                                }
+                            }
                         }
+                    } while (amt < 0);
+                    break;
+                case "2":
+                    String newPeriod;
+                    System.out.println("What should the new pay period be?");
+                    System.out.println("[1] Annually");
+                    System.out.println("[2] Bi-Annually");
+                    System.out.println("[3] Quarterly");
+                    System.out.println("[4] Monthly");
+                    System.out.print("Choice: ");
+                    int choice = Integer.parseInt(getUserInput(new String[]{"1", "2", "3", "4"}));
+                    switch (choice) {
+                        case 1:
+                            newPeriod = "annually";
+                            break;
+                        case 2:
+                            newPeriod = "bi-annually";
+                            break;
+                        case 3:
+                            newPeriod = "quarterly";
+                            break;
+                        default:
+                            newPeriod = "monthly";
+                            break;
                     }
-                }while (amt <= 0);
-                break;
-            case "2":
-                String newPeriod;
-                System.out.println("What should the new pay period be?");
-                System.out.println("[1] Annually");
-                System.out.println("[2] Bi-Annually");
-                System.out.println("[3] Quarterly");
-                System.out.println("[4] Monthly");
-                int choice = Integer.parseInt(getUserInput(new String[]{"1", "2", "3", "4"}));
-                switch (choice){
-                    case 1:
-                        newPeriod = "annually";
-                        break;
-                    case 2:
-                        newPeriod = "bi-annually";
-                        break;
-                    case 3:
-                        newPeriod = "quarterly";
-                        break;
-                    default:
-                        newPeriod = "monthly";
-                        break;
-                }
-                if(updateBillingPeriod(newPeriod, customerId))
-                    System.out.println("Billing period successfully updated.");
-                else
-                    System.out.println("Could not update the billing period.\n" +
-                            "Contact a systems administrator.");
-                break;
+                    if (updateBillingPeriod(newPeriod, customerId))
+                        System.out.println("Billing period successfully updated.");
+                    else
+                        System.out.println("Could not update the billing period.\n" +
+                                "Contact a systems administrator.");
+                    break;
+            }
         }
     }
 
+    /**
+     * A method that lets the accounting employees add money to an account.
+     * Also sets the employee_id on billing to this user, for accountability.
+     * @param amount: The amount of money to add, must be more than 0
+     * @param acctNum: The account number to add it to
+     * @return If the action was successful.
+     */
     private boolean addMoney(double amount, int acctNum){
         String query = "UPDATE billing SET balance_to_date = balance_to_date + %f WHERE id = %d";
         String lastTouchedQuery = "UPDATE billing SET employee_id = " + getId();
@@ -731,6 +853,13 @@ public class EmployeeAccess implements AutoCloseable{
         return H2Access.createAndExecute(connection, String.format(query, amount, acctNum));
     }
 
+    /**
+     * Lets an accounting employee update the customers billing period.
+     * Also sets the employee_id on billing to this user, for accountability.
+     * @param period: The new period, a string of annually, bi-annually, monthly, quarterly
+     * @param acctNum: The account number to edit
+     * @return If the query was successful.
+     */
     private boolean updateBillingPeriod(String period, int acctNum){
         String query = "UPDATE billing SET pay_model = '%s' WHERE id = %d";
         String lastTouchedQuery = "UPDATE billing SET employee_id = " + getId();
@@ -739,49 +868,95 @@ public class EmployeeAccess implements AutoCloseable{
         return H2Access.createAndExecute(connection, String.format(query, period, acctNum));
     }
 
-    // returns customerID
+    /**
+     * Lets the accounting employee select a customer. The account employee can select
+     * customers one of three ways. First, they can provide a first and last name, second
+     * they can give the account number associated with the customer (this will still
+     * verify the account number is valid), third, they can give the username associated
+     * with the customer. return Codes:
+     *  -1  :   An error occurred
+     *  -2  :   User wants to go back a page
+     *  -3  :   User wants to quit
+     *  -4  :   User wants to go to the home page
+     * @param prompt: The situation specific prompt to ask to select a user
+     * @return The account number of the selected customer, a different option, or an error
+     */
     private int selectCustomer(String prompt){
         String desired = "";
         Scanner in = new Scanner(System.in);
         while(!desired.equals("Y")) {
-            basePage();
-            System.out.println(prompt);
-            System.out.println("[1] First and Last name");
-            System.out.println("[2] Account number");
-            System.out.println("[3] Customer username");
-            System.out.print("Please enter the number of how you'd like to select a customer: ");
-            String method = getUserInput(new String[]{"1", "2", "3", "4"});
             ResultSet r;
             String query = "";
-            switch (method) {
-                case "1":
-                    String[] name;
-                    do {
-                        System.out.print("Please enter the First and Last name: ");
-                        name = in.nextLine().split(" ");
-                        if (name.length != 2)
-                            System.out.println("Please enter exactly two names.");
-                    } while (name.length != 2);
-                    query = String.format("first_name='%s' AND last_name='%s'", name[0], name[1]);
-                    break;
-                case "2":
-                    System.out.print("Please enter the account number: ");
-                    int acctNum = in.nextInt();
-                    query = "account_number=" + acctNum;
-                    break;
-                case "3":
-                    System.out.print("Please enter the user name: ");
-                    String username = in.nextLine();
-                    query = "account_number=" + getId(username);
-                    break;
-            }
+            String method;
+            boolean back;
+            do {
+                back = false;
+                String choice;
+                System.out.println("\n" + prompt);
+                basePage();
+                System.out.println("[1] First and Last name");
+                System.out.println("[2] Account number");
+                System.out.println("[3] Customer username");
+                System.out.print("Please enter the number of who you'd like to select a customer: ");
+                method = getUserInput(new String[]{"1", "2", "3", "4", "B", "H", "Q"});
+                switch (method) {
+                    case "1":
+                        String[] name = new String[2];
+                        do {
+                            System.out.print("Please enter the First and Last name: ");
+                            choice = in.nextLine();
+                            if(choice.equalsIgnoreCase("B")) {
+                                back = true;
+                                break;
+                            }else if(choice.equalsIgnoreCase("H")) {
+                                return -4;
+                            }
+                            name = choice.split(" ");
+                            if (name.length != 2)
+                                System.out.println("Please enter exactly two names.");
+                        } while (name.length != 2);
+                        if(!back)
+                            query = String.format("first_name='%s' AND last_name='%s'", name[0], name[1]);
+                        break;
+                    case "2":
+                        System.out.print("Please enter the account number: ");
+                        choice = in.nextLine();
+                        if(choice.equalsIgnoreCase("B")) {
+                            back = true;
+                            break;
+                        }else if(choice.equalsIgnoreCase("H")) {
+                            return -4;
+                        }
+                        int acctNum = Integer.parseInt(choice);
+                        query = "account_number=" + acctNum;
+                        break;
+                    case "3":
+                        System.out.print("Please enter the user name: ");
+                        choice = in.nextLine();
+                        if(choice.equalsIgnoreCase("B")) {
+                            back = true;
+                            break;
+                        }else if(choice.equalsIgnoreCase("H")) {
+                            return -4;
+                        }
+                        String username = in.nextLine();
+                        query = "account_number=" + getId(username);
+                        break;
+                    case "B":
+                        return -2;
+                    case "Q":
+                        return -3;
+                    case "H":
+                        return -4;
+                }
+            } while(back);
             r = getCustomersWhere(query);
             try {
                 if (!r.next())
                     System.out.println("No customer found matching that information. Please try again.");
                 else {
                     printCustomer(r);
-                    System.out.print("Is this the desired user? [Y/N]");
+                    System.out.print("Is this the desired user? [Y/N]: ");
                     desired = getUserInput(new String[]{"Y", "N"});
                     if (desired.equalsIgnoreCase("Y")) {
                         r.beforeFirst();
@@ -796,45 +971,59 @@ public class EmployeeAccess implements AutoCloseable{
         return -1;
     }
 
+    /**
+     * Allows an accounting employee to generate and pay customer invoices.
+     */
     private void generateCustomerInvoices(){
         int customerId = selectCustomer("Which customer would you like to generate an invoice for?");
-        System.out.println("Generating Invoice...");
+        if(customerId == -3){
+            userLogin();
+        } else if(customerId == -4 || customerId == -2){
+            return;
+        } else {
+            System.out.println("Generating Invoice...");
 
-        int numCharges = 0;
-        double amountDue = 0;
-        double data[] = viewCharges(customerId);
-        if(data != null) {
-            numCharges = (int) data[0];
-            amountDue = data[1];
-        }
+            int numCharges = 0;
+            double amountDue = 0;
+            double data[] = viewCharges(customerId);
+            if (data != null) {
+                numCharges = (int) data[0];
+                amountDue = data[1];
+            }
 
-        System.out.printf("This user has %d unpaid charge(s) totalling $%.2f.\n", numCharges, amountDue);
-        if(numCharges > 0) {
-            System.out.print("Continue to pay these charges? [Y/N]: ");
-            String cont = getUserInput(new String[]{"Y", "N"});
-            if (cont.equalsIgnoreCase("Y")) {
-                double newBalance = payCharges(customerId, amountDue);
-                if (Double.isNaN(newBalance)) {
-                    System.out.println("An error has occurred while trying to create this invoice.\n" +
-                            "Please contact a system administrator.");
-                } else {
-                    System.out.printf("The customer now has a balance of %.2f\n", newBalance);
-                    if (newBalance < 0) {
-                        System.out.println("Note: This customer lacked the funds in their account, " +
-                                "and requires a bill to be mailed to their main address.\n" +
-                                "This customer will no longer be able to send packages until their" +
-                                " balance is positive again.");
+            System.out.printf("This user has %d unpaid charge(s) totalling $%.2f.\n", numCharges, amountDue);
+            if (numCharges > 0) {
+                System.out.print("Continue to pay these charges? [Y/N]: ");
+                String cont = getUserInput(new String[]{"Y", "N"});
+                if (cont.equalsIgnoreCase("Y")) {
+                    double newBalance = payCharges(customerId, amountDue);
+                    if (Double.isNaN(newBalance)) {
+                        System.out.println("An error has occurred while trying to create this invoice.\n" +
+                                "Please contact a system administrator.");
+                    } else {
+                        System.out.printf("The customer now has a balance of %.2f\n", newBalance);
+                        if (newBalance < 0) {
+                            System.out.println("Note: This customer lacked the funds in their account, " +
+                                    "and requires a bill to be mailed to their main address.\n" +
+                                    "This customer will no longer be able to send packages until their" +
+                                    " balance is positive again.");
+                        }
                     }
+                } else {
+                    System.out.println("Charges not paid.");
                 }
             } else {
-                System.out.println("Charges not paid.");
+                System.out.println("No action available.");
             }
-        } else {
-            System.out.println("No action available.");
         }
 
     }
 
+    /**
+     * Gets the balance of an account.
+     * @param acct: Account number
+     * @return double, the balance. Can be negative.
+     */
     private double getBalance(int acct){
         double newBalance = Double.NaN;
         String getBalance = "SELECT balance_to_date FROM billing WHERE account_number_fk = " + acct;
@@ -848,6 +1037,12 @@ public class EmployeeAccess implements AutoCloseable{
         return  newBalance;
     }
 
+    /**
+     * Allows an accounting employee to pay the charges for a customer.
+     * @param acct: The account id of the customer who's paying
+     * @param amountDue: The amount of money the customer owes for all thier unpaid packages.
+     * @return The new balance of the account
+     */
     private double payCharges(int acct, double amountDue){
         double newBalance = getBalance(acct);
         if(!Double.isNaN(newBalance)){
@@ -863,6 +1058,11 @@ public class EmployeeAccess implements AutoCloseable{
         return newBalance;
     }
 
+    /**
+     * Lets an accountant view money much money this customer ows for thier packages
+     * @param accountID: The id of the account to look at
+     * @return The amount of money owed
+     */
     private double[] viewCharges(int accountID){
         String detailQuery = "select * from charge where account_number_fk = " + accountID;
         String metaQuery = "SELECT COUNT(id), SUM(price) FROM CHARGE WHERE account_number_fk = "
@@ -889,9 +1089,8 @@ public class EmployeeAccess implements AutoCloseable{
         return null;
     }
 
-    public static void main(String[] args){
+    public static void userLogin(){
         Scanner in = new Scanner(System.in);
-        boolean success = false;
         do {
             // Get the username and password
             System.out.print("Username: ");
@@ -904,13 +1103,12 @@ public class EmployeeAccess implements AutoCloseable{
                 // If the username doesn't exists in the system, reenter credentials
                 if(employeeType == null)
                     System.out.println("This username doesn't exists, please try again.");
-                // Customers are not allowed to enter this view
+                    // Customers are not allowed to enter this view
                 else if(employeeType.equalsIgnoreCase("customer"))
                     System.out.println("Customers are not allowed to access this portal.");
                 else {
                     // Log the employee in
                     EmployeeAccess employee = new EmployeeAccess(username, password, employeeType);
-                    success = true;
                     System.out.println("Congratulations! You've been logged in as a(n) " +
                             employeeType.replace("_", " ") + ".");
                     // Package employee view
@@ -918,9 +1116,12 @@ public class EmployeeAccess implements AutoCloseable{
                         boolean idSuccess;
                         do {
                             // Sample number: VGLJPA1YKP5G
-                            System.out.print("Please enter your location ID: ");
+                            System.out.print("Please enter your location ID (or Q to quit): ");
                             String locationID = in.nextLine();
-
+                            if(locationID.equalsIgnoreCase("Q")) {
+                                System.out.println("Have A good day!\n");
+                                break;
+                            }
                             // Test if this is a valid location
                             idSuccess = employee.testLocationId(locationID);
                             if (!employee.testLocationId(locationID)) {
@@ -946,11 +1147,15 @@ public class EmployeeAccess implements AutoCloseable{
                                             "Please scan packages as they're dropped off (or Q to quit).");
                                     employee.scanPackage(in, locationID, true);
                                 }
+                                employee.close();
+                                System.out.println("Have A good day!\n");
                             }
                         }
                         while (!idSuccess);
                     } else if(employeeType.equalsIgnoreCase("accounting_employee")){
                         employee.acctHomePage();
+                        employee.close();
+                        System.out.println("Have A good day!\n");
                     }
                 }
             } catch (SQLException e){
@@ -958,6 +1163,14 @@ public class EmployeeAccess implements AutoCloseable{
                         "Check your username and password. " +
                         "If the issue persists, contact an administrator.");
             }
-        } while(!success);
+        } while(true);
+    }
+
+    /**
+     * The main method to let employees log in and do work
+     * @param args: No arguments needed
+     */
+    public static void main(String[] args){
+        userLogin();
     }
 }
