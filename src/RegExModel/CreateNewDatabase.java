@@ -173,14 +173,29 @@ public class CreateNewDatabase {
                 + ");" ;
         Statement stmt = conn.createStatement();
         stmt.execute(query);
+
+        // goes through the CSV and ingests the data
         try {
             BufferedReader br = new BufferedReader(new FileReader("./src/RegExModel/csvs/customer.csv"));
             String line;
+            String account_num, billing_fk, negotiated_rate_ID_fk, mailing_address_ID_fk;
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("account_number")) {
-                    query = String.format("INSERT INTO customer VALUES(%s,%s,%s,%s,'%s','%s','%s');",
-                            split[0], split[1], split[2], split[3], split[4], split[5], split[6]);
+                    account_num = split[0].substring(1, split[0].length()-1);
+                    billing_fk = split[1].substring(1, split[1].length()-1);
+                    negotiated_rate_ID_fk = split[2].substring(1, split[2].length()-1);
+                    mailing_address_ID_fk = split[3].substring(1, split[3].length()-1);
+                    query = String.format(
+                        "INSERT INTO customer VALUES(%s,%s,%s,%s,'%s','%s','%s');",
+                        account_num,
+                        billing_fk,
+                        negotiated_rate_ID_fk,
+                        mailing_address_ID_fk,
+                        split[4],
+                        split[5],
+                        split[6]
+                    );
                     conn.createStatement().execute(query);
                 }
             }
@@ -287,7 +302,7 @@ public class CreateNewDatabase {
                 + "ATTN VARCHAR(255),"
                 + "STREET_LINE_1 VARCHAR(255),"
                 + "STREET_LINE_2 VARCHAR(255),"
-                + "ZIP_FK INT," // TODO char(5)
+                + "ZIP_FK INT,"
                 + "ACCOUNT_NUMBER_FK INT,"
                 + ");" ;
         Statement stmt = conn.createStatement();
@@ -530,26 +545,39 @@ public class CreateNewDatabase {
         }
     }
 
+    public void permissions() {
+        try {
+            Connection conn = H2Access.createConnection("me", "password");
+            Statement stmt = conn.createStatement();
+            // gives customer their correct permission
+            String query = "GRANT ALL ON customer, address, zip_code, billing, rate, package, transaction TO PUBLIC";
+            stmt.execute(query);
+        } catch (SQLException sqle) {
+            /* well let's hope this doesn't happen :/ */
+        }
+    }
+
+
     /**
      * Initializes all the tables.
      */
     public void initDatabase(){
         try {
-            this.transaction();
-            this.packageInit();
-            this.customers();
-            this.billing();
-            this.accountingEmployees();
-            this.packageEmployees();
-            this.address();
-            this.charges();
-            this.location();
-            this.priority();
-            this.rates();
-            this.service();
-            this.zipCodes();
-            this.users();
-
+            transaction();
+            packageInit();
+            customers();
+            billing();
+            accountingEmployees();
+            packageEmployees();
+            address();
+            charges();
+            location();
+            priority();
+            rates();
+            service();
+            zipCodes();
+            users();
+            permissions();
         } catch (SQLException e) {
             e.printStackTrace();
         }
