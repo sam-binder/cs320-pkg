@@ -607,14 +607,14 @@ public class CustomerAccess implements AutoCloseable{
                 switch (constraint) {
                     case 'O':
                     case 'o':
-                        if (matches.getString(0).charAt(1) == 'O') {
-                            return matches.getString(0);
+                        if (matches.getString(1).charAt(1) == 'O') {
+                            return matches.getString(1);
                         }
                         break;
                     case 'D':
                     case 'd':
-                        if (matches.getString(0).charAt(1) == 'D') {
-                            return matches.getString(0);
+                        if (matches.getString(1).charAt(1) == 'D') {
+                            return matches.getString(1);
                         }
                         break;
                     default:
