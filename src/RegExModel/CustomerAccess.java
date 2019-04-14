@@ -891,9 +891,11 @@ public class CustomerAccess implements AutoCloseable {
         String lastSerial = "AAAAAA";
 
         // if the serial lookup had a result (customer has sent at least one package)
-        if (lastPackage.next()) {
+        if (lastPackage != null && lastPackage.next()) {
             // grab the last serial
-            lastSerial = lastPackage.getString(1);
+            String possibleLastSerial = lastPackage.getString(1);
+            if(possibleLastSerial != null)
+                lastSerial = possibleLastSerial;
         }
 
         // creates a next serial char array
