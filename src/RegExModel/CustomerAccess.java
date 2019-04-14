@@ -818,55 +818,79 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * helper method for sendPackage
-     * Creates package serial.
+     * A helper method for sendPackage to create a package serial for the package.
      *
-     * @param account_number_fk
-     * @param service_id_fk
-     * @param dim_height
-     * @param dim_length
-     * @param dim_depth
-     * @param weight
-     * @param origin
-     * @param destination
-     * @return
+     * @param accountNumber  The account number of the sending package.
+     * @param serviceID  The service ID to send the package.
+     * @param height  The height of the package.
+     * @param length  The length of the package.
+     * @param depth  The depth of the package.
+     * @param weight  The weight of the package.
+     * @param origin  The origin of the package.
+     * @param destination  The destination of the package.
+     *
+     * @return  The ResultSet of the package created for the package.
      */
-    private ResultSet createPackage(String account_number_fk, String service_id_fk, String dim_height, String dim_length,
-                                    String dim_depth, String weight, String origin, String destination) throws SQLException {
+    private ResultSet createPackage(String accountNumber,
+                                    String serviceID,
+                                    String height,
+                                    String length,
+                                    String depth,
+                                    String weight,
+                                    String origin,
+                                    String destination) throws SQLException {
 
-        String getLast = "SELECT MAX(serial) FROM package WHERE account_number_fk = '" + account_number_fk + "';";
+        String getLastPackageSentQuery =
+            "SELECT MAX(serial) " +
+            "FROM package " +
+            "WHERE account_number_fk = '" + accountNumber + "';";
 
-        ResultSet last = H2Access.createAndExecuteQuery(connection, getLast);
-        // GET the last serial this customer has sent, add 1
-        String lastSerial;
-        if (last.next()) {
+        // queries the last package
+        ResultSet lastPackage = H2Access.createAndExecuteQuery(
+            this.connection,
+            getLastPackageSentQuery
+        );
 
-            lastSerial = last.getString(1);
+        // get the last serial this customer sent
+        String lastSerial = "AAAAAA";
 
-        } else {
-            lastSerial = "AAAAAA";
+        // if the serial lookup had a result (customer has sent at least one package)
+        if (lastPackage.next()) {
+            // grab the last serial
+            lastSerial = lastPackage.getString(1);
         }
-        char nextSerial[] = new char[6];
-        boolean carry = false;
 
+        // creates a next serial char array
+        char [] nextSerial = new char[6];
+        // determines if rollOver has occurred
+        boolean rollOver = false;
 
+        // the current index in the serial
         int i = 5;
+        // if the last character in the serial is a Z
         if (lastSerial.charAt(i) == 'Z') {
+            // place a 0 at that index
             nextSerial[i] = '0';
-
+        // if the last character in the serial is a 9
         } else if (lastSerial.charAt(i) == '9') {
+            // place an A at that index
             nextSerial[i] = 'A';
-            carry = true;
-
+            // rollOver has occurred, we need to keep track of that
+            rollOver = true;
+        // else place the next character in that spot
         } else {
-            nextSerial[i] = (char) (lastSerial.charAt(i) + 1);
+            nextSerial[i] = (char)(lastSerial.charAt(i) + 1);
         }
-        if (!carry) {
-            for (int j = 4; j < 0; j--) {
-                nextSerial[j] = (char) (lastSerial.charAt(i) + 1);
+
+        // if there was no rollover
+        if (!rollOver) {
+            // go down through the characters in the last serial, adding making it the next character to it
+            for (; i >= 0; --i) {
+                nextSerial[i] = (char)(lastSerial.charAt(i) + 1);
             }
         }
-        while (carry) {
+
+        while (rollOver) {
             // this will work fine until someone mails their
             // 2176782336th package ( little over 2billion )
             // so i guess we're not aiming to work with amazon
@@ -874,15 +898,15 @@ public class CustomerAccess implements AutoCloseable {
             i--;
             if (lastSerial.charAt(i) == 'Z') {
                 nextSerial[i] = '0';
-                carry = false;
+                rollOver = false;
 
             } else if (lastSerial.charAt(i) == '9') {
                 nextSerial[i] = 'A';
-                carry = true;
+                rollOver = true;
 
             } else {
                 nextSerial[i] = (char) (lastSerial.charAt(i) + 1);
-                carry = false;
+                rollOver = false;
             }
         }
         while (i >= 0) {
@@ -895,23 +919,23 @@ public class CustomerAccess implements AutoCloseable {
         String query = "INSERT INTO PACKAGE " +
                 "(ACCOUNT_NUMBER_FK, SERVICE_ID_FK, SERIAL, HEIGHT, LENGTH, DEPTH, WEIGHT, ORIGIN_FK, DESTINATION_FK)" +
                 " VALUES (" +
-                account_number_fk + ", " +
-                service_id_fk + ", " +
+                accountNumber + ", " +
+                serviceID + ", " +
                 "'" + new String(nextSerial) + "', " +
-                dim_height + ", " +
-                dim_length + ", " +
-                dim_depth + ", " +
+                height + ", " +
+                length + ", " +
+                depth + ", " +
                 weight + ", " +
                 "'" + origin + "', " +
                 "'" + destination + "');";
-        if (H2Access.createAndExecute(connection, query)) {
-
-            String query2 = "SELECT * FROM PACKAGE" +
-                    " WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk +
-                    ") AND (SERIAL = '" + new String(nextSerial) + "');";
-
-            ResultSet ins_new_rec = H2Access.createAndExecuteQuery(connection, query2);
-            return ins_new_rec;
+        if (H2Access.createAndExecute(this.connection, query)) {
+            return H2Access.createAndExecuteQuery(
+                this.connection,
+                "SELECT * " +
+                "FROM package " +
+                "WHERE account_number_fk = " + accountNumber + " " +
+                "AND serial='" + new String(nextSerial) + "';"
+            );
         } else {
             return null;
         }
