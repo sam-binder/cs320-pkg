@@ -499,10 +499,15 @@ public class CustomerAccess implements AutoCloseable{
     public ResultSet getCustomerRates(String account_number) throws SQLException{
         String QrateID = "SELECT negotiated_rate_ID_fk FROM CUSTOMER WHERE account_number = '" + account_number + "';";
         ResultSet rateID = h2.createAndExecuteQuery(connection, QrateID);
-        int rate_fk = rateID.getInt("negotiated_rate_ID_fk");
-        String QGetRates = "SELECT * FROM RATE WHERE negotiated_rate_ID = " + rate_fk + ";";
-        ResultSet rates = h2.createAndExecuteQuery(connection, QGetRates);
-        return rates;
+        if(rateID.next()){
+            int rate_fk = rateID.getInt("negotiated_rate_ID_fk");
+            String QGetRates = "SELECT * FROM RATE WHERE negotiated_rate_ID = " + rate_fk + ";";
+            ResultSet rates = h2.createAndExecuteQuery(connection, QGetRates);
+            return rates;
+        } else {
+            return null;
+        }
+
 
     }
 
