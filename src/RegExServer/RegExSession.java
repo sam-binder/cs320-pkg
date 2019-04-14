@@ -19,8 +19,6 @@ public class RegExSession {
      */
     private static final int SESSION_LENGTH_HOURS = 24;
 
-    // PUBLIC SESSION VARIABLES
-
     /**
      * The user's ID in the database.
      */
@@ -111,6 +109,12 @@ public class RegExSession {
         return this.expiration.before(oneHourFromNow.getTime());
     }
 
+    /**
+     * Replaces the default session variables on any page that needs it.
+     *
+     * @param pageContent  The current page content String for the page needing session vars put in place.
+     * @return  The pageContent with session variable identifiers replaced.
+     */
     public String replaceVarPlaceholders(String pageContent) {
         return pageContent.replace("@{user-name}", this.userName)
                           .replace("@{user-type}", this.accountType);

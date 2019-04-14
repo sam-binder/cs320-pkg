@@ -13,13 +13,13 @@ public class RegExErrorDialog {
      * Generates an error HTML dialog with the given message, or, if null,
      * returns an empty string.
      *
-     * @param errorMsg  The error message to put in the error dialog.
-     * @return  An error dialog HTML block.
+     * @param errorMsg The error message to put in the error dialog.
+     * @return An error dialog HTML block.
      */
     public static String getErrorDialogHTML(String errorMsg) {
         // returns an error dialog if there needs to be one
         return (errorMsg != null) ?
-            "<div class='error'>" + errorMsg + "</div>" :
-            "";
+                "<div class='error'>" + errorMsg + "</div>" :
+                "";
     }
 }

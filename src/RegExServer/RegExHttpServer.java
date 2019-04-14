@@ -2,10 +2,8 @@ package RegExServer;
 
 // FILE: RegExHttpServer.java
 
-import RegExModel.H2Access;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -23,9 +21,11 @@ public class RegExHttpServer {
      * @throws IOException  Any IOException encountered will be thrown out to jvm.
      */
     public static void main(String[] args) throws IOException {
+        // log the bootup debug setting
         RegExLogger.logBootup(
             "starting server with debug logging " + (RegExLogger.DEBUG ? "ENABLED" : "DISABLED"),
-            RegExLogger.NO_LEVEL);
+            RegExLogger.NO_LEVEL
+        );
 
         // logs that we are about to be open for business
         RegExLogger.logBootup("opening RegEx connection on port 80", RegExLogger.NO_LEVEL);

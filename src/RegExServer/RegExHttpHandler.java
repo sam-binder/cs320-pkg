@@ -3,21 +3,16 @@ package RegExServer;
 // FILE: RegExHttpHandler.java
 
 import RegExModel.*;
-
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-
 import java.io.File;
 import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import java.net.HttpURLConnection;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
 import java.sql.SQLException;
 import java.util.*;
 
@@ -42,8 +37,14 @@ public class RegExHttpHandler implements HttpHandler {
      */
     public static final String DOCUMENT_ROOT = "./src/RegExServer/public_html";
 
+    /**
+     * Creates a new RegExHttpHandler which will take care of responding to each request made to the server.
+     */
     public RegExHttpHandler() {
+        // creates an empty HashMap for the sessions
         this.sessions = new HashMap<>();
+
+        // generaets default accepted datatypes
         this.fileTypeMIMES = new HashMap<>();
 
         // PUTS OUR SUPPORTED MIME TYPES
@@ -152,9 +153,9 @@ public class RegExHttpHandler implements HttpHandler {
 
             // puts in place our cookie deletion to remove it from the browser
             attachNewHeader(
-                    exchange,
-                    "Set-Cookie",
-                    Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+                exchange,
+                "Set-Cookie",
+                Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
             );
 
             // trash the cookie from the map (remove it)
@@ -193,13 +194,14 @@ public class RegExHttpHandler implements HttpHandler {
             if (requestedPath.endsWith("html")) {
                 // the only thing sent from here down is html
                 attachNewHeader(
-                        exchange,
-                        "Content-Type",
-                        Collections.singletonList("text/html; charset=UTF-8")
+                    exchange,
+                    "Content-Type",
+                    Collections.singletonList("text/html; charset=UTF-8")
                 );
 
                 // determines which page to send back
                 switch (requestedPath) {
+                    // request for the index page (login)
                     case "/index.html":
                         // check for posted login information
                         if (requestParameters.containsKey("login-submit")) {
@@ -239,18 +241,18 @@ public class RegExHttpHandler implements HttpHandler {
                                         // adds a new cookie header to tell the browser to keep track
                                         // of our session
                                         attachNewHeader(
-                                                exchange,
-                                                "Set-Cookie",
-                                                Collections.singletonList("REGEX_SESSION=" + newSessionId)
+                                            exchange,
+                                            "Set-Cookie",
+                                            Collections.singletonList("REGEX_SESSION=" + newSessionId)
                                         );
-                                        // the web-based UI is ONLY for customers; responds with the index saying so
+                                    // the web-based UI is ONLY for customers; responds with the index saying so
                                     } else {
                                         // logs that this was not allowed
                                         RegExLogger.warn("non-customer login attempted; not allowed", 1);
 
                                         // responds with the index page again saying it is only for customers
                                         responseBody = new RegExIndex(
-                                                "This web application is only for customers."
+                                            "This web application is only for customers."
                                         ).getPageContent();
                                         break;
                                     }
@@ -271,16 +273,14 @@ public class RegExHttpHandler implements HttpHandler {
                                     break;
                                 }
                             } else {
+                                // logs that the username check failed
                                 RegExLogger.warn("username check failed", 1);
                                 // sets the response code to moved temporarily
                                 responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-
                                 // redirect the user to login failed index
                                 redirectUser(exchange, DOMAIN_ROOT + "/?login-failed");
-
                                 // empty response body
                                 responseBody = new byte[]{};
-
                                 // break the switch so that no more processing occurs
                                 break;
                             }
@@ -311,6 +311,7 @@ public class RegExHttpHandler implements HttpHandler {
                             responseBody = new RegExIndex(errorContent).getPageContent();
                         }
                         break;
+                    // responds to request for create-account page
                     case "/create-account/index.html":
                         // if they are on this page with a "create-submit" post variable
                         if (requestParameters.containsKey("create-submit")) {
@@ -333,34 +334,32 @@ public class RegExHttpHandler implements HttpHandler {
                                     // next we need to do things with the customer's account, like set their
                                     // basic information
                                     tempCustomerAccess.changeBasicInformation(
-                                            (String) requestParameters.get("first-name"),
-                                            (String) requestParameters.get("last-name"),
-                                            (String) requestParameters.get("phone-number")
+                                        (String) requestParameters.get("first-name"),
+                                        (String) requestParameters.get("last-name"),
+                                        (String) requestParameters.get("phone-number")
                                     );
 
                                     // pulls out the correct "form" of these
                                     String company = requestParameters.get("company") != null ?
-                                            (String) requestParameters.get("company") :
-                                            "";
+                                        (String) requestParameters.get("company") :
+                                        "";
                                     String addressLine2 = requestParameters.get("address-line-2") != null ?
-                                            (String) requestParameters.get("address-line-2") :
-                                            "";
+                                        (String) requestParameters.get("address-line-2") :
+                                        "";
 
                                     // next is to set in place the customer's address information
                                     tempCustomerAccess.enterAddress(
-                                            company,
-                                            (String) requestParameters.get("attention"),
-                                            (String) requestParameters.get("address-line-1"),
-                                            addressLine2,
-                                            (String) requestParameters.get("zip")
+                                        company,
+                                        (String) requestParameters.get("attention"),
+                                        (String) requestParameters.get("address-line-1"),
+                                        addressLine2,
+                                        (String) requestParameters.get("zip")
                                     );
 
                                     // redirect them to the home page
                                     responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-
                                     // redirect user to the index
                                     redirectUser(exchange, DOMAIN_ROOT + "/?account-created");
-
                                     // account creation succeeded
                                     responseBody = new byte[]{};
                                     break;
@@ -368,19 +367,19 @@ public class RegExHttpHandler implements HttpHandler {
                                 case 3:
                                     // username exists already, try again
                                     responseBody = new RegExCreateAccount(
-                                            "Username is already taken. Please use a different username."
+                                        "Username is already taken. Please use a different username."
                                     ).getPageContent();
                                     break;
                                 case 2:
                                     // database error
                                     responseBody = new RegExCreateAccount(
-                                            "Database error encountered. Please try again in a minute."
+                                        "Database error encountered. Please try again in a minute."
                                     ).getPageContent();
                                     break;
                                 default:
                                     // customer ID get failed
                                     responseBody = new RegExCreateAccount(
-                                            "A server issue was encountered.  Please try again in a minute."
+                                        "A server issue was encountered.  Please try again in a minute."
                                     ).getPageContent();
                             }
                         } else {
@@ -388,6 +387,7 @@ public class RegExHttpHandler implements HttpHandler {
                             responseBody = new RegExCreateAccount(RegExCreateAccount.NO_ERROR).getPageContent();
                         }
                         break;
+                    // a request for the home page
                     case "/home/index.html":
                         // if the user attempts to access a protected page without a session
                         if (sessionExpired || userRegExSession == null) {
@@ -396,8 +396,8 @@ public class RegExHttpHandler implements HttpHandler {
 
                             // attaches a location header for the browser to go to root (login)
                             redirectUser(
-                                    exchange,
-                                    DOMAIN_ROOT + "/"
+                                exchange,
+                                DOMAIN_ROOT + "/"
                             );
 
                             // empty response body
@@ -407,26 +407,26 @@ public class RegExHttpHandler implements HttpHandler {
                             responseBody = new RegExHome(userRegExSession).getPageContent();
                         }
                         break;
+                    // request for view-package page
                     case "/view-package/index.html":
                         // gets the packageID from the map (will be null if none is there)
                         String packageID = (String) requestParameters.get("package-id");
                         responseBody = new RegExViewPackage(
-                                packageID,
-                                userRegExSession != null
+                            packageID,
+                            userRegExSession != null
                         ).getPageContent();
                         break;
+                    // request for account-info page
                     case "/account-info/index.html":
                         // if the user attempts to access a protected page without a session
                         if (sessionExpired || userRegExSession == null) {
                             // redirect user to home page
                             responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-
                             // attaches a location header for the browser to go to root (login)
                             redirectUser(
-                                    exchange,
-                                    DOMAIN_ROOT + "/"
+                                exchange,
+                                DOMAIN_ROOT + "/"
                             );
-
                             // empty response body
                             responseBody = new byte[]{};
                         } else {
@@ -434,76 +434,79 @@ public class RegExHttpHandler implements HttpHandler {
                             if (requestParameters.containsKey("update-submit")) {
                                 // we have to call the customer access update method
                                 CustomerAccess tempCustomerAccess = new CustomerAccess(
-                                        userRegExSession.userName,
-                                        userRegExSession.password
+                                    userRegExSession.userName,
+                                    userRegExSession.password
                                 );
 
                                 // changes the user's first, last and phone
                                 tempCustomerAccess.changeBasicInformation(
-                                        (String) requestParameters.get("first-name"),
-                                        (String) requestParameters.get("last-name"),
-                                        (String) requestParameters.get("phone-number")
+                                    (String) requestParameters.get("first-name"),
+                                    (String) requestParameters.get("last-name"),
+                                    (String) requestParameters.get("phone-number")
                                 );
 
                                 String company = requestParameters.get("company") != null ?
-                                        (String) requestParameters.get("company") :
-                                        "";
+                                    (String) requestParameters.get("company") :
+                                    "";
 
                                 String addressLine2 = requestParameters.get("address-line-2") != null ?
-                                        (String) requestParameters.get("address-line-2") :
-                                        "";
+                                    (String) requestParameters.get("address-line-2") :
+                                    "";
 
                                 // then changes their address
                                 tempCustomerAccess.enterAddress(
-                                        company,
-                                        (String) requestParameters.get("attention"),
-                                        (String) requestParameters.get("address-line-1"),
-                                        addressLine2,
-                                        (String) requestParameters.get("zip")
+                                    company,
+                                    (String) requestParameters.get("attention"),
+                                    (String) requestParameters.get("address-line-1"),
+                                    addressLine2,
+                                    (String) requestParameters.get("zip")
                                 );
 
                                 // then redirect the user to the same page to clear the post request
                                 // (destroys refresh loop)
                                 responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
                                 redirectUser(
-                                        exchange,
-                                        DOMAIN_ROOT + "/account-info/"
+                                    exchange,
+                                    DOMAIN_ROOT + "/account-info/"
                                 );
+                                // responds with empty body (no content anyway)
                                 responseBody = new byte[]{};
                             } else {
-                                // simple gets the page content for this user
+                                // simply gets the page content for this user
                                 responseBody = new RegExAccountInfo(userRegExSession).getPageContent();
                             }
                         }
                         break;
+                    // request for send-package page
                     case "/send-package/index.html":
                         // if the user attempts to access a protected page without a session
                         if (sessionExpired || userRegExSession == null) {
                             // redirect user to home page
                             responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
-
                             // attaches a location header for the browser to go to root (login)
                             redirectUser(
-                                    exchange,
-                                    DOMAIN_ROOT + "/"
+                                exchange,
+                                DOMAIN_ROOT + "/"
                             );
-
                             // empty response body
                             responseBody = new byte[]{};
-                            // processes a send package form
+                        // processes a send package form
                         } else if (requestParameters.containsKey("send-submit")) {
-
                             // now we need to extract everything
                             int serviceID = Integer.parseInt((String) requestParameters.get("method"));
 
                             // performs some math on the serviceID to get in the correct service region
                             serviceID = ((serviceID - 1) * 4) + 1;
 
+                            // if there is a hazardous material shipping requset
                             if (requestParameters.containsKey("hazardous")) {
+                                // add 2 to the ID
                                 serviceID += 2;
                             }
 
+                            // if there is a signature required
                             if (requestParameters.containsKey("signature")) {
+                                // add 1 to the ID
                                 serviceID += 1;
                             }
 
@@ -512,43 +515,44 @@ public class RegExHttpHandler implements HttpHandler {
 
                             // looks to send the package
                             CustomerAccess tempCustomerAccess = new CustomerAccess(
-                                    userRegExSession.userName,
-                                    userRegExSession.password
+                                userRegExSession.userName,
+                                userRegExSession.password
                             );
 
+                            // formats some things that are optional
                             String originAttention = requestParameters.get("origin-attention") != null ?
-                                    (String) requestParameters.get("origin-attention") : "";
+                                (String) requestParameters.get("origin-attention") : "";
                             String originLineTwo = requestParameters.get("origin-address-line-2") != null ?
-                                    (String) requestParameters.get("origin-address-line-2") : "";
+                                (String) requestParameters.get("origin-address-line-2") : "";
                             String destinationAttention = requestParameters.get("destination-attention") != null ?
-                                    (String) requestParameters.get("destination-attention") : "";
+                                (String) requestParameters.get("destination-attention") : "";
                             String destinationLineTwo = requestParameters.get("destination-address-line-2") != null ?
-                                    (String) requestParameters.get("destination-address-line-2") : "";
+                                (String) requestParameters.get("destination-address-line-2") : "";
 
                             // makes a package send request
                             // there are lots of parameters needed to send a package,
                             // each one is on its own line for better readability
                             tempCustomerAccess.sendPackage(
-                                    String.format("%d", H2Access.getUserFK(userRegExSession.userName)),
-                                    serviceIDString,
-                                    (String) requestParameters.get("height"),
-                                    (String) requestParameters.get("length"),
-                                    (String) requestParameters.get("width"),
-                                    (String) requestParameters.get("weight"),
-                                    (String) requestParameters.get("origin-company"),
-                                    originAttention,
-                                    (String) requestParameters.get("origin-address-line-1"),
-                                    originLineTwo,
-                                    (String) requestParameters.get("origin-city"),
-                                    (String) requestParameters.get("origin-state"),
-                                    (String) requestParameters.get("origin-zip"),
-                                    (String) requestParameters.get("destination-company"),
-                                    destinationAttention,
-                                    (String) requestParameters.get("destination-address-line-1"),
-                                    destinationLineTwo,
-                                    (String) requestParameters.get("destination-city"),
-                                    (String) requestParameters.get("destination-state"),
-                                    (String) requestParameters.get("destination-zip")
+                                String.format("%d", H2Access.getUserFK(userRegExSession.userName)),
+                                serviceIDString,
+                                (String) requestParameters.get("height"),
+                                (String) requestParameters.get("length"),
+                                (String) requestParameters.get("width"),
+                                (String) requestParameters.get("weight"),
+                                (String) requestParameters.get("origin-company"),
+                                originAttention,
+                                (String) requestParameters.get("origin-address-line-1"),
+                                originLineTwo,
+                                (String) requestParameters.get("origin-city"),
+                                (String) requestParameters.get("origin-state"),
+                                (String) requestParameters.get("origin-zip"),
+                                (String) requestParameters.get("destination-company"),
+                                destinationAttention,
+                                (String) requestParameters.get("destination-address-line-1"),
+                                destinationLineTwo,
+                                (String) requestParameters.get("destination-city"),
+                                (String) requestParameters.get("destination-state"),
+                                (String) requestParameters.get("destination-zip")
                             );
 
                             // redirects user back to home
@@ -557,17 +561,20 @@ public class RegExHttpHandler implements HttpHandler {
                                     exchange,
                                     DOMAIN_ROOT + "/home/"
                             );
+                            // empty body
                             responseBody = new byte[]{};
                         } else {
+                            // default page with no changes in place
                             responseBody = getFileContents("/send-package/index.html");
                         }
                         break;
+                    // request to logout
                     case "/logout/index.html":
                         // deletes cookie from browser
                         attachNewHeader(
-                                exchange,
-                                "Set-Cookie",
-                                Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+                            exchange,
+                            "Set-Cookie",
+                            Collections.singletonList("REGEX_SESSION=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT")
                         );
 
                         // trash the cookie from the map (remove it)
@@ -578,18 +585,18 @@ public class RegExHttpHandler implements HttpHandler {
 
                         // attaches a location header for the browser to go to root (login)
                         redirectUser(
-                                exchange,
-                                DOMAIN_ROOT + "/"
+                            exchange,
+                            DOMAIN_ROOT + "/"
                         );
-
                         // empty response body
                         responseBody = new byte[]{};
                         break;
+                    // if all of these checks fail, respond with the file contents of the reqested file
                     default:
                         // attempt to bring up static version of the file
                         responseBody = getFileContents(requestedPath);
                 }
-                // else we send back the file contents of whatever was requested (if it exists)
+            // else we send back the file contents of whatever was requested (if it exists)
             } else {
                 // always send the request for icon to the favicon
                 if (requestedPath.endsWith(".ico")) {
@@ -598,13 +605,13 @@ public class RegExHttpHandler implements HttpHandler {
 
                 // attach the correct header to specify content type
                 attachNewHeader(
-                        exchange,
-                        "Content-Type",
-                        Collections.singletonList(
-                                this.fileTypeMIMES.get(
-                                        requestedPath.substring(requestedPath.lastIndexOf(".") + 1)
-                                )
+                    exchange,
+                    "Content-Type",
+                    Collections.singletonList(
+                        this.fileTypeMIMES.get(
+                            requestedPath.substring(requestedPath.lastIndexOf(".") + 1)
                         )
+                    )
                 );
 
                 // gets our response body from our contents
@@ -617,6 +624,7 @@ public class RegExHttpHandler implements HttpHandler {
             // get the error response page for our error
             responseBody = getErrorPage(responseCode);
         } catch (Exception e) {
+            // print the stack trace of any server-halting exception
             e.printStackTrace();
             // logs that some exception was hit
             RegExLogger.error("issue with loading page - internal server error", 1);
@@ -628,8 +636,8 @@ public class RegExHttpHandler implements HttpHandler {
 
         // direct our exchange to send back the response headers
         exchange.sendResponseHeaders(
-                responseCode,
-                responseBody.length
+            responseCode,
+            responseBody.length
         );
 
         // gets our response OutputStream
@@ -658,7 +666,7 @@ public class RegExHttpHandler implements HttpHandler {
         // attempts to return our login screen if an error is
         // encountered an IOException is thrown
         return Files.readAllBytes(
-                Paths.get(DOCUMENT_ROOT + pathToFile)
+            Paths.get(DOCUMENT_ROOT + pathToFile)
         );
     }
 
@@ -688,7 +696,7 @@ public class RegExHttpHandler implements HttpHandler {
                 return getFileContents("/503.shtml");
             default:
                 RegExLogger.warn(" server issue hit - sending 500", 1);
-                // default to error 404
+                // default to error 500
                 return getFileContents("/500.shtml");
         }
     }
@@ -704,16 +712,16 @@ public class RegExHttpHandler implements HttpHandler {
 
         // adds in our connection keep alive, keep alive time, and server ID
         responseHeaders.put(
-                "Connection",
-                Collections.singletonList("Keep-Alive")
+            "Connection",
+            Collections.singletonList("Keep-Alive")
         );
         responseHeaders.put(
-                "Keep-Alive",
-                Collections.singletonList("timeout=5")
+            "Keep-Alive",
+            Collections.singletonList("timeout=5")
         );
         responseHeaders.put(
-                "Server",
-                Collections.singletonList("RegExServe")
+            "Server",
+            Collections.singletonList("RegExServer")
         );
     }
 
@@ -741,9 +749,9 @@ public class RegExHttpHandler implements HttpHandler {
 
         // this method is a dummy method to add a "Location" header.
         attachNewHeader(
-                exchange,
-                "Location",
-                Collections.singletonList(pathToRedirect)
+            exchange,
+            "Location",
+            Collections.singletonList(pathToRedirect)
         );
     }
 

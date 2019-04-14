@@ -1,5 +1,7 @@
 package RegExServer;
 
+// FILE: RegExViewPackage.java
+
 import RegExModel.H2Access;
 
 import java.io.IOException;
@@ -15,7 +17,10 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
+ * RegExPage class used to format the ViewPackage page.
  *
+ * @author Kevin J. Becker (kjb2503)
+ * @version 03/20/2019
  */
 public class RegExViewPackage extends RegExPage {
     /**
@@ -64,11 +69,12 @@ public class RegExViewPackage extends RegExPage {
     }
 
     /**
-     * Gets the byte form of the page's full content.
+     * Returns the byte-level form of the page's content.
      *
-     * @return  The byte-level form of the home page's content.
-     * @throws IOException  If any IOException is encountered, it is thrown to the caller.
+     * @return The byte-level form of the page's content.
+     * @throws IOException If any IOException is encountered, it is thrown out to the caller.
      */
+    @Override
     public byte[] getPageContent() throws IOException {
         // attempts to return our login screen if an error is
         // encountered an IOException is thrown
@@ -180,16 +186,16 @@ public class RegExViewPackage extends RegExPage {
                         // if we get here the database returned a null when querying information about the package
                         // implying it doesn't exist
                         specifiedIDPageContent = new String(
-                                Files.readAllBytes(
-                                        Paths.get(packageIDFailURI)
-                                ),
-                                StandardCharsets.UTF_8
+                            Files.readAllBytes(
+                                Paths.get(packageIDFailURI)
+                            ),
+                            StandardCharsets.UTF_8
                         ).replace(
-                                "@{error-dialog}",
-                                RegExErrorDialog.getErrorDialogHTML("Package does not exist.")
+                            "@{error-dialog}",
+                            RegExErrorDialog.getErrorDialogHTML("Package does not exist.")
                         ).replace(
-                                "@{entered-package-id}",
-                                this.packageID
+                            "@{entered-package-id}",
+                            this.packageID
                         );
                     }
                 } catch (SQLException sqle) {
@@ -201,13 +207,13 @@ public class RegExViewPackage extends RegExPage {
                         ),
                         StandardCharsets.UTF_8
                     ).replace(
-                            "@{error-dialog}",
-                            RegExErrorDialog.getErrorDialogHTML(
-                                "An error was encountered when trying to get package data. Please try again in a little bit."
-                            )
+                        "@{error-dialog}",
+                        RegExErrorDialog.getErrorDialogHTML(
+                            "An error was encountered when trying to get package data. Please try again in a little bit."
+                        )
                     ).replace(
-                            "@{entered-package-id}",
-                            this.packageID
+                        "@{entered-package-id}",
+                        this.packageID
                     );
                 }
             } else {
@@ -352,6 +358,7 @@ public class RegExViewPackage extends RegExPage {
                 break;
         }
 
+        // appends the transaction ID to the end of the note
         note += " (" + transactionID + ")";
 
         // returns the update as a table row

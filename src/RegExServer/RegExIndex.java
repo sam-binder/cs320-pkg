@@ -8,7 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
+ * RegExPage class used to format the Index page.
  *
+ * @author Kevin J. Becker (kjb2503)
+ * @version 03/20/2019
  */
 public class RegExIndex extends RegExPage {
     /**
@@ -20,7 +23,7 @@ public class RegExIndex extends RegExPage {
      * If there is no error to be displayed on the home page, this constant can be used
      * to identify that.
      */
-    public static String NO_ERROR = null;
+    public final static String NO_ERROR = null;
 
     /**
      * The error message to print on the page.
@@ -37,11 +40,12 @@ public class RegExIndex extends RegExPage {
     }
 
     /**
-     * Gets the byte form of the page's full content.
+     * Returns the byte-level form of the page's content.
      *
-     * @return  The byte-level form of the index page's content.
-     * @throws IOException  If any IOException is encountered, it is thrown to the caller.
+     * @return The byte-level form of the page's content.
+     * @throws IOException If any IOException is encountered, it is thrown out to the caller.
      */
+    @Override
     public byte[] getPageContent() throws IOException {
         // attempts to return our login screen if an error is
         // encountered an IOException is thrown

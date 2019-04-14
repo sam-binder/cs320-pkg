@@ -3,7 +3,6 @@ package RegExServer;
 // FILE: RegExHome.java
 
 import RegExModel.CustomerAccess;
-import RegExModel.H2Access;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -22,7 +21,7 @@ import java.util.Locale;
  * @author Kevin J. Becker (kjb2503)
  * @version 03/24/2019
  */
-public class RegExHome extends RegExPage{
+public class RegExHome extends RegExPage {
     /**
      * URI of this page's base HTML file.
      */
@@ -35,26 +34,27 @@ public class RegExHome extends RegExPage{
     /**
      * Constructs a new RegExHome page with the session of userRegExSession.
      *
-     * @param userRegExSession  The session to render with.
+     * @param userRegExSession The session to render with.
      */
     public RegExHome(RegExSession userRegExSession) {
         this.userRegExSession = userRegExSession;
     }
 
     /**
-     * Gets the byte form of the page's full content.
+     * Returns the byte-level form of the page's content.
      *
-     * @return  The byte-level form of the home page's content.
-     * @throws IOException  If any IOException is encountered, it is thrown to the caller.
+     * @return The byte-level form of the page's content.
+     * @throws IOException If any IOException is encountered, it is thrown out to the caller.
      */
+    @Override
     public byte[] getPageContent() throws IOException {
         // attempts to return our login screen if an error is
         // encountered an IOException is thrown
         String pageContent = new String(
-            Files.readAllBytes(
-                Paths.get(pageURI)
-            ),
-            StandardCharsets.UTF_8
+                Files.readAllBytes(
+                        Paths.get(pageURI)
+                ),
+                StandardCharsets.UTF_8
         );
 
         // we have to build out "last 3 transactions" table
@@ -63,8 +63,8 @@ public class RegExHome extends RegExPage{
         // attempts to load in all of the three things
         try {
             CustomerAccess tempCustomerAccess = new CustomerAccess(
-                    this.userRegExSession.userName,
-                    this.userRegExSession.password
+                this.userRegExSession.userName,
+                this.userRegExSession.password
             );
 
             // gets the resultset for the last (up to) three transactions on this account
@@ -72,37 +72,37 @@ public class RegExHome extends RegExPage{
                 this.userRegExSession.accountNumber
             );
 
-            // if the resultset has actual data
-            if(lastThreeTrans != null) {
+            // if the ResultSet has actual data
+            if (lastThreeTrans != null) {
                 // load up the first transaction if it exists
-                if(lastThreeTrans.next()) {
+                if (lastThreeTrans.next()) {
                     do {
                         lastThreeTransTable.append(
-                                generateTableRow(
-                                        generateTrackingID(
-                                                lastThreeTrans.getInt(3),
-                                                lastThreeTrans.getString(6),
-                                                lastThreeTrans.getString(4)
-                                        ),
-                                        lastThreeTrans.getString(5),
-                                        lastThreeTrans.getString(1),
-                                        lastThreeTrans.getString(2)
-                                )
+                            generateTableRow(
+                                RegExModel.Util.generateTrackingID(
+                                    lastThreeTrans.getInt(3),
+                                    lastThreeTrans.getInt(6),
+                                    lastThreeTrans.getString(4)
+                                ),
+                                lastThreeTrans.getString(5),
+                                lastThreeTrans.getString(1),
+                                lastThreeTrans.getString(2)
+                            )
                         );
                     } while (lastThreeTrans.next());
                 } else {
                     // dump in a "no records yet"
                     lastThreeTransTable.append(
-                            "<tr>" +
-                                "<td colspan='3' class='text-italic text-bold text-center'>" +
-                                    "No transactions yet." +
-                                "</td>" +
-                            "</tr>"
+                        "<tr>" +
+                            "<td colspan='3' class='text-italic text-bold text-center'>" +
+                                "No transactions yet." +
+                            "</td>" +
+                        "</tr>"
                     );
                 }
             }
         } catch (SQLException sqle) {
-            /* hopefully this never happens */
+            /* if this happens we have a bigger issue */
         }
 
         // places our table content
@@ -121,11 +121,10 @@ public class RegExHome extends RegExPage{
     /**
      * Generates a row for the package tracking table.
      *
-     * @param transactionID  The transaction ID to print a note about the update with.
-     * @param dateStr  The string representation of the date.
-     * @param timeStr  The string representation of the time.
-     *
-     * @return  A row for the package tracking table.
+     * @param transactionID The transaction ID to print a note about the update with.
+     * @param dateStr       The string representation of the date.
+     * @param timeStr       The string representation of the time.
+     * @return A row for the package tracking table.
      */
     private String generateTableRow(String trackingID, String transactionID, String dateStr, String timeStr) {
         // a formatter to ensure consistent dates
@@ -138,60 +137,45 @@ public class RegExHome extends RegExPage{
         Date time = new Date();
         DateFormat timeFormatOutput = new SimpleDateFormat("hh:mm a");
 
+        // parses date and time
         try {
-            // parses date and time
             date = dateFormat.parse(dateStr);
             time = timeFormat.parse(timeStr);
         } catch (ParseException pe) {
             /* this will never happen */
         }
 
+        // generates the note
         String note = "";
-        switch(transactionID.charAt(0)) {
+        switch (transactionID.charAt(0)) {
             case 'V':
             case 'H':
                 note = "In transit";
                 break;
             case 'T':
-                note = "Delivered";
+                switch(transactionID.charAt(1)) {
+                    case 'O':
+                        note = "Left Carrier Facility";
+                        break;
+                    case 'D':
+                        note = "Delivered";
+                        break;
+                }
                 break;
         }
 
+        // puts the last transaction location ID after the note
         note += " (" + transactionID + ")";
 
         // returns the update as a table row
         return "<tr>" +
                     "<td>" +
-                        "<a href='/view-package/?package-id=" + trackingID + "' title='View more info about package "+ trackingID +".'>" +
+                        "<a href='/view-package/?package-id=" + trackingID + "' title='View more info about package " + trackingID + ".'>" +
                             trackingID +
                         "</a>" +
                     "</td>" +
                     "<td>" + note + "</td>" +
                     "<td>" + dateFormatOutput.format(date) + " at " + timeFormatOutput.format(time) + "</td>" +
                 "</tr>";
-    }
-
-    private String generateTrackingID(int accountID, String serviceID, String packageSerial) {
-        // the trackingID stringbuilder
-        StringBuilder trackingID = new StringBuilder();
-
-        trackingID.append(String.format("%06d", accountID));
-        trackingID.append(serviceID);
-        trackingID.append(packageSerial);
-
-
-        // our total sum will be made using this variable
-        int sum = 0;
-
-        for(char c : trackingID.toString().toCharArray()) {
-            // add the ascii value of the char at index i
-            sum += c;
-        }
-
-        // appends the checkBit
-        trackingID.append((char)((sum % 17) + 74));
-
-        // returns true if the check digit matches the sum mod 17
-        return trackingID.toString();
     }
 }

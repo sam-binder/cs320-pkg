@@ -9,6 +9,12 @@ import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * RegExPage class used to format the AccountInfo page.
+ *
+ * @author Kevin J. Becker (kjb2503)
+ * @version 04/05/2019
+ */
 public class RegExAccountInfo extends RegExPage {
     /**
      * URI of this page's base HTML file.
@@ -21,7 +27,7 @@ public class RegExAccountInfo extends RegExPage {
     private RegExSession userRegExSession;
 
     /**
-     * Creates a new RegExAccountInfo page
+     * Creates a new RegExAccountInfo page.
      *
      * @param userRegExSession The session to render the page for.
      */
@@ -64,35 +70,35 @@ public class RegExAccountInfo extends RegExPage {
             if (userDetails.next()) {
                 // replace all of the information we just grabbed
                 pageContent = pageContent.replace(
-                        "@{first-name}",
-                        userDetails.getString(6)
+                    "@{first-name}",
+                    userDetails.getString(6)
                 ).replace(
-                        "@{last-name}",
-                        userDetails.getString(7)
+                    "@{last-name}",
+                    userDetails.getString(7)
                 ).replace(
-                        "@{phone-number}",
-                        userDetails.getString(8)
+                    "@{phone-number}",
+                    userDetails.getString(8)
                 ).replace(
-                        "@{company}",
-                        userDetails.getString(10)
+                    "@{company}",
+                    userDetails.getString(10)
                 ).replace(
-                        "@{attn}",
-                        userDetails.getString(11)
+                    "@{attn}",
+                    userDetails.getString(11)
                 ).replace(
-                        "@{address-line-1}",
-                        userDetails.getString(12)
+                    "@{address-line-1}",
+                    userDetails.getString(12)
                 ).replace(
-                        "@{address-line-2}",
-                        userDetails.getString(13)
+                    "@{address-line-2}",
+                    userDetails.getString(13)
                 ).replace(
-                        "@{city}",
-                        userDetails.getString(17)
+                    "@{city}",
+                    userDetails.getString(17)
                 ).replace(
-                        "@{state}",
-                        userDetails.getString(18)
+                    "@{state}",
+                    userDetails.getString(18)
                 ).replace(
-                        "@{zip}",
-                        userDetails.getString(16)
+                    "@{zip}",
+                    userDetails.getString(16)
                 );
 
                 // last but not least we have to drop in the packages table
@@ -108,6 +114,7 @@ public class RegExAccountInfo extends RegExPage {
                         "<tr><td class='text-bold text-center text-italic'>No packages yet.</td></tr>"
                     );
                 } else {
+                    // keeps a count to create new rows when needed
                     int count = 0;
                     do {
                         // start a new row if we are on an even 3
@@ -116,11 +123,16 @@ public class RegExAccountInfo extends RegExPage {
                         }
 
                         // generates the package tracking ID
-                        String trackingID = generateTrackingID(
+                        String trackingID = RegExModel.Util.generateTrackingID(
                             sentPackages.getInt(1),
                             sentPackages.getInt(2),
                             sentPackages.getString(3)
                         );
+
+                        // if the trackingID generation fails, go to the next loop and ignore it
+                        if(trackingID == null) {
+                            continue;
+                        }
 
 
                         // append the link to this package
@@ -137,17 +149,19 @@ public class RegExAccountInfo extends RegExPage {
                         if (count % 3 == 0) {
                             sentPackagesTable.append("</tr>");
                         }
+                        // keeps going while we have more packages
                     } while (sentPackages.next());
 
                     // adds a closing row if it was not done in the loop
                     if (count % 3 != 0) {
+                        // at the end append an end row tag
                         sentPackagesTable.append("</tr>");
                     }
 
-                    // throw it into the table
+                    // dump the content of the table in place
                     pageContent = pageContent.replace(
-                            "@{sent-packages-table}",
-                            sentPackagesTable.toString()
+                        "@{sent-packages-table}",
+                        sentPackagesTable.toString()
                     );
                 }
             }
@@ -157,29 +171,5 @@ public class RegExAccountInfo extends RegExPage {
 
         // returns the byte-level form of the page content
         return pageContent.getBytes();
-    }
-
-    private String generateTrackingID(int accountID, int serviceID, String packageSerial) {
-        // the trackingID stringbuilder
-        StringBuilder trackingID = new StringBuilder();
-
-        trackingID.append(String.format("%06d", accountID));
-        trackingID.append(String.format("%02d", serviceID));
-        trackingID.append(packageSerial);
-
-
-        // our total sum will be made using this variable
-        int sum = 0;
-
-        for (char c : trackingID.toString().toCharArray()) {
-            // add the ascii value of the char at index i
-            sum += c;
-        }
-
-        // appends the checkBit
-        trackingID.append((char) ((sum % 17) + 74));
-
-        // returns true if the check digit matches the sum mod 17
-        return trackingID.toString();
     }
 }
