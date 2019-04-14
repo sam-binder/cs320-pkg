@@ -192,7 +192,7 @@ public class RegExViewPackage extends RegExPage {
                             StandardCharsets.UTF_8
                         ).replace(
                             "@{error-dialog}",
-                            RegExErrorDialog.getErrorDialogHTML("Package does not exist.")
+                            RegExDialog.getErrorDialogHTML("Package does not exist.")
                         ).replace(
                             "@{entered-package-id}",
                             this.packageID
@@ -208,7 +208,7 @@ public class RegExViewPackage extends RegExPage {
                         StandardCharsets.UTF_8
                     ).replace(
                         "@{error-dialog}",
-                        RegExErrorDialog.getErrorDialogHTML(
+                        RegExDialog.getErrorDialogHTML(
                             "An error was encountered when trying to get package data. Please try again in a little bit."
                         )
                     ).replace(
@@ -239,7 +239,7 @@ public class RegExViewPackage extends RegExPage {
                 // puts in place our error dialog
                 specifiedIDPageContent = specifiedIDPageContent.replace(
                     "@{error-dialog}",
-                    RegExErrorDialog.getErrorDialogHTML(errorMsg)
+                    RegExDialog.getErrorDialogHTML(errorMsg)
                 ).replace(
                     "@{entered-package-id}",
                     this.packageID
@@ -339,12 +339,18 @@ public class RegExViewPackage extends RegExPage {
             /* this will never happen */
         }
 
+        // String for the location
+        String location = " ";
+
         String note = "";
         switch(transactionID.charAt(0)) {
             case 'V':
+                location ="In Transit";
                 note = "Vehicle loading scan.";
                 break;
             case 'T':
+                if(city != null && state != null)
+                    location = city + ", " + state;
                 switch(transactionID.charAt(1)) {
                     case 'O':
                         note = "Arrived at carrier facility.";
@@ -355,16 +361,20 @@ public class RegExViewPackage extends RegExPage {
                 break;
             case 'H':
                 note = "Transfer at package facility.";
+                if(city != null && state != null)
+                    location = city + ", " + state;
                 break;
         }
 
         // appends the transaction ID to the end of the note
         note += " (" + transactionID + ")";
 
+
+
         // returns the update as a table row
         return "<tr>" +
                     "<td>" + dateFormatOutput.format(date) + " at " + timeFormatOutput.format(time) + "</td>" +
-                    "<td class='text-bold'>" + city + ", " + state + "</td>" +
+                    "<td class='text-bold'>" + location + "</td>" +
                     "<td>" + note + "</td>" +
                 "</tr>";
     }

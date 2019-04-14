@@ -217,8 +217,8 @@ public class CustomerAccess implements AutoCloseable {
 
             // creates a new prepared statement with our address insertion query
             PreparedStatement prep = this.connection.prepareStatement(
-                    addressQuery,
-                    Statement.RETURN_GENERATED_KEYS
+                addressQuery,
+                Statement.RETURN_GENERATED_KEYS
             );
             // executes the query
             prep.executeUpdate();
@@ -891,9 +891,11 @@ public class CustomerAccess implements AutoCloseable {
         String lastSerial = "AAAAAA";
 
         // if the serial lookup had a result (customer has sent at least one package)
-        if (lastPackage.next()) {
+        if (lastPackage != null && lastPackage.next()) {
             // grab the last serial
-            lastSerial = lastPackage.getString(1);
+            String possibleLastSerial = lastPackage.getString(1);
+            if(possibleLastSerial != null)
+                lastSerial = possibleLastSerial;
         }
 
         // creates a next serial char array

@@ -20,23 +20,23 @@ public class RegExIndex extends RegExPage {
     private static String pageURI = RegExHttpHandler.DOCUMENT_ROOT + "/index.html";
 
     /**
-     * If there is no error to be displayed on the home page, this constant can be used
+     * If there is no success to be displayed on the home page, this constant can be used
      * to identify that.
      */
-    public final static String NO_ERROR = null;
+    public final static String NO_CREATION_MESSAGE = null;
 
     /**
-     * The error message to print on the page.
+     * The success message to print on the page.
      */
-    private String error;
+    private String success;
 
     /**
-     * Creates a new RegExIndex object with error message of error.
+     * Creates a new RegExIndex object with success message of success.
      *
-     * @param error  The error message to display at the top of the page.
+     * @param success  The success message to display at the top of the page.
      */
-    public RegExIndex(String error) {
-        this.error = error;
+    public RegExIndex(String success) {
+        this.success = success;
     }
 
     /**
@@ -47,7 +47,7 @@ public class RegExIndex extends RegExPage {
      */
     @Override
     public byte[] getPageContent() throws IOException {
-        // attempts to return our login screen if an error is
+        // attempts to return our login screen if an success is
         // encountered an IOException is thrown
         String pageContent = new String(
             Files.readAllBytes(
@@ -56,10 +56,10 @@ public class RegExIndex extends RegExPage {
             StandardCharsets.UTF_8
         );
 
-        // replaces error dialogue with
+        // replaces success dialogue with
         pageContent = pageContent.replace(
-            "@{error-dialog}",
-            RegExErrorDialog.getErrorDialogHTML(this.error)
+            "@{success-dialog}",
+            RegExDialog.getSuccessDialogHTML(this.success)
         );
 
         // return our page content as bytes

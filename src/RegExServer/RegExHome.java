@@ -32,12 +32,24 @@ public class RegExHome extends RegExPage {
     private RegExSession userRegExSession;
 
     /**
+     * A public "NO SENT MESSAGE" variable to use when generating just the basic home page.
+     */
+    public static final String NO_TRACKING_ID = null;
+
+    /**
+     * The message that is displayed when a user has just sent a package and is redirected back to home.
+     */
+    private String trackingID;
+
+    /**
      * Constructs a new RegExHome page with the session of userRegExSession.
      *
      * @param userRegExSession The session to render with.
+     * @param trackingID The ID to display as a message.
      */
-    public RegExHome(RegExSession userRegExSession) {
+    public RegExHome(RegExSession userRegExSession, String trackingID) {
         this.userRegExSession = userRegExSession;
+        this.trackingID = trackingID;
     }
 
     /**
@@ -51,10 +63,10 @@ public class RegExHome extends RegExPage {
         // attempts to return our login screen if an error is
         // encountered an IOException is thrown
         String pageContent = new String(
-                Files.readAllBytes(
-                        Paths.get(pageURI)
-                ),
-                StandardCharsets.UTF_8
+            Files.readAllBytes(
+                Paths.get(pageURI)
+            ),
+            StandardCharsets.UTF_8
         );
 
         // we have to build out "last 3 transactions" table
@@ -113,6 +125,16 @@ public class RegExHome extends RegExPage {
 
         // replaces all var placeholders with session details
         pageContent = userRegExSession.replaceVarPlaceholders(pageContent);
+
+        // lastly goes drops in our success message if there was a successfully sent package
+        pageContent = pageContent.replace(
+            "@{tracking-id-message}",
+            (this.trackingID != null) ?
+                RegExDialog.getSuccessDialogHTML(
+                    "Your package has successfully been created. " +
+                    "Track it <a href='/view-package/?package-id=" + this.trackingID + "'>here</a>."
+                ) : ""
+        );
 
         // return our page content as bytes
         return pageContent.getBytes();

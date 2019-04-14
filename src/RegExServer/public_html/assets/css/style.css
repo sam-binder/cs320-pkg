@@ -236,6 +236,17 @@ a {
     padding: 1.25rem;
 }
 
+.success {
+    background: #54bc58;
+    color: #ffffff;
+    margin-top: 2rem;
+    padding: 1.25rem;
+}
+
+.error a, .success a {
+    text-decoration: none;
+}
+
 .input-row {
     margin-bottom: 30px;
 }

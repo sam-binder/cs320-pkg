@@ -56,7 +56,7 @@ public class RegExCreateAccount extends RegExPage {
         // replaces error dialogue with
         pageContent = pageContent.replace(
             "@{error-dialog}",
-            RegExErrorDialog.getErrorDialogHTML(this.error)
+            RegExDialog.getErrorDialogHTML(this.error)
         );
 
         // return our page content as bytes

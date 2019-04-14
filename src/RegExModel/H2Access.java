@@ -33,10 +33,10 @@ public class H2Access {
 	public static Connection createConnection(String username, String password) throws SQLException {
 		try {
 			// Used when connecting to the database in server mode. Requires DatabaseServer to be running
-			//String url = "jdbc:h2:tcp://localhost:8095/" + "~/Desktop/RIT/Year 3/Data Mang/cs320-pkg/src";
+			String url = "jdbc:h2:tcp://localhost:8095/" + "~/Desktop/RIT/Year 3/Data Mang/cs320-pkg/src";
 
 			// builds a URL to connect to the database with
-			String url = "jdbc:h2:./src";
+			//String url = "jdbc:h2:./src";
 
 			// uses the H2Driver method
 			Class.forName("org.h2.Driver");
@@ -216,8 +216,6 @@ public class H2Access {
 			conn.createStatement().execute(userQuery);
 			// creates a USER in the database
 			conn.createStatement().execute("CREATE USER " + username + " PASSWORD '" + password + "';");
-			// closes the connection
-			closeConnection(conn);
 
 			// builds a prepared statement to insert the customer
 			PreparedStatement prep = conn.prepareStatement(
@@ -289,9 +287,9 @@ public class H2Access {
 	public static ResultSet trackPackage(int accountNum, String serial) {
 		try {
 			String query = "SELECT transaction.*, zip_code.city, zip_code.state from transaction " +
-					"INNER JOIN location ON location_id_fk = location.ID " +
-					"INNER JOIN address ON address.ID = location.address_id " +
-					"INNER JOIN zip_code ON zip_code.ID = address.zip_fk " +
+					"LEFT JOIN location ON location_id_fk = location.ID " +
+					"LEFT JOIN address ON address.ID = location.address_id " +
+					"LEFT JOIN zip_code ON zip_code.ID = address.zip_fk " +
 					"WHERE transaction.account_number_fk=" + accountNum +
 					" AND package_serial_fk='" + serial + "' ORDER BY date, time;";
 			Connection conn = createConnection("me", "password");
@@ -358,9 +356,10 @@ public class H2Access {
 				CreateNewDatabase.initDatabase();
 			} else {
 				// after the first time run, this must be run to set the correct permissions
-				boolean permissionsRun = false;
+				boolean permissionsRun = true;
 				if (permissionsRun) {
 					CreateNewDatabase.permissions();
+					grantPublicRights();
 				} else {
 					// Example creating a Customer
 					System.out.println("Creating the customer returned: " + createCustomer("Walter", "password"));

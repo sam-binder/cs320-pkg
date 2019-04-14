@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -298,7 +299,7 @@ public class RegExHttpHandler implements HttpHandler {
                             responseBody = new byte[]{};
                         } else {
                             // defaults to a NO ERROR
-                            String errorContent = RegExIndex.NO_ERROR;
+                            String errorContent = RegExIndex.NO_CREATION_MESSAGE;
 
                             // dumps in an error message if one is needed
                             if (requestParameters.containsKey("login-failed")) {
@@ -391,7 +392,7 @@ public class RegExHttpHandler implements HttpHandler {
                     case "/home/index.html":
                         // if the user attempts to access a protected page without a session
                         if (sessionExpired || userRegExSession == null) {
-                            // redirect user to home page
+                            // redirect user to root
                             responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
 
                             // attaches a location header for the browser to go to root (login)
@@ -402,9 +403,18 @@ public class RegExHttpHandler implements HttpHandler {
 
                             // empty response body
                             responseBody = new byte[]{};
+                        } else if(requestParameters.containsKey("sent")) {
+                            // gets our home page content for our user
+                            responseBody = new RegExHome(
+                                userRegExSession,
+                                (String) requestParameters.get("sent")
+                            ).getPageContent();
                         } else {
                             // gets our home page content for our user
-                            responseBody = new RegExHome(userRegExSession).getPageContent();
+                            responseBody = new RegExHome(
+                                userRegExSession,
+                                RegExHome.NO_TRACKING_ID
+                            ).getPageContent();
                         }
                         break;
                     // request for view-package page
@@ -532,7 +542,7 @@ public class RegExHttpHandler implements HttpHandler {
                             // makes a package send request
                             // there are lots of parameters needed to send a package,
                             // each one is on its own line for better readability
-                            tempCustomerAccess.sendPackage(
+                            ResultSet packageSent = tempCustomerAccess.sendPackage(
                                 String.format("%d", H2Access.getUserFK(userRegExSession.userName)),
                                 serviceIDString,
                                 (String) requestParameters.get("height"),
@@ -555,11 +565,21 @@ public class RegExHttpHandler implements HttpHandler {
                                 (String) requestParameters.get("destination-zip")
                             );
 
+                            String trackingID = "";
+
+                            if(packageSent.next()) {
+                                trackingID = RegExModel.Util.generateTrackingID(
+                                    packageSent.getInt("account_number_fk"),
+                                    packageSent.getInt("service_id_fk"),
+                                    packageSent.getString("serial")
+                                );
+                            }
+
                             // redirects user back to home
                             responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
                             redirectUser(
-                                    exchange,
-                                    DOMAIN_ROOT + "/home/"
+                                exchange,
+                                DOMAIN_ROOT + "/home/?sent=" + trackingID
                             );
                             // empty body
                             responseBody = new byte[]{};
