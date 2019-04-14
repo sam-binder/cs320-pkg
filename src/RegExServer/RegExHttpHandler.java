@@ -299,7 +299,7 @@ public class RegExHttpHandler implements HttpHandler {
                             responseBody = new byte[]{};
                         } else {
                             // defaults to a NO ERROR
-                            String errorContent = RegExIndex.NO_ERROR;
+                            String errorContent = RegExIndex.NO_CREATION_MESSAGE;
 
                             // dumps in an error message if one is needed
                             if (requestParameters.containsKey("login-failed")) {
