@@ -331,10 +331,8 @@ public class CustomerAccess implements AutoCloseable{
                                  String destination_zip) throws SQLException{
         ResultSet o_zip = zipCodeLookupByCityState(origin_city, origin_state);
         ResultSet d_zip = zipCodeLookupByCityState(destination_city, destination_state);
-        int o_zip_numeric = Integer.parseInt(origin_zip);
-        int d_zip_numeric = Integer.parseInt(destination_zip);
-        String origin_has_addr = "none";
-        String dest_has_addr = "none";
+        String origin_has_addr;
+        String dest_has_addr;
 
         // detect zip code IDs for origin & destination
         /* edit: nope
@@ -668,7 +666,6 @@ public class CustomerAccess implements AutoCloseable{
         //      create new ones
         // CASE: 'H' / 'V' - create new
         Random r = new Random();
-        String new_Location_ID;
         String query2;
         ResultSet ok;
         char[] ch_to_array = new char[12];
@@ -704,15 +701,6 @@ public class CustomerAccess implements AutoCloseable{
      */
     @Override
     public void close(){
-        h2.closeConnection(this.connection);
-    }
-
-    public ResultSet viewAccount(String account_number){
-        String query = "(SELECT * FROM Customer WHERE account_number = '" + account_number + "') UNION " +
-                        "(SELECT * FROM Billing WHERE account_number_fk = '" + account_number + "');";
-        return H2Access.createAndExecuteQuery(connection, query);
-
-
-
+        H2Access.closeConnection(this.connection);
     }
 }
