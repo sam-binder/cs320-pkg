@@ -318,11 +318,10 @@ public class H2Access {
 		if (clearDatabase) {
 			H2Access.clearDatabase();
 		} else {
-			//NOTE: Set to true if AND ONLY IF this is the first time running the code.
-			boolean firstTime = false;
+			// NOTE: Set to true if AND ONLY IF this is the first time running the code.
+			boolean firstTime = true;
 			if (firstTime) {
 				new CreateNewDatabase().initDatabase();
-				grantPublicRights();
 			} else {
 				// Example creating a Customer
 				System.out.println("Creating the customer returned: " + createCustomer("Walter", "password"));

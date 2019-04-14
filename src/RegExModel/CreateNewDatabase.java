@@ -122,8 +122,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void packageInit() throws SQLException{
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS package("
                 + "ACCOUNT_NUMBER_FK INT,"
                 + "SERVICE_ID_FK INT,"
@@ -161,8 +160,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void customers() throws SQLException {
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS customer("
                 // Autoincrement for easy of adding future customers
                 + "ACCOUNT_NUMBER INT PRIMARY KEY auto_increment,"
@@ -198,8 +196,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void billing() throws SQLException {
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS billing("
                 // Autoincrement for easy of adding future billing
                 + "ID INT PRIMARY KEY auto_increment,"
@@ -236,8 +233,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void users() throws  SQLException{
-        H2Access h2 = new H2Access();
-        Connection conn = h2.createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS user("
                 + "GENERAL_FK INT,"
                 + "USERNAME VARCHAR(255) PRIMARY KEY,"
@@ -283,7 +279,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void address() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS address("
                 // Autoincrement for easy of adding future addresses
                 + "ID INT PRIMARY KEY auto_increment,"
@@ -322,7 +318,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void charges() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS charge("
                 // Autoincrement for easy of adding future charges
                 + "ID INT PRIMARY KEY auto_increment,"
@@ -361,7 +357,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void location() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS location("
                 + "ID CHAR(12) PRIMARY KEY,"
                 + "ADDRESS_ID INT,"
@@ -394,7 +390,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void priority() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS priority("
                 + "ID INT PRIMARY KEY,"
                 + "AIR_GROUND INT,"
@@ -427,7 +423,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void rates() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS rate("
                 + "NEGOTIATED_RATE_ID INT PRIMARY KEY auto_increment,"
                 + "GROUND_RATE DOUBLE,"
@@ -466,7 +462,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void service() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS service("
                 + "ID INT PRIMARY KEY,"
                 + "PRIORITY_FK INT,"
@@ -501,7 +497,7 @@ public class CreateNewDatabase {
      * failure to establish a connection to failure to execute a query.
      */
     public void zipCodes() throws SQLException{
-        Connection conn = new H2Access().createConnection("me", "password");
+        Connection conn = H2Access.createConnection("me", "password");
         String query = "CREATE TABLE IF NOT EXISTS zip_code("
                 + "ID INT PRIMARY KEY,"
                 + "ZIP_CODE CHAR(5),"
@@ -538,7 +534,6 @@ public class CreateNewDatabase {
      * Initializes all the tables.
      */
     public void initDatabase(){
-        H2Access h2 = new H2Access();
         try {
             this.transaction();
             this.packageInit();
