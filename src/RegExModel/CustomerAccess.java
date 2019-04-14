@@ -1030,7 +1030,7 @@ public class CustomerAccess implements AutoCloseable {
 
             // appends the last 10 characters to the string builder
             for(int i = 2; i < 12; ++i) {
-                locationIDBuilder.append(rand.nextInt(26) + 'A');
+                locationIDBuilder.append((char)(rand.nextInt(26) + 'A'));
             }
 
             // queries the database to see if the location ID has been taken

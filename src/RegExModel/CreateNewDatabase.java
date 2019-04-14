@@ -233,10 +233,10 @@ public class CreateNewDatabase {
             while((line = br.readLine()) != null){
                 String[] split = line.split(",");
                 if(!split[0].equals("account_number")) {
-                    account_num = split[0].substring(1, split[0].length()-1);
-                    billing_fk = split[1].substring(1, split[1].length()-1);
-                    negotiated_rate_ID_fk = split[2].substring(1, split[2].length()-1);
-                    mailing_address_ID_fk = split[3].substring(1, split[3].length()-1);
+                    account_num = split[0];
+                    billing_fk = split[1];
+                    negotiated_rate_ID_fk = split[2];
+                    mailing_address_ID_fk = split[3];
                     query = String.format(
                         "INSERT INTO customer VALUES(%s,%s,%s,%s,'%s','%s','%s');",
                         account_num,
