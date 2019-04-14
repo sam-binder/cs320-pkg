@@ -818,7 +818,7 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * A helper method for sendPackage to create a package serial for the package.
+     * A helper method for sendPackage to create a package serial for the package and insert it into the database.
      *
      * @param accountNumber  The account number of the sending package.
      * @param serviceID  The service ID to send the package.
@@ -862,63 +862,49 @@ public class CustomerAccess implements AutoCloseable {
 
         // creates a next serial char array
         char [] nextSerial = new char[6];
-        // determines if rollOver has occurred
-        boolean rollOver = false;
 
         // the current index in the serial
         int i = 5;
-        // if the last character in the serial is a Z
-        if (lastSerial.charAt(i) == 'Z') {
-            // place a 0 at that index
-            nextSerial[i] = '0';
-        // if the last character in the serial is a 9
-        } else if (lastSerial.charAt(i) == '9') {
+
+        // if the last character in the serial is a 9, there is roll over
+        // that must be accounted for
+        if (lastSerial.charAt(i) == '9') {
             // place an A at that index
             nextSerial[i] = 'A';
-            // rollOver has occurred, we need to keep track of that
-            rollOver = true;
-        // else place the next character in that spot
-        } else {
-            nextSerial[i] = (char)(lastSerial.charAt(i) + 1);
-        }
 
-        // if there was no rollover
-        if (!rollOver) {
-            // go down through the characters in the last serial, adding making it the next character to it
-            for (; i >= 0; --i) {
-                nextSerial[i] = (char)(lastSerial.charAt(i) + 1);
+            // keep going until rollOver stops
+            while(true) {
+                // go to the last character in the serial
+                --i;
+                // if the next previous character in the last serial is another rollover character
+                if (lastSerial.charAt(i) == '9') {
+                    // place an A at that index; keep propagating roll over effects
+                    nextSerial[i] = 'A';
+                } else {
+                    // else put the correct next character
+                    if(lastSerial.charAt(i) == 'Z') {
+                        nextSerial[i] = '0';
+                    } else {
+                        nextSerial[i] = (char)(lastSerial.charAt(i) + 1);
+                    }
+
+                    // and break the loop
+                    break;
+                }
             }
         }
 
-        while (rollOver) {
-            // this will work fine until someone mails their
-            // 2176782336th package ( little over 2billion )
-            // so i guess we're not aiming to work with amazon
-
-            i--;
-            if (lastSerial.charAt(i) == 'Z') {
-                nextSerial[i] = '0';
-                rollOver = false;
-
-            } else if (lastSerial.charAt(i) == '9') {
-                nextSerial[i] = 'A';
-                rollOver = true;
-
-            } else {
-                nextSerial[i] = (char) (lastSerial.charAt(i) + 1);
-                rollOver = false;
-            }
-        }
-        while (i >= 0) {
+        // go down through the remaining characters copying over the same character from the last serial
+        for (; i >= 0; --i) {
             nextSerial[i] = lastSerial.charAt(i);
-            i--;
-            // this should now copy over everything that isn't carry-digited
         }
 
-
-        String query = "INSERT INTO PACKAGE " +
-                "(ACCOUNT_NUMBER_FK, SERVICE_ID_FK, SERIAL, HEIGHT, LENGTH, DEPTH, WEIGHT, ORIGIN_FK, DESTINATION_FK)" +
-                " VALUES (" +
+        // builds the insertion query to insert our package
+        String packagInsertion =
+            "INSERT INTO package" +
+            "(account_number_fk, service_id_fk, serial, height, " +
+                "length, depth, weight, origin_fk, destination_fk) " +
+            "VALUES (" +
                 accountNumber + ", " +
                 serviceID + ", " +
                 "'" + new String(nextSerial) + "', " +
@@ -927,8 +913,12 @@ public class CustomerAccess implements AutoCloseable {
                 depth + ", " +
                 weight + ", " +
                 "'" + origin + "', " +
-                "'" + destination + "');";
-        if (H2Access.createAndExecute(this.connection, query)) {
+                "'" + destination + "'" +
+            ");";
+
+        // if the package is successfully inserted
+        if (H2Access.createAndExecute(this.connection, packagInsertion)) {
+            // return the package row just generated
             return H2Access.createAndExecuteQuery(
                 this.connection,
                 "SELECT * " +
@@ -936,6 +926,7 @@ public class CustomerAccess implements AutoCloseable {
                 "WHERE account_number_fk = " + accountNumber + " " +
                 "AND serial='" + new String(nextSerial) + "';"
             );
+        // else return null
         } else {
             return null;
         }
