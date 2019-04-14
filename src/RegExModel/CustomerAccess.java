@@ -483,7 +483,7 @@ public class CustomerAccess implements AutoCloseable{
         } else {
             base = rate.getDouble(1);
         }
-        if(1 == priority % 1){
+        if(1 == priority % 2){
             rush = rate.getDouble(3);
         } else {
             rush = 1.0;
