@@ -579,7 +579,7 @@ public class CustomerAccess implements AutoCloseable{
                         " VALUES (" +
                         account_number_fk + ", " +
                         service_id_fk + ", " +
-                        "'" + nextSerial.toString() + "', " +
+                        "'" + new String(nextSerial) + "', " +
                         dim_height + ", " +
                         dim_length + ", " +
                         dim_depth + ", " +
@@ -590,7 +590,7 @@ public class CustomerAccess implements AutoCloseable{
 
             String query2 = "SELECT * FROM PACKAGE" +
                     " WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk +
-                    ") AND (SERIAL = '" + nextSerial.toString() + "');";
+                    ") AND (SERIAL = '" + new String(nextSerial) + "');";
 
             ResultSet ins_new_rec = h2.createAndExecuteQuery(connection, query2);
             return ins_new_rec;
