@@ -678,36 +678,64 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * updates billing amount due
+     * Updates the amount that is due by a customer.
      *
-     * @param acct
-     * @return
-     * @throws SQLException
+     * @param accountNumber  The account number of the user.
+     *
+     * @throws SQLException  If any SQLException is encountered, it is thrown out to the caller
      */
-    private ResultSet updateBillingAmountDue(String acct) throws SQLException {
-        // get current outstanding charges (from charge)
-        // & get total paid (from charge)
-        String Qoutstanding = "SELECT SUM(price) FROM CHARGE WHERE account_number_fk = '" + acct + "' AND paid = 0;";
-        ResultSet outstanding = H2Access.createAndExecuteQuery(connection, Qoutstanding);
-        if (outstanding.next()) {
-            double due = outstanding.getDouble(1);
-            String QcurrentBal = "SELECT balance_to_date FROM billing WHERE account_number_fk = '" + acct + "';";
-            ResultSet currentBalance = H2Access.createAndExecuteQuery(connection, QcurrentBal);
+    private void updateBillingAmountDue(String accountNumber) throws SQLException {
+        // a query to select the current outstanding amount due by this customer
+        String currentUnpaidCharges =
+            "SELECT SUM(price) " +
+            "FROM CHARGE " +
+            "WHERE account_number_fk = '" + accountNumber + "' AND paid = 0;";
+
+        // queries the outstanding amount due
+        ResultSet queryUnpaidCharges = H2Access.createAndExecuteQuery(
+            this.connection,
+            currentUnpaidCharges
+        );
+
+        // if there is an outstanding amount returned above
+        if (queryUnpaidCharges.next()) {
+            // pulls out the amount due by this customer
+            double amountDue = queryUnpaidCharges.getDouble(1);
+
+            // a query used to get the balance to date
+            String currentBalanceToDate =
+                "SELECT balance_to_date " +
+                "FROM billing " +
+                "WHERE account_number_fk = '" + accountNumber + "';";
+            // runs the above query
+            ResultSet currentBalance = H2Access.createAndExecuteQuery(this.connection, currentBalanceToDate);
+
+            // if the above query returned a result
             if (currentBalance.next()) {
-                due += currentBalance.getDouble(1);
-                // update billing table
-                String QupdateOutstanding = "UPDATE billing SET balance_to_date = " + due + " WHERE account_number_fk = '" + acct + "';";
-                if (H2Access.createAndExecute(connection, QupdateOutstanding)) {
-                    String QpullUpdate = "SELECT * FROM billing WHERE account_number_fk = '" + acct + "';";
-                    return H2Access.createAndExecuteQuery(connection, QpullUpdate);
-                } else {
-                    return null;
+                // the amount due gets updated with the current balance outstanding
+                amountDue += currentBalance.getDouble(1);
+
+                // builds a query to update the balance to date for this customer
+                String updateOutstandingBalanceDue =
+                    "UPDATE billing " +
+                    "SET balance_to_date = " + amountDue + " " +
+                    "WHERE account_number_fk = '" + accountNumber + "';";
+
+
+                // if this udpate runs to completion
+                if (H2Access.createAndExecute(
+                    this.connection,
+                    updateOutstandingBalanceDue
+                )) {
+                    // builds a query to get the amount due from billing
+                    String queryAmountDue =
+                        "SELECT * " +
+                        "FROM billing " +
+                        "WHERE account_number_fk = '" + accountNumber + "';";
+                    // returns the result of the query to get the amount due
+                    H2Access.createAndExecuteQuery(this.connection, queryAmountDue);
                 }
-            } else {
-                return null;
             }
-        } else {
-            return null;
         }
     }
 
@@ -962,30 +990,26 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * A function which returns a ResultSet containing the last three transactions involved with this account.
+     * Simple method which will get the last three transactions of an account.
      *
-     * @param accntNum The account number to get the last three transactions on.
+     * @param accountNumber The account number to get the last three transactions on.
      * @return A ResultSet containing UP TO 3 transactions.
      */
-    public ResultSet getLastThreeTransactions(int accntNum) {
-        String query = "SELECT date, time, transaction.account_number_fk, " +
+    public ResultSet getLastThreeTransactions(int accountNumber) {
+        String query =
+            "SELECT date, time, transaction.account_number_fk, " +
                 "package_serial_fk, location_ID_fk, package.service_id_fk " +
-                "FROM transaction " +
-                "INNER JOIN package ON package_serial_fk = package.serial " +
-                "WHERE transaction.account_number_fk = " + accntNum + " " +
-                "ORDER BY date, time " +
-                "LIMIT 3;";
-        try {
-            Connection conn = H2Access.createConnection("me", "password");
-            return H2Access.createAndExecuteQuery(conn, query);
-        } catch (SQLException e) {
-            return null;
-        }
+            "FROM transaction " +
+            "INNER JOIN package ON package_serial_fk = package.serial " +
+            "WHERE transaction.account_number_fk = " + accountNumber + " " +
+            "ORDER BY date, time " +
+            "LIMIT 3;";
+        return H2Access.createAndExecuteQuery(this.connection, query);
     }
 
     /**
-     * Function required to be implemented by AutoCloseable.
-     * Lets CustomerAccess be used in a 'try with resources' block
+     * The AutoClosable portion of this class.  Will automatically close the
+     * connection to the database.
      */
     @Override
     public void close() {
