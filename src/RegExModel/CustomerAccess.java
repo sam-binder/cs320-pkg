@@ -393,23 +393,27 @@ public class CustomerAccess implements AutoCloseable{
         int _l = Integer.parseInt(dim_length);
         int _d = Integer.parseInt(dim_depth);
         int _w = Integer.parseInt(weight);
-        int dim_break = rates.getInt("dim_rating_break");
+        if(rates.next() && pkg.next()) {
+            int dim_break = rates.getInt("dim_rating_break");
 
-        billable_weight = _h * _l * _d;
-        billable_weight /= dim_break;
+            billable_weight = _h * _l * _d;
+            billable_weight /= dim_break;
 
-        if(_w > billable_weight){
-            billable_weight = _w;
+            if (_w > billable_weight) {
+                billable_weight = _w;
+            }
+
+            ResultSet charges = createCharges(rates, account_number_fk, pkg.getString("serial"), billable_weight, service_id_fk);
+            // charges should be the result of an insert query, so empty;
+
+            // call billing update method
+            ResultSet billing = updateBillingAmountDue(account_number_fk);
+            // also empty - result of update query
+
+            return pkg;
+        } else {
+            return null;
         }
-
-        ResultSet charges = createCharges(rates, account_number_fk, pkg.getString(2), billable_weight, service_id_fk);
-        // charges should be the result of an insert query, so empty;
-
-        // call billing update method
-        ResultSet billing = updateBillingAmountDue(account_number_fk);
-        // also empty - result of update query
-
-        return pkg;
     }
 
     /**
