@@ -1,15 +1,9 @@
 package RegExModel;
-import com.sun.org.apache.xpath.internal.SourceTree;
-import sun.font.TrueTypeFont;
 
 import java.io.IOException;
 import java.sql.*;
-import java.util.HashMap;
 import java.util.Scanner;
 
-/**
- * Created by Walter Schaertl on 3/23/2019.
- */
 
 /**
  * Class that contains ease of use methods for the employees that use the system.
@@ -18,7 +12,6 @@ import java.util.Scanner;
 public class EmployeeAccess implements AutoCloseable{
     private String username, type;
     private Connection connection;
-    private H2Access h2;
 
     /**
      * How an employee logs in
@@ -30,8 +23,7 @@ public class EmployeeAccess implements AutoCloseable{
     public EmployeeAccess(String username, String password, String type) throws SQLException{
         this.username = username;
         this.type = type;
-        this.h2 = new H2Access();
-        this.connection = this.h2.createConnection(username, password);
+        this.connection = H2Access.createConnection(username, password);
     }
 
     /**
@@ -40,11 +32,11 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public int getId() {
         String query = "SELECT general_fk FROM user where username='" + username + "'";
-        ResultSet r = h2.createAndExecuteQuery(connection, query);
+        ResultSet r = H2Access.createAndExecuteQuery(connection, query);
         try {
-            if (r.next())
+            if(r != null && r.next())
                 return r.getInt(1);
-        }catch (SQLException e) {}
+        } catch (SQLException e) {}
         return -1;
     }
 
@@ -56,7 +48,7 @@ public class EmployeeAccess implements AutoCloseable{
         String query = "SELECT general_fk FROM user where username='" + username + "'";
         ResultSet r = H2Access.createAndExecuteQuery(connection, query);
         try {
-            if (r.next())
+            if (r != null && r.next())
                 return r.getInt(1);
         }catch (SQLException e) {}
         return -1;
@@ -68,7 +60,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     @Override
     public void close(){
-        h2.closeConnection(this.connection);
+        H2Access.closeConnection(this.connection);
     }
 
     /**
@@ -86,7 +78,7 @@ public class EmployeeAccess implements AutoCloseable{
         String query = String.format("INSERT INTO transaction(DATE, TIME, EMPLOYEE_ID_FK, LOCATION_ID_FK, " +
                         "ACCOUNT_NUMBER_FK, PACKAGE_SERIAL_FK) VALUES (\'%s\',\'%s\',\'%s\',\'%s\',\'%s\',\'%s\');",
                         date, time, employeeId, locationId, acctNumber, pkgSerial);
-        h2.createAndExecute(connection, query);
+        H2Access.createAndExecute(connection, query);
     }
 
     /**
@@ -96,7 +88,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public ResultSet getCustomers(){
         String query = "SELECT * from customer";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -106,7 +98,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public ResultSet getCustomersWhere(String conditional){
         String query = "SELECT * from customer WHERE " +  conditional + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -117,10 +109,9 @@ public class EmployeeAccess implements AutoCloseable{
      * @return the result set of the specific customer
      */
     public ResultSet viewSpecificCustomer(String customerID, String lastName, String firstName) {
-        int accountNum = Integer.parseInt(customerID);
         String query = "SELECT * FROM customer WHERE account_number = " + customerID + " AND" +
                 " last_name = " + lastName + " AND first_name = " + firstName + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -130,7 +121,7 @@ public class EmployeeAccess implements AutoCloseable{
      */
     public ResultSet viewCustomerBilling(int acctNumber){
         String query = "SELECT * from billing WHERE account_number_fk=" + acctNumber + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -144,7 +135,7 @@ public class EmployeeAccess implements AutoCloseable{
         int employeeID = this.getId();
         String query = "UPDATE billing SET balance_to_date=" + balance + " , pay_model=" + payModel +
                 ", employeeID=" + employeeID + "WHERE ID=" + ID + " AND account_number_fk=" + acctNum + ";";
-        h2.createAndExecute(connection, query);
+        H2Access.createAndExecute(connection, query);
     }
 
     /**
@@ -156,7 +147,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewPackageHistory(int accntNum, String serial){
         String query = "SELECT * from transaction WHERE account_number_fk=" + accntNum +
                 " AND package_serial_fk='" + serial +"';";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -168,7 +159,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewPackageData(int accntNum, String serial){
         String query = "SELECT * from package WHERE account_number_fk=" + accntNum +
                 " AND serial='" + serial +"';";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
 
@@ -207,7 +198,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewRates(String negotiatedID) {
         int negotiated = Integer.parseInt(negotiatedID);
         String query = "SELECT * FROM rate WHERE negotiated_rate_id=" + negotiated + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -237,7 +228,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewCharge(int ID, int account_num, int package_serial) {
         String query = "SELECT price FROM charges WHERE ID = " + ID + " AND account_number_fk = " +
                 account_num + " AND package_serial_fk = " + package_serial + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -251,7 +242,7 @@ public class EmployeeAccess implements AutoCloseable{
         String query = "UPDATE charges SET price = " + new_charges + ", service_id = " + service_id +
                 " WHERE ID = " + ID + " AND account_number_fk = " + account_num +
                 " AND package_serial_fk = " + package_serial + ";";
-        h2.createAndExecute(connection, query);
+        H2Access.createAndExecute(connection, query);
     }
 
     /**
@@ -264,7 +255,7 @@ public class EmployeeAccess implements AutoCloseable{
         String query = "SELECT location_ID_fk FROM transaction WHERE account_number_fk = " + account_num +
                 " AND package_serial_fk = " + serial + " AND ID = SELECT MAX(T.ID) FROM transaction AS T WHERE " +
                 "T.account_number_fk = " + account_num + " AND package_serial_fk = '" + serial + "';";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -276,7 +267,7 @@ public class EmployeeAccess implements AutoCloseable{
     public void putSignature(String receiver, String account_num, String serial) {
         String query = "UPDATE package SET signed_for_by = '" + receiver + "' WHERE account_number_fk = " +
                 account_num + " AND serial = '" + serial + "';";
-        h2.createAndExecute(connection, query);
+        H2Access.createAndExecute(connection, query);
     }
 
     /**
@@ -288,7 +279,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet checkSignature(String account_num, String serial) {
         String query = "SELECT signed_for_by FROM  package WHERE account_number_fk = " + account_num +
                 " AND serial = " + serial + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -300,7 +291,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewService(int account_num, String serial) {
         String query = "SELECT * FROM service WHERE ID = (SELECT service_id_fk FROM package WHERE" +
                 " account_number_fk = " + account_num + " AND serial = '" + serial + "');";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     /**
@@ -311,7 +302,7 @@ public class EmployeeAccess implements AutoCloseable{
     public ResultSet viewPriority(int service_id) {
         String query = "SELECT * FROM priority WHERE ID = (SELECT priority_fk FROM service WHERE " +
                 "ID = " + service_id + ";";
-        return h2.createAndExecuteQuery(connection, query);
+        return H2Access.createAndExecuteQuery(connection, query);
     }
 
     public ResultSet viewAddress(int maillingId){
@@ -332,7 +323,7 @@ public class EmployeeAccess implements AutoCloseable{
         query = String.format(query, acctNumber, pkgSerial);
         ResultSet r = H2Access.createAndExecuteQuery(connection, query);
         try{
-            if(r.next())
+            if(r != null && r.next())
                 return r.getString(1);
         } catch (SQLException e){
             return null;
@@ -343,14 +334,14 @@ public class EmployeeAccess implements AutoCloseable{
 
     /**
      * Tests if this location ID is valid
-     * @param locationID
-     * @return
+     * @param locationID string location
+     * @return boolean if locationID is valid
      */
     private boolean testLocationId(String locationID){
         String query = "SELECT * FROM location WHERE id='"+ locationID +"';";
         ResultSet r = H2Access.createAndExecuteQuery(connection, query);
         try {
-            return r.next();
+            return r != null && r.next();
         } catch (SQLException e){
             return  false;
         }
@@ -361,7 +352,7 @@ public class EmployeeAccess implements AutoCloseable{
         query = String.format(query, acctNumber, pkgSerial);
         ResultSet r = H2Access.createAndExecuteQuery(connection, query);
         try{
-            return r.next();
+            return  r != null && r.next();
         } catch (SQLException e){
             return false;
         }
@@ -370,7 +361,9 @@ public class EmployeeAccess implements AutoCloseable{
     private void clearScreen(){
         try {
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-        } catch (IOException | InterruptedException e){}
+        } catch (IOException | InterruptedException e){
+            e.printStackTrace();
+        }
 
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -384,7 +377,7 @@ public class EmployeeAccess implements AutoCloseable{
      * @param dropOff: If this package is being dropped off
      */
     private void scanPackage(Scanner in, String locationID, boolean dropOff){
-        String pkg = "";
+        String pkg;
         // While drivers don't switch from scanning in to going out on delivery,
         // and hub employee's haven't quit.
         while(true){
@@ -439,7 +432,7 @@ public class EmployeeAccess implements AutoCloseable{
 
     private void printCustomer(ResultSet customers){
         try {
-            int zipId = 0;
+            int zipId;
             int acctNum = customers.getInt("account_number");
             int addressID = customers.getInt("mailing_address_id_fk");
             String rateId = customers.getInt("negotiated_rate_id_fk") + "";
@@ -505,6 +498,7 @@ public class EmployeeAccess implements AutoCloseable{
         System.out.println("[H] Home    [B] Back    [Q]    quit");
     }
     private void acctHomePage(){
+        Scanner in = new Scanner(System.in);
         // Generate Invoices
         // Make a new rate
         // Edit billing
@@ -514,7 +508,7 @@ public class EmployeeAccess implements AutoCloseable{
         System.out.println("[3] Negotiate custom rates.");
         System.out.println("[4] Track a package.");
         System.out.print("Please enter a choice: ");
-        String userStr = getUserInput(new String[]{"1", "2", "3", "H", "B", "Q"});
+        String userStr = getUserInput(new String[]{"1", "2", "3", "4", "H", "B", "Q"});
         switch (userStr){
             case "H":
                 acctHomePage();
@@ -537,7 +531,19 @@ public class EmployeeAccess implements AutoCloseable{
                 acctHomePage();
                 break;
             case "4":
-                //trackAPackage();
+                boolean success = false;
+                do {
+                    System.out.print("Enter package tracking ID: ");
+                    String pkg = in.nextLine();
+                    int acctNum = Integer.parseInt(pkg.substring(0, 6));
+                    String serial = pkg.substring(8, 14);
+                    if ((!testpackageId(acctNum, serial)) || (Util.validateCheckDigit(pkg))) {
+                        System.out.println("That package does not exists." +
+                                " Please verify the information was entered correctly.");
+                    } else
+                        success = true;
+                    printPackageHistory(acctNum, serial);
+                } while(!success);
                 break;
         }
 
@@ -585,12 +591,25 @@ public class EmployeeAccess implements AutoCloseable{
         String query = "SELECT negotiated_rate_id_fk FROM customer WHERE account_number=" + acctNum;
         ResultSet r = H2Access.createAndExecuteQuery(connection, query);
         try {
-            if(r.next())
+            if(r != null && r.next())
                 return r.getInt("negotiated_rate_id_fk");
         } catch (SQLException e){
             e.printStackTrace();
         }
         return -1;
+    }
+
+    //tracking number: AAAAAAXXNNNNNNC
+    //[last six digits of a customers account]+[service id]+[package serial]+[check character]
+    private void printPackageHistory(int acctNum, String serial){
+        ResultSet r = viewPackageHistory(acctNum, serial);
+        try {
+            while (r.next()) {
+                // TODO print packing informtion
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 
     private void editCustomerBilling(){
@@ -611,7 +630,7 @@ public class EmployeeAccess implements AutoCloseable{
                 System.exit(0);
                 break;
             case "1":
-                double amt = 0;
+                double amt;
                 do {
                     System.out.print("How much money should be added: ");
                     amt = in.nextDouble();
@@ -629,7 +648,7 @@ public class EmployeeAccess implements AutoCloseable{
                 }while (amt <= 0);
                 break;
             case "2":
-                String newPeriod = "";
+                String newPeriod;
                 System.out.println("What should the new pay period be?");
                 System.out.println("[1] Annually");
                 System.out.println("[2] Bi-Annually");
@@ -738,7 +757,6 @@ public class EmployeeAccess implements AutoCloseable{
 
         int numCharges = 0;
         double amountDue = 0;
-        double accountBalance = getBalance(customerId);
         double data[] = viewCharges(customerId);
         if(data != null) {
             numCharges = (int) data[0];
@@ -777,7 +795,7 @@ public class EmployeeAccess implements AutoCloseable{
         String getBalance = "SELECT balance_to_date FROM billing WHERE account_number_fk = " + acct;
         ResultSet currentBalance = H2Access.createAndExecuteQuery(connection, getBalance);
         try {
-            if(currentBalance.next())
+            if(currentBalance != null && currentBalance.next())
                 newBalance = currentBalance.getDouble(1);
         } catch (SQLException e){
             e.printStackTrace();
