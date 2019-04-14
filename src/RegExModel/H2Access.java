@@ -1,5 +1,7 @@
 package RegExModel;
 
+// FILE: H2Access.java
+
 // imports H2 elements
 import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.h2.jdbc.JdbcSQLNonTransientConnectionException;
@@ -16,7 +18,7 @@ import java.sql.DriverManager;
 /**
  * Methods to interface with the package database.
  *
- * @author Walter Schaertl;
+ * @author Walter Schaertl
  * @version 04/10/2019
  */
 public class H2Access {
