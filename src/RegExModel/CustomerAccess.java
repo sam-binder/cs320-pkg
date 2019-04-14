@@ -586,14 +586,17 @@ public class CustomerAccess implements AutoCloseable{
                         weight + ", " +
                         "'" + origin + "', " +
                         "'" + destination + "');";
-        ResultSet ins_new_rec = h2.createAndExecuteQuery(connection, query);
-        String query2 = "SELECT * FROM PACKAGE" +
-                        " WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk +
-                        ") AND (SERIAL = '" + nextSerial.toString() + "');";
+        if(h2.createAndExecute(connection, query)) {
 
-        ins_new_rec = h2.createAndExecuteQuery(connection, query2);
-        return ins_new_rec;
+            String query2 = "SELECT * FROM PACKAGE" +
+                    " WHERE (ACCOUNT_NUMBER_FK = " + account_number_fk +
+                    ") AND (SERIAL = '" + nextSerial.toString() + "');";
 
+            ResultSet ins_new_rec = h2.createAndExecuteQuery(connection, query2);
+            return ins_new_rec;
+        } else {
+            return null;
+        }
     }
 
     /**
