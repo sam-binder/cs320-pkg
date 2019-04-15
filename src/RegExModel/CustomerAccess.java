@@ -622,8 +622,8 @@ public class CustomerAccess implements AutoCloseable {
 
 
         // get the IDs of the addresses just inserted into the table
-        String originAddressID = findLocation(newOrig.getString("ID"), 'O');
-        String destinationAddressID = findLocation(newDest.getString("ID"), 'D');
+        String originAddressID = findLocation(newOrig.getString(1), 'O');
+        String destinationAddressID = findLocation(newDest.getString(1), 'D');
 
         // creates the package and takes its return as packageCreation
         ResultSet packageCreation = createPackage(
