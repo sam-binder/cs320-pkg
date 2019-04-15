@@ -789,12 +789,13 @@ public class CustomerAccess implements AutoCloseable {
 
         // calculates the total price: the billable weight multiplied by the base, the rush and service multipliers
         double totalprice = billableWeight * baseMultiplier * rushMultiplier * serviceMultiplier;
+        String realprice = String.format("%.2f", totalprice);
 
         String insertionQuery =
             "INSERT INTO charge " +
             "(price, account_number_fk, package_serial_fk, servive_id, paid) " +
             "VALUES(" +
-                totalprice + ", " +
+                realprice + ", " +
                 accountNumber + ", '" +
                 serial + "', " +
                 serviceId + ", " +
@@ -1046,8 +1047,14 @@ public class CustomerAccess implements AutoCloseable {
             );
         } while (locationIDExistsQuery.next());
 
-        // once we find a new unique id, we return it
-        return locationIDBuilder.toString();
+        String Qaddloc = "INSERT INTO location (ID, address_ID) VALUES ('" +
+                locationIDBuilder.toString() + "', '" +
+                addressID + "');";
+        if(H2Access.createAndExecute(connection, Qaddloc)){
+            return locationIDBuilder.toString();
+        } else {
+            return null;
+        }
     }
 
     /**
