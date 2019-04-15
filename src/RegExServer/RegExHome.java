@@ -2,18 +2,10 @@ package RegExServer;
 
 // FILE: RegExHome.java
 
-import RegExModel.CustomerAccess;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 /**
  * RegEx application home page generator.
@@ -69,60 +61,6 @@ public class RegExHome extends RegExPage {
             StandardCharsets.UTF_8
         );
 
-        // we have to build out "last 3 transactions" table
-        StringBuilder lastThreeTransTable = new StringBuilder();
-
-        // attempts to load in all of the three things
-        try {
-            CustomerAccess tempCustomerAccess = new CustomerAccess(
-                this.userRegExSession.userName,
-                this.userRegExSession.password
-            );
-
-            // gets the resultset for the last (up to) three transactions on this account
-            ResultSet lastThreeTrans = tempCustomerAccess.getLastThreeTransactions(
-                this.userRegExSession.accountNumber
-            );
-
-            // if the ResultSet has actual data
-            if (lastThreeTrans != null) {
-                // load up the first transaction if it exists
-                if (lastThreeTrans.next()) {
-                    do {
-                        lastThreeTransTable.append(
-                            generateTableRow(
-                                RegExModel.Util.generateTrackingID(
-                                    lastThreeTrans.getInt(3),
-                                    lastThreeTrans.getInt(6),
-                                    lastThreeTrans.getString(4)
-                                ),
-                                lastThreeTrans.getString(5),
-                                lastThreeTrans.getString(1),
-                                lastThreeTrans.getString(2)
-                            )
-                        );
-                    } while (lastThreeTrans.next());
-                } else {
-                    // dump in a "no records yet"
-                    lastThreeTransTable.append(
-                        "<tr>" +
-                            "<td colspan='3' class='text-italic text-bold text-center'>" +
-                                "No transactions yet." +
-                            "</td>" +
-                        "</tr>"
-                    );
-                }
-            }
-        } catch (SQLException sqle) {
-            /* if this happens we have a bigger issue */
-        }
-
-        // places our table content
-        pageContent = pageContent.replace(
-            "@{last-three-transactions}",
-            lastThreeTransTable
-        );
-
         // replaces all var placeholders with session details
         pageContent = userRegExSession.replaceVarPlaceholders(pageContent);
 
@@ -138,66 +76,5 @@ public class RegExHome extends RegExPage {
 
         // return our page content as bytes
         return pageContent.getBytes();
-    }
-
-    /**
-     * Generates a row for the package tracking table.
-     *
-     * @param transactionID The transaction ID to print a note about the update with.
-     * @param dateStr       The string representation of the date.
-     * @param timeStr       The string representation of the time.
-     * @return A row for the package tracking table.
-     */
-    private String generateTableRow(String trackingID, String transactionID, String dateStr, String timeStr) {
-        // a formatter to ensure consistent dates
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        Date date = new Date();
-        DateFormat dateFormatOutput = new SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH);
-
-        // a formatter to ensure consistent TIMES
-        DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.ENGLISH);
-        Date time = new Date();
-        DateFormat timeFormatOutput = new SimpleDateFormat("hh:mm a");
-
-        // parses date and time
-        try {
-            date = dateFormat.parse(dateStr);
-            time = timeFormat.parse(timeStr);
-        } catch (ParseException pe) {
-            /* this will never happen */
-        }
-
-        // generates the note
-        String note = "";
-        switch (transactionID.charAt(0)) {
-            case 'V':
-            case 'H':
-                note = "In transit";
-                break;
-            case 'T':
-                switch(transactionID.charAt(1)) {
-                    case 'O':
-                        note = "Left Carrier Facility";
-                        break;
-                    case 'D':
-                        note = "Delivered";
-                        break;
-                }
-                break;
-        }
-
-        // puts the last transaction location ID after the note
-        note += " (" + transactionID + ")";
-
-        // returns the update as a table row
-        return "<tr>" +
-                    "<td>" +
-                        "<a href='/view-package/?package-id=" + trackingID + "' title='View more info about package " + trackingID + ".'>" +
-                            trackingID +
-                        "</a>" +
-                    "</td>" +
-                    "<td>" + note + "</td>" +
-                    "<td>" + dateFormatOutput.format(date) + " at " + timeFormatOutput.format(time) + "</td>" +
-                "</tr>";
     }
 }
