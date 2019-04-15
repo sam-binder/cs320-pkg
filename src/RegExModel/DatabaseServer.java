@@ -4,7 +4,11 @@ import org.h2.tools.Server;
 import java.sql.SQLException;
 
 /**
- * Class to easily run a server for the database
+ * Class to easily run a server for the database. This class will be used for class
+ * demos, as it allows multiple concurrent accesses, but the submitted code will not
+ * Use this class, as that database will operate as embedded.
+ *
+ * @author Walter Schaertl
  */
 public class DatabaseServer {
     public static void main(String[] args){
