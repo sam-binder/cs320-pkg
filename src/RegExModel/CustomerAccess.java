@@ -617,10 +617,6 @@ public class CustomerAccess implements AutoCloseable {
             accountNumber
         );
 
-        newOrig.next();
-        newDest.next();
-
-
         // get the IDs of the addresses just inserted into the table
         String originAddressID = findLocation(newOrig.getString(1), 'O');
         String destinationAddressID = findLocation(newDest.getString(1), 'D');
