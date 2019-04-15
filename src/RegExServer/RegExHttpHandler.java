@@ -341,8 +341,8 @@ public class RegExHttpHandler implements HttpHandler {
                                     );
 
                                     // pulls out the correct "form" of these
-                                    String company = requestParameters.get("company") != null ?
-                                        (String) requestParameters.get("company") :
+                                    String attention = requestParameters.get("attention") != null ?
+                                        (String) requestParameters.get("attention") :
                                         "";
                                     String addressLine2 = requestParameters.get("address-line-2") != null ?
                                         (String) requestParameters.get("address-line-2") :
@@ -350,8 +350,8 @@ public class RegExHttpHandler implements HttpHandler {
 
                                     // next is to set in place the customer's address information
                                     tempCustomerAccess.enterAddress(
-                                        company,
-                                        (String) requestParameters.get("attention"),
+                                        (String) requestParameters.get("company"),
+                                        attention,
                                         (String) requestParameters.get("address-line-1"),
                                         addressLine2,
                                         (String) requestParameters.get("zip")
