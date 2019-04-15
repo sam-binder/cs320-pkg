@@ -418,8 +418,8 @@ public class CustomerAccess implements AutoCloseable {
      */
     public ResultSet getAllAddressesSentTo(String accountNumber) {
         String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + accountNumber + ");";
-        // run the query
         return H2Access.createAndExecuteQuery(this.connection, query);
+        // run the query
     }
 
     /**
@@ -600,7 +600,7 @@ public class CustomerAccess implements AutoCloseable {
 
 
         // create new addresses for the origin and destination
-        createNewAddress(
+        ResultSet newOrig = createNewAddress(
             originCompany,
             originAttention,
             originAddressLine1,
@@ -608,7 +608,7 @@ public class CustomerAccess implements AutoCloseable {
             originZipID,
             accountNumber
         );
-        createNewAddress(
+        ResultSet newDest = createNewAddress(
             destinationCompany,
             destinationAttention,
             destinationAddressLine1,
@@ -617,9 +617,13 @@ public class CustomerAccess implements AutoCloseable {
             accountNumber
         );
 
+        newOrig.next();
+        newDest.next();
+
+
         // get the IDs of the addresses just inserted into the table
-        String originAddressID = findLocation(originZipID, 'O');
-        String destinationAddressID = findLocation(destinationZipID, 'D');
+        String originAddressID = findLocation(newOrig.getString("ID"), 'O');
+        String destinationAddressID = findLocation(newDest.getString("ID"), 'D');
 
         // creates the package and takes its return as packageCreation
         ResultSet packageCreation = createPackage(
