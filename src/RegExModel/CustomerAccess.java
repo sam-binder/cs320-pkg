@@ -1046,9 +1046,9 @@ public class CustomerAccess implements AutoCloseable {
             );
         } while (locationIDExistsQuery.next());
 
-        String Qaddloc = "INSERT INTO location (ID, address_ID) VALUES (" +
-                locationIDBuilder.toString() + ", " +
-                addressID + ");";
+        String Qaddloc = "INSERT INTO location (ID, address_ID) VALUES ('" +
+                locationIDBuilder.toString() + "', '" +
+                addressID + "');";
         if(H2Access.createAndExecute(connection, Qaddloc)){
             return locationIDBuilder.toString();
         } else {
