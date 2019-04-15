@@ -797,7 +797,7 @@ public class CustomerAccess implements AutoCloseable {
 
         String insertionQuery =
             "INSERT INTO charge " +
-            "(price, account_number_fk, package_serial_fk, servive_id, paid) " +
+            "(price, account_number_fk, package_serial_fk, service_id, paid) " +
             "VALUES(" +
                 realprice + ", " +
                 accountNumber + ", '" +
