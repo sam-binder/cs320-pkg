@@ -940,7 +940,7 @@ public class CustomerAccess implements AutoCloseable {
         }
 
         // go down through the remaining characters copying over the same character from the last serial
-        for (; i >= 0; --i) {
+        for (i=4; i >= 0; --i) {
             nextSerial[i] = lastSerial.charAt(i);
         }
 
