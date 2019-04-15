@@ -33,10 +33,10 @@ public class H2Access {
 	public static Connection createConnection(String username, String password) throws SQLException {
 		try {
 			// Used when connecting to the database in server mode. Requires DatabaseServer to be running
-			String url = "jdbc:h2:tcp://localhost:8095/" + "~/Desktop/RIT/Year 3/Data Mang/cs320-pkg/src";
+//			String url = "jdbc:h2:tcp://localhost:8095/" + "~/Desktop/RIT/Year 3/Data Mang/cs320-pkg/src";
 
 			// builds a URL to connect to the database with
-			//String url = "jdbc:h2:./src";
+			String url = "jdbc:h2:./src";
 
 			// uses the H2Driver method
 			Class.forName("org.h2.Driver");

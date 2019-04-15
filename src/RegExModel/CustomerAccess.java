@@ -1062,24 +1062,6 @@ public class CustomerAccess implements AutoCloseable {
     }
 
     /**
-     * Simple method which will get the last three transactions of an account.
-     *
-     * @param accountNumber The account number to get the last three transactions on.
-     * @return A ResultSet containing UP TO 3 transactions.
-     */
-    public ResultSet getLastThreeTransactions(int accountNumber) {
-        String query =
-            "SELECT date, time, transaction.account_number_fk, " +
-                "package_serial_fk, location_ID_fk, package.service_id_fk " +
-            "FROM transaction " +
-            "INNER JOIN package ON package_serial_fk = package.serial " +
-            "WHERE transaction.account_number_fk = " + accountNumber + " " +
-            "ORDER BY date, time " +
-            "LIMIT 3;";
-        return H2Access.createAndExecuteQuery(this.connection, query);
-    }
-
-    /**
      * The AutoClosable portion of this class.  Will automatically close the
      * connection to the database.
      */
