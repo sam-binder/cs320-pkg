@@ -772,8 +772,8 @@ public class CustomerAccess implements AutoCloseable {
 
         // if no signature required
         if (signature == 0) {
-            // add .05 to the service multiplier
-            serviceMultiplier += .05;
+            // subtract .05 to the service multiplier
+            serviceMultiplier -= .05;
         }
 
         // shipping hazardous material costs a bit more
