@@ -16,7 +16,9 @@ To access the database as a customer, run the main method in RegExServer.RegExHt
 To access the database as an employee, run the main method in RegExModel.EmployeeAccess.
 Again, only one of these classes can be operational at a time. The prompts for each view
 are detailed and will walk the user through all functionality. For more information, see
-the demonstration on wednesday.
+the demonstration on wednesday. Execute the CLI via intelij if issues are observed in
+terminal, alternatively, change the access back to TCP H2Acc.createConnection with the
+correct DB location.
 
 Sample Log ins:
     Customer:
