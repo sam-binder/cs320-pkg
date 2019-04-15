@@ -1,4 +1,4 @@
-Authors: Walter Schaertl, Sam Binder, Lyan Ye
+Authors: Walter Schaertl, Sam Binder, Lyan Ye, Kevin Becker
 Steps to running the Database
 
 During presentation, connections to the database will be over TCP, to allow
