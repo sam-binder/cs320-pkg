@@ -418,8 +418,8 @@ public class CustomerAccess implements AutoCloseable {
      */
     public ResultSet getAllAddressesSentTo(String accountNumber) {
         String query = "SELECT * FROM address " + "WHERE (ACCOUNT_NUMBER_FK = " + accountNumber + ");";
-        // run the query
         return H2Access.createAndExecuteQuery(this.connection, query);
+        // run the query
     }
 
     /**
@@ -600,7 +600,7 @@ public class CustomerAccess implements AutoCloseable {
 
 
         // create new addresses for the origin and destination
-        createNewAddress(
+        ResultSet newOrig = createNewAddress(
             originCompany,
             originAttention,
             originAddressLine1,
@@ -608,7 +608,7 @@ public class CustomerAccess implements AutoCloseable {
             originZipID,
             accountNumber
         );
-        createNewAddress(
+        ResultSet newDest = createNewAddress(
             destinationCompany,
             destinationAttention,
             destinationAddressLine1,
@@ -618,8 +618,8 @@ public class CustomerAccess implements AutoCloseable {
         );
 
         // get the IDs of the addresses just inserted into the table
-        String originAddressID = findLocation(originZipID, 'O');
-        String destinationAddressID = findLocation(destinationZipID, 'D');
+        String originAddressID = findLocation(newOrig.getString(1), 'O');
+        String destinationAddressID = findLocation(newDest.getString(1), 'D');
 
         // creates the package and takes its return as packageCreation
         ResultSet packageCreation = createPackage(
@@ -793,7 +793,7 @@ public class CustomerAccess implements AutoCloseable {
 
         String insertionQuery =
             "INSERT INTO charge " +
-            "(price, account_number_fk, package_serial_fk, servive_id, paid) " +
+            "(price, account_number_fk, package_serial_fk, service_id, paid) " +
             "VALUES(" +
                 realprice + ", " +
                 accountNumber + ", '" +
@@ -936,7 +936,7 @@ public class CustomerAccess implements AutoCloseable {
         }
 
         // go down through the remaining characters copying over the same character from the last serial
-        for (; i >= 0; --i) {
+        for (i=4; i >= 0; --i) {
             nextSerial[i] = lastSerial.charAt(i);
         }
 

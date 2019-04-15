@@ -397,17 +397,22 @@ public class EmployeeAccess implements AutoCloseable{
      * @param in: A scanner to get user input
      * @param locationID: The location Id of the employee (must be either a hub or vehicle). Ignored
      *                  if dropOff (as in to it's final destination) is true
-     * @param dropOff: If this package is being dropped off
+     * @param pickUpFromOrigin: Package is being picked up from it's origin
+     * @param pickUpFromHub: Package is being picked up from a hub
+     * @param dropOffToDest: Package if being dropped off at it's destination
+     * @param arriveAtHub: Package has arrived at a hub
+     * Note: there is no 'dropOffToHub', a hub worker scans in those packages.
      */
-    private void scanPackage(Scanner in, String locationID, boolean dropOff){
+    private void scanPackage(Scanner in, String locationID, boolean pickUpFromOrigin,
+                             boolean pickUpFromHub, boolean dropOffToDest, boolean arriveAtHub){
         String pkg;
         // While drivers don't switch from scanning in to going out on delivery,
         // and hub employee's haven't quit.
         while(true){
             // Scan the package, Sample Package: 00013114B9IWEAV
-            System.out.print("Please scan a package: ");
+            System.out.print("Please scan a package (Or Q to quit): ");
             pkg = in.nextLine();
-            if(pkg.equalsIgnoreCase("T") || pkg.equalsIgnoreCase("Q"))
+            if(pkg.equalsIgnoreCase("Q"))
                 break;
 
             // Make sure the ID is correctly formatted
@@ -424,11 +429,11 @@ public class EmployeeAccess implements AutoCloseable{
                             " Please verify the information was entered correctly.");
                     return;
                 }
-                if(!dropOff) {
+                if(arriveAtHub || pickUpFromOrigin || pickUpFromHub) {
                     // Get the account number and serial from the package
                     updatePackageLocation(locationID, acctNum, serial);
                     System.out.println("Package location updated!");
-                } else {
+                } else if(dropOffToDest){
                     // Add a transaction that this package has reached it's destination
                     ResultSet r = viewService(acctNum, serial);
                     try{
@@ -1152,16 +1157,47 @@ public class EmployeeAccess implements AutoCloseable{
                             else {
                                 if(locationID.startsWith("H")) {
                                     // workers at hubs just scan
-                                    System.out.println("Tracking number received, " +
-                                            "you may now start scanning packages (or Q to quit).");
-                                    employee.scanPackage(in, locationID, false);
+                                    System.out.println("Tracking number received, you may now " +
+                                            "start scanning arriving (Truck -> Hub) packages (or Q to quit).");
+                                    employee.scanPackage(in, locationID, false, false, false, true);
                                 }else {
-                                    System.out.println("You are currently scanning packages to load" +
-                                            " on to your truck. Press T to go out on delivery.");
-                                    employee.scanPackage(in, locationID, false);
-                                    System.out.println("You are currently out on delivery. " +
-                                            "Please scan packages as they're dropped off (or Q to quit).");
-                                    employee.scanPackage(in, locationID, true);
+                                    String choice = "";
+                                    do {
+                                        // Note: Package movers don't scan packages off to a hub, the
+                                        // employee at the hub scans the package.
+                                        clearScreen();
+                                        System.out.println("What action are you performing?");
+                                        System.out.println("[Q] Quit for the day.");
+                                        System.out.println("[1] Scanning Packages Onto Your Truck. Origin -> Truck");
+                                        System.out.println("[2] Scanning Packages Onto Your Truck. Hub -> Truck");
+                                        System.out.println("[3] Scanning Packages Off Your Truck.  Truck -> Destination");
+                                        System.out.print("Action: ");
+                                        choice = employee.getUserInput(new String[]{"1", "2", "3", "Q"});
+                                        switch (choice) {
+                                            case "1":
+                                                System.out.println("You are currently scanning packages"
+                                                        + " to load on to your truck from their origin."
+                                                        + " Press Q when the truck is full. Be sure that"
+                                                        + " the hub scans packages off your truck.");
+                                                employee.scanPackage(in, locationID, true, false, false, false);
+                                                break;
+                                            case "2":
+                                                System.out.println("You are currently scanning packages"
+                                                        + " to load on to your truck from a Hub."
+                                                        + " Press Q when the truck is full. Be sure that"
+                                                        + " the hub scans packages off your truck.");
+                                                employee.scanPackage(in, locationID, false, true, false, false);
+                                                break;
+                                            case "3":
+                                                System.out.println("You are currently scanning packages"
+                                                        + " to offload from your truck to a destination.");
+                                                employee.scanPackage(in, locationID, false, false, true, false);
+                                                break;
+                                            default:
+                                                break;
+
+                                        }
+                                    } while(!choice.equalsIgnoreCase("Q"));
                                 }
                                 employee.close();
                                 System.out.println("Have A good day!\n");
