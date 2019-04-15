@@ -789,12 +789,13 @@ public class CustomerAccess implements AutoCloseable {
 
         // calculates the total price: the billable weight multiplied by the base, the rush and service multipliers
         double totalprice = billableWeight * baseMultiplier * rushMultiplier * serviceMultiplier;
+        String realprice = String.format("%.2f", totalprice);
 
         String insertionQuery =
             "INSERT INTO charge " +
             "(price, account_number_fk, package_serial_fk, servive_id, paid) " +
             "VALUES(" +
-                totalprice + ", " +
+                realprice + ", " +
                 accountNumber + ", '" +
                 serial + "', " +
                 serviceId + ", " +
