@@ -567,13 +567,11 @@ public class RegExHttpHandler implements HttpHandler {
 
                             String trackingID = "";
 
-                            if(packageSent.next()) {
-                                trackingID = RegExModel.Util.generateTrackingID(
-                                    packageSent.getInt("account_number_fk"),
-                                    packageSent.getInt("service_id_fk"),
-                                    packageSent.getString("serial")
-                                );
-                            }
+                            trackingID = RegExModel.Util.generateTrackingID(
+                                packageSent.getInt("account_number_fk"),
+                                packageSent.getInt("service_id_fk"),
+                                packageSent.getString("serial")
+                            );
 
                             // redirects user back to home
                             responseCode = HttpURLConnection.HTTP_MOVED_TEMP;
